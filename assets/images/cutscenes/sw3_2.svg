@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+  <defs>
+    <radialGradient id="steam" cx="0.5" cy="0.6" r="0.4">
+      <stop offset="0%" stop-color="#D4A14F" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#D4A14F" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="900" fill="#1A1410"/>
+  <ellipse cx="800" cy="540" rx="500" ry="300" fill="url(#steam)"/>
+  <text x="800" y="350" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="22" fill="#5C7DA0" letter-spacing="0.2em">[ 컷씬 시안 2/3 ]</text>
+  <text x="800" y="420" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="40" fill="#D4A14F" font-weight="300">국 한 솥, 김이 오른다</text>
+  <text x="800" y="470" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="20" fill="#9A9388">절제된 양념, 여전한 김</text>
+</svg>

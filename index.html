@@ -58,6 +58,7 @@
     </aside>
 
     <article id="scenarioPanel">
+      <div id="sceneImage"><img id="sceneImageImg" alt=""></div>
       <h2 id="sceneTitle">— 시작 —</h2>
       <div id="sceneBody"></div>
       <div id="choices"></div>
@@ -113,6 +114,16 @@
   </div>
 </div>
 
+<!-- 컷씬 모달 -->
+<div id="cutsceneOverlay">
+  <div class="cutscene-stage">
+    <div class="cutscene-image"><img id="cutsceneImg" alt=""></div>
+    <div class="cutscene-text" id="cutsceneText"></div>
+    <div class="cutscene-progress" id="cutsceneProgress"></div>
+    <div class="cutscene-hint">CLICK · SPACE · → 다음</div>
+  </div>
+</div>
+
 <!-- 토스트 -->
 <div id="toastContainer"></div>
 
@@ -133,6 +144,7 @@
 <script src="engine/smallwin.js"></script>
 <script src="engine/beacon.js"></script>
 <script src="engine/drama.js"></script>
+<script src="engine/cutscene.js"></script>
 <script src="engine/render.js"></script>
 <script src="engine/loop.js"></script>
 <script src="engine/save.js"></script>

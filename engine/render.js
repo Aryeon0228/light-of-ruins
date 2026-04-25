@@ -128,6 +128,22 @@ LR.render.scenario = function(state) {
   const node = state.pendingChoice;
   if (!node) return;
 
+  // 헤더 일러스트
+  const sceneImage = document.getElementById('sceneImage');
+  const sceneImageImg = document.getElementById('sceneImageImg');
+  if (node.image) {
+    sceneImageImg.src = node.image;
+    sceneImageImg.alt = node.title || '';
+    sceneImage.classList.add('visible');
+    // 다시 페이드인 트리거
+    sceneImageImg.style.animation = 'none';
+    sceneImageImg.offsetHeight;
+    sceneImageImg.style.animation = '';
+  } else {
+    sceneImage.classList.remove('visible');
+    sceneImageImg.removeAttribute('src');
+  }
+
   document.getElementById('sceneTitle').textContent = node.title;
 
   // 본문

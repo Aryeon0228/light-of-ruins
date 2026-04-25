@@ -48,6 +48,17 @@ LR.SMALL_WIN_DEFS = {
     name: '정훈의 작은 간식',
     actor: 'jeonghun',
     text: '정훈이 비축해둔 건조 식재료를 살짝 꺼내 작은 간식을 만든다. 누구에게 권한 것도 아닌데 다들 한 입씩 받는다.',
+    cutscene: {
+      id: 'sw3_jeonghun_snack',
+      frames: [
+        { image: 'assets/images/cutscenes/sw3_1.svg',
+          text: '정훈이 창고 구석에서 비축해둔 건조 나물 한 줌을 꺼낸다. 누구도 보지 못한 척한다.' },
+        { image: 'assets/images/cutscenes/sw3_2.svg',
+          text: '국 한 솥. 절제된 양념. 그래도 김이 오른다.' },
+        { image: 'assets/images/cutscenes/sw3_3.svg',
+          text: '동호가 처음으로 한 입 떠 본다. "… 의외로 괜찮은데." 정훈이 표정 없이 고개만 끄덕인다.' }
+      ]
+    },
     canFire: function(state) {
       const j = LR.charById(state, 'jeonghun');
       if (!j.alive || j.morale < 55) return false;

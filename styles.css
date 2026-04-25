@@ -214,6 +214,37 @@ button {
   min-height: 500px;
   display: flex; flex-direction: column;
 }
+
+/* 시나리오 일러스트 */
+#sceneImage {
+  width: 100%;
+  margin: -0.3rem 0 1.2rem;
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+  background: #0A0B0E;
+  aspect-ratio: 16 / 7;
+  display: none;
+}
+#sceneImage.visible { display: block; }
+#sceneImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: fadeInImage 0.7s ease-out;
+}
+#sceneImage::after {
+  /* 부드러운 그라데이션으로 텍스트와 자연스럽게 연결 */
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0; height: 40%;
+  background: linear-gradient(to bottom, transparent, var(--c-panel));
+  pointer-events: none;
+}
+@keyframes fadeInImage {
+  from { opacity: 0; transform: scale(1.03); }
+  to { opacity: 1; transform: scale(1); }
+}
 #sceneTitle {
   font-size: 1.3rem;
   font-weight: 500;
@@ -439,6 +470,83 @@ button {
 }
 .ending-actions button:hover {
   background: var(--c-panel-2); border-color: var(--c-blue);
+}
+
+/* ─── 컷씬 모달 ─── */
+#cutsceneOverlay {
+  position: fixed; inset: 0;
+  background: rgba(10, 11, 14, 0.92);
+  backdrop-filter: blur(6px);
+  z-index: 60;
+  display: none;
+  align-items: center; justify-content: center;
+  flex-direction: column;
+  padding: 2rem;
+  cursor: pointer;
+}
+#cutsceneOverlay.active { display: flex; }
+.cutscene-stage {
+  max-width: 900px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.cutscene-image {
+  width: 100%;
+  max-height: 60vh;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+  background: #14161A;
+  aspect-ratio: 16 / 9;
+  margin-bottom: 1.5rem;
+}
+.cutscene-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: cutsceneIn 0.6s ease-out;
+}
+@keyframes cutsceneIn {
+  from { opacity: 0; transform: scale(1.05); }
+  to { opacity: 1; transform: scale(1); }
+}
+.cutscene-text {
+  font-size: 1.1rem;
+  line-height: 1.85;
+  color: var(--c-text);
+  text-align: center;
+  max-width: 700px;
+  min-height: 4em;
+  padding: 0 1rem;
+  animation: textFadeIn 0.8s 0.3s both;
+}
+@keyframes textFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.cutscene-progress {
+  margin-top: 1.5rem;
+  display: flex; gap: 0.5rem;
+}
+.cutscene-progress .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--c-text-faint);
+  transition: background 0.3s;
+}
+.cutscene-progress .dot.active { background: var(--c-text); }
+.cutscene-hint {
+  margin-top: 1.5rem;
+  font-size: 0.78rem;
+  color: var(--c-text-faint);
+  letter-spacing: 0.15em;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.85; }
 }
 
 /* ─── 토스트 / 시스템 알림 ─── */

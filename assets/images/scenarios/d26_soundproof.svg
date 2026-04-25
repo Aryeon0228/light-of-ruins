@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 700">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1A1F2E"/>
+      <stop offset="100%" stop-color="#0A0B0E"/>
+    </linearGradient>
+    <radialGradient id="lamp" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#D4A14F" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#D4A14F" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="700" fill="url(#bg)"/>
+  <ellipse cx="800" cy="350" rx="600" ry="350" fill="url(#lamp)"/>
+  <text x="800" y="220" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="22" fill="#5C7DA0" letter-spacing="0.2em">[ 시안 자리 · D26 ]</text>
+  <text x="800" y="290" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="40" fill="#D4A14F" font-weight="300" letter-spacing="0.05em">종혁의 방음 칸막이</text>
+  <text x="800" y="340" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="20" fill="#9A9388" letter-spacing="0.05em">자기희생 기여 — P-2 생성 정점</text>
+  <text x="800" y="430" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="14" fill="#6A6358">교체 경로: assets/images/scenarios/d26_soundproof.jpg</text>
+  <text x="800" y="455" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="13" fill="#5A5348">권장 비율 16:7 · 권장 해상도 1600×700 또는 1920×840</text>
+</svg>

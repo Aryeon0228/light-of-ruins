@@ -347,6 +347,7 @@ LR.SCRIPTED_DAYS = {
   26: {
     id: 'D26_jonghyeok_soundproof',
     day: 26,
+    image: 'assets/images/scenarios/d26_soundproof.svg',
     title: 'Day 26 — 종혁의 방음 칸막이, 긍정 전례 P-2 생성',
     body: [
       { kind: 'narration', text: '아기가 자라며 울음이 점점 커진다. 마을의 통제 불가 소음원이 생리적 소음 +10/일을 매일 기록하고 있다.' },

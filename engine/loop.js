@@ -167,7 +167,14 @@ LR.engine.applyChoice = function(choiceId) {
 
   // 11. 일일 마감 → 다음 날
   state.awaitingChoice = false;
-  LR.engine.endOfDay();
+
+  // 11a. SW 컷씬이 있으면 컷씬 끝난 뒤 endOfDay
+  const cutsceneSW = fired.find(sw => LR.SMALL_WIN_DEFS[sw.id] && LR.SMALL_WIN_DEFS[sw.id].cutscene);
+  if (cutsceneSW) {
+    LR.cutscene.play(LR.SMALL_WIN_DEFS[cutsceneSW.id].cutscene, () => LR.engine.endOfDay());
+  } else {
+    LR.engine.endOfDay();
+  }
 };
 
 LR.engine.endOfDay = function() {
