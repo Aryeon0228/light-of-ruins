@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>폐허의 불빛 — Light of Ruins</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- 타이틀 화면 -->
+<div id="titleScreen">
+  <h1>폐허의 불빛</h1>
+  <div class="subtitle">LIGHT OF RUINS</div>
+  <div class="title-buttons">
+    <button id="btnNewGame">새 게임 — Day 1부터</button>
+    <button id="btnContinue">이어하기</button>
+    <button id="btnAbout">기획에 대하여</button>
+  </div>
+  <div class="credits">
+    원작 기획 · 김소연 (홍익대학교 대학원 게임 디자인 v1.2)<br>
+    좀비 생존 마을 관리 · 30일 한 사이클
+  </div>
+</div>
+
+<!-- 게임 화면 -->
+<div id="gameRoot">
+
+  <header id="topBar">
+    <div class="day-label">
+      <span id="topDay">Day 1</span>
+      <span class="season" id="topSeason">봄 후반</span>
+    </div>
+    <div class="axes" id="topAxes"></div>
+    <div class="actions">
+      <button id="btnSave">수동 저장</button>
+      <button id="btnTitle">타이틀로</button>
+    </div>
+  </header>
+
+  <main id="layout">
+    <aside id="leftPanel">
+      <section class="panel" id="spiralPanel">
+        <h3>상승 나선</h3>
+        <div id="spiralStages"></div>
+      </section>
+      <section class="panel" id="resourcePanel">
+        <h3>자원</h3>
+        <div id="resourceList"></div>
+      </section>
+      <section class="panel" id="beaconPanel">
+        <h3>주간 비컨</h3>
+        <div id="beaconInfo"></div>
+      </section>
+    </aside>
+
+    <article id="scenarioPanel">
+      <h2 id="sceneTitle">— 시작 —</h2>
+      <div id="sceneBody"></div>
+      <div id="choices"></div>
+    </article>
+
+    <aside id="rightPanel">
+      <section class="panel" id="precedentPanel">
+        <h3>전례 (P-)</h3>
+        <div id="precedentList">
+          <div class="row"><span class="lbl">없음</span></div>
+        </div>
+      </section>
+      <section class="panel" id="smallwinPanel">
+        <h3>Small Win</h3>
+        <div id="smallwinList"></div>
+      </section>
+      <section class="panel" id="tiPanel">
+        <h3>긴장도 (TI)</h3>
+        <div id="tiInfo"></div>
+      </section>
+    </aside>
+  </main>
+
+  <footer id="characterCards"></footer>
+
+</div>
+
+<!-- 엔딩 화면 -->
+<div id="endingOverlay">
+  <div class="ending-container">
+    <h1 class="ending-title" id="endingTitle"></h1>
+    <div class="ending-subtitle" id="endingSubtitle"></div>
+    <section class="ending-section">
+      <h2>마지막 새벽</h2>
+      <div class="ending-narration" id="endingNarration"></div>
+    </section>
+    <section class="ending-section">
+      <h2>생존자 명단</h2>
+      <div class="ending-roster" id="endingRoster"></div>
+    </section>
+    <section class="ending-section">
+      <h2>전례 원장</h2>
+      <div class="ending-ledger" id="endingLedger"></div>
+    </section>
+    <section class="ending-section">
+      <h2>30일의 기록</h2>
+      <div id="endingTimeline"></div>
+    </section>
+    <div class="ending-actions">
+      <button id="btnRestart">처음부터 다시</button>
+      <button id="btnEndingTitle">타이틀로</button>
+    </div>
+  </div>
+</div>
+
+<!-- 토스트 -->
+<div id="toastContainer"></div>
+
+<!-- 데이터 -->
+<script src="data/characters.js"></script>
+<script src="data/scripted.js"></script>
+<script src="data/cross-events.js"></script>
+<script src="data/small-wins.js"></script>
+<script src="data/beacons.js"></script>
+<script src="data/templates.js"></script>
+<script src="data/endings.js"></script>
+
+<!-- 엔진 -->
+<script src="engine/state.js"></script>
+<script src="engine/formulas.js"></script>
+<script src="engine/precedents.js"></script>
+<script src="engine/spiral.js"></script>
+<script src="engine/smallwin.js"></script>
+<script src="engine/beacon.js"></script>
+<script src="engine/drama.js"></script>
+<script src="engine/render.js"></script>
+<script src="engine/loop.js"></script>
+<script src="engine/save.js"></script>
+<script src="engine/main.js"></script>
+
+</body>
+</html>
