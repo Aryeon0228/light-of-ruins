@@ -100,11 +100,13 @@ LR.village.open = function(state) {
   LR.village.selected = LR.village.selected || 'jaehyeok';
   document.getElementById('villageScreen').classList.add('active');
   LR.village.render();
+  LR.village.startScope();
 };
 
 LR.village.close = function() {
   const el = document.getElementById('villageScreen');
   if (el) el.classList.remove('active');
+  LR.village.stopScope();
 };
 
 LR.village.setMode = function(mode) {
@@ -131,6 +133,7 @@ LR.village.render = function() {
   renderRoster(s);
   renderSystems(s);
   renderDetail(s);
+  updateScopeReadout(s);
   LR.village.renderScene();
 };
 
@@ -285,6 +288,75 @@ function renderDetail(s) {
   }
 }
 
+// ─── 음향 감지 스코프 (소음 → 실시간 파형) ───
+function scopeColor(noise) {
+  const sc = LR.raidProbability(noise).scale;
+  return sc === '위험' ? '#e0584e' : sc === '경계' ? '#e0823a' : sc === '주의' ? '#d9a441' : '#5fae8a';
+}
+function updateScopeReadout(s) {
+  const v = document.getElementById('vhScopeVal');
+  if (!v) return;
+  const n = s.noiseToday, col = scopeColor(n);
+  v.textContent = n; v.style.color = col;
+  document.getElementById('vhScopeState').textContent = LR.raidProbability(n).scale;
+  const dot = document.getElementById('vhScopeDot');
+  if (dot) { dot.style.background = col; dot.style.boxShadow = '0 0 6px ' + col; }
+}
+
+LR.village.startScope = function() {
+  const canvas = document.getElementById('vhScopeCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let samples = [];
+  function resize() {
+    const r = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.max(1, Math.round(r.width * dpr));
+    canvas.height = Math.max(1, Math.round(r.height * dpr));
+    samples = new Array(canvas.width).fill(0);
+  }
+  resize();
+  LR.village._scopeResize = resize;
+  LR.village.stopScope();           // 중복 방지
+  let t = 0, stopped = false;
+  function frame() {
+    if (stopped) return;
+    const s = LR.village.state;
+    const noise = s ? s.noiseToday : 0;
+    const intensity = Math.min(1, noise / 100);
+    t += 0.12 + intensity * 0.6;     // 소음 클수록 빠르게
+    let v = Math.sin(t) * 0.22 + (Math.random() - 0.5) * 0.55;
+    if (Math.random() < 0.015 + intensity * 0.13) v += (Math.random() < 0.5 ? -1 : 1) * (0.4 + Math.random() * 0.6); // 돌발 스파이크
+    v *= (0.08 + intensity * 0.9);   // 소음 클수록 진폭 ↑
+    v = Math.max(-1, Math.min(1, v));
+    samples.push(v); if (samples.length > canvas.width) samples.shift();
+    draw(noise);
+    LR.village._scopeRaf = requestAnimationFrame(frame);
+  }
+  function draw(noise) {
+    const W = canvas.width, H = canvas.height, mid = H / 2, col = scopeColor(noise);
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#080b08'; ctx.fillRect(0, 0, W, H);
+    // 그리드
+    ctx.strokeStyle = 'rgba(120,150,110,.12)'; ctx.lineWidth = 1;
+    const gx = Math.max(1, Math.floor(W / 8));
+    for (let x = 0; x < W; x += gx) { ctx.beginPath(); ctx.moveTo(x + 0.5, 0); ctx.lineTo(x + 0.5, H); ctx.stroke(); }
+    ctx.beginPath(); ctx.moveTo(0, mid); ctx.lineTo(W, mid); ctx.stroke();
+    // 파형
+    ctx.strokeStyle = col; ctx.lineWidth = Math.max(1.5, (window.devicePixelRatio || 1) * 1.2);
+    ctx.shadowColor = col; ctx.shadowBlur = 6; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for (let i = 0; i < samples.length; i++) {
+      const y = mid - samples[i] * mid * 0.86;
+      if (i === 0) ctx.moveTo(i, y); else ctx.lineTo(i, y);
+    }
+    ctx.stroke(); ctx.shadowBlur = 0;
+  }
+  LR.village._scopeStop = function() { stopped = true; if (LR.village._scopeRaf) cancelAnimationFrame(LR.village._scopeRaf); };
+  LR.village._scopeRaf = requestAnimationFrame(frame);
+};
+LR.village.stopScope = function() { if (LR.village._scopeStop) LR.village._scopeStop(); };
+
 // ═══════════════════════════════════════════════════════
 //  씬 (중앙 거점 조망)
 // ═══════════════════════════════════════════════════════
@@ -330,7 +402,10 @@ function fitStage() {
 }
 if (!window.__vhResizeBound) {
   window.__vhResizeBound = true;
-  window.addEventListener('resize', () => { if (LR.village.mode === 'compound') fitStage(); });
+  window.addEventListener('resize', () => {
+    if (LR.village.mode === 'compound') fitStage();
+    if (LR.village._scopeResize) LR.village._scopeResize();
+  });
 }
 
 // ─── 측면 단면도 ───
@@ -778,7 +853,17 @@ function ensureDom() {
         </div>
       </main>
 
-      <aside class="vh-right" id="vhSystems"></aside>
+      <aside class="vh-right">
+        <section class="vh-card vh-scope-card">
+          <h4>음향 감지 · ACOUSTIC</h4>
+          <canvas id="vhScopeCanvas" class="vh-scope"></canvas>
+          <div class="vh-scope-read">
+            <span class="vh-scope-dot" id="vhScopeDot"></span>
+            소음 <b id="vhScopeVal">0</b> · <span id="vhScopeState">—</span>
+          </div>
+        </section>
+        <div id="vhSystems"></div>
+      </aside>
     </div>
   `;
   document.body.appendChild(el);

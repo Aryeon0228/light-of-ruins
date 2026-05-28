@@ -483,3 +483,20 @@
   background: linear-gradient(180deg, rgba(42, 44, 32, .86), rgba(24, 26, 18, .9));
 }
 #villageScreen .vh-hint { color: #9a9a6a; }
+
+/* ═══════ 음향 감지 스코프 (소음 실시간 파형) ═══════ */
+#villageScreen #vhSystems { display: flex; flex-direction: column; gap: 8px; }
+.vh-scope-card { padding-bottom: 0.5rem; }
+.vh-scope {
+  display: block; width: 100%; height: 52px;
+  border: 1px solid #14130d; border-radius: 2px;
+  background: #080b08;
+  box-shadow: inset 0 0 10px #000a;
+  margin: 2px 0 5px;
+}
+.vh-scope-read {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 0.78rem; color: #9a9a6a;
+}
+.vh-scope-read b { font-size: 0.95rem; text-shadow: 1px 1px 0 #000; }
+.vh-scope-dot { width: 9px; height: 9px; border-radius: 50%; background: #5fae8a; flex-shrink: 0; }
