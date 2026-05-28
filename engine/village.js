@@ -145,12 +145,12 @@ function renderTopbar(s) {
   document.getElementById('vhClock').textContent = dayPhase(s).label;
 
   const pills = [
-    pill(ICON.food,  '식량', s.food, foodT.tier === 'famine' || foodT.tier === 'crisis' ? 'warn' : ''),
-    pill(ICON.water, '물',   s.water, s.water < 20 ? 'warn' : ''),
-    pill(ICON.fuel,  '연료', s.fuel,  s.fuel < 10 ? 'warn' : ''),
-    pill(ICON.med,   '의약품', s.medicine, s.medicine === 0 ? 'danger' : ''),
-    pill(ICON.noise, '소음', s.noiseToday, raid.p >= 0.6 ? 'danger' : raid.p >= 0.25 ? 'warn' : ''),
-    pill(ICON.people, '생존자', alive + '/10', alive < 10 ? 'dim' : '')
+    pill('food',  '식량', s.food, foodT.tier === 'famine' ? 'danger' : foodT.tier === 'crisis' ? 'warn' : ''),
+    pill('water', '물',   s.water, s.water < 12 ? 'danger' : s.water < 25 ? 'warn' : ''),
+    pill('fuel',  '연료', s.fuel,  s.fuel < 6 ? 'danger' : s.fuel < 12 ? 'warn' : ''),
+    pill('med',   '의약품', s.medicine, s.medicine === 0 ? 'danger' : s.medicine <= 1 ? 'warn' : ''),
+    pill('noise', '소음', s.noiseToday, raid.p >= 0.6 ? 'danger' : raid.p >= 0.25 ? 'warn' : ''),
+    pill('people', '생존자', alive + '/10', alive < 10 ? 'warn' : '')
   ].join('');
   document.getElementById('vhResources').innerHTML = pills;
 
@@ -168,9 +168,10 @@ function renderTopbar(s) {
   }
 }
 
-function pill(icon, label, value, cls) {
-  return `<div class="vh-pill ${cls || ''}">
-    <span class="vh-pill-ic">${icon}</span>
+function pill(key, label, value, cls) {
+  const m = RES[key];
+  return `<div class="vh-pill ${cls || ''}" style="--rc:${m.color}">
+    <span class="vh-pill-ic" style="color:${m.color}">${m.icon}</span>
     <span class="vh-pill-lab">${label}</span>
     <span class="vh-pill-val">${value}</span>
   </div>`;
@@ -184,16 +185,17 @@ function renderRoster(s) {
     const ht = LR.healthTier(c.health);
     const sel = LR.village.selected === id ? ' selected' : '';
     const dead = c.alive ? '' : ' dead';
-    return `<button class="vh-rost${sel}${dead}" data-rost="${id}" style="--cc:${def.color}">
-      <span class="vh-rost-dot" style="background:${c.alive ? hpColor(c.health) : '#555'}"></span>
+    const hpc = hpColor(c.health), moc = moColor(c.morale);
+    const danger = c.alive && (c.health < 20 || c.morale < 25) ? ' danger' : '';
+    const hpLow = c.alive && c.health < 50 ? ' low' : '';
+    const moLow = c.alive && c.morale < 50 ? ' low' : '';
+    return `<button class="vh-rost${sel}${dead}${danger}" data-rost="${id}" style="--cc:${def.color}">
       <span class="vh-rost-body">
         <span class="vh-rost-name">${c.name}<em>${c.role}</em></span>
-        <span class="vh-rost-bars">
-          <span class="vh-mini"><i style="width:${c.health}%;background:${hpColor(c.health)}"></i></span>
-          <span class="vh-mini"><i style="width:${c.morale}%;background:var(--c-axis-morale)"></i></span>
-        </span>
+        <span class="vh-stat${hpLow}"><span class="vh-stat-ic" style="color:${hpc}">${HPIC}</span><span class="vh-mini"><i style="width:${c.health}%;background:${hpc}"></i></span></span>
+        <span class="vh-stat${moLow}"><span class="vh-stat-ic" style="color:${moc}">${MOIC}</span><span class="vh-mini"><i style="width:${c.morale}%;background:${moc}"></i></span></span>
       </span>
-      <span class="vh-rost-state">${c.alive ? ht.label : '사망'}</span>
+      <span class="vh-rost-state" style="color:${c.alive ? (c.health < 50 || c.morale < 50 ? hpc : 'var(--c-text-dim)') : '#777'}">${c.alive ? ht.label : '사망'}</span>
     </button>`;
   }).join('');
   root.querySelectorAll('[data-rost]').forEach(b => {
@@ -419,11 +421,23 @@ function sceneCompound(s) {
     const nm = (c.name || '') + (p.file === 'jaehyeok_minsu' ? ' · 민수' : '');
     return `<button class="vh-phot" data-pchar="${p.char}" style="left:${pl}%;top:${pt}%;width:${pw}%;height:${ph}%"><span class="vh-plab">${nm}</span></button>`;
   }).join('');
+  // 상태 경고 핀 — 다치거나 사기 낮은 사람 머리 위 (멀쩡하면 안 뜸)
+  const pips = PEOPLE_FILES.map(p => {
+    const c = s.characters[p.char];
+    if (!c || !c.alive || !p.box) return '';
+    const items = [];
+    if (c.health < 60) items.push(`<span class="vh-pip" style="color:${hpColor(c.health)}">${HPIC}</span>`);
+    if (c.morale < 50) items.push(`<span class="vh-pip" style="color:${moColor(c.morale)}">${MOIC}</span>`);
+    if (!items.length) return '';
+    const cx = p.box[0] + p.box[2] / 2, ty = p.box[1];
+    return `<div class="vh-pips" style="left:${cx}%;top:${ty}%">${items.join('')}</div>`;
+  }).join('');
   return `<div class="vh-stagebox">
     <img class="vh-layer vh-bg" src="${A}bg_village.png" alt="">
     ${glows}
     ${fire}
     ${people}
+    ${pips}
     ${hots}
     ${phots}
   </div>`;
@@ -666,6 +680,15 @@ function hpColor(h) {
   if (h >= 20) return '#cc7a3a';
   return '#c25656';
 }
+function moColor(m) {
+  if (m >= 80) return '#6b9e63';
+  if (m >= 50) return '#c9a24a';
+  if (m >= 25) return '#cc7a3a';
+  return '#c25656';
+}
+// 상태 아이콘 (한눈 인지용)
+const HPIC = '<svg viewBox="0 0 12 12"><path d="M6 10.4C2.2 7.7 1 6 1 4.1A2.3 2.3 0 0 1 6 2.6 2.3 2.3 0 0 1 11 4.1C11 6 9.8 7.7 6 10.4z" fill="currentColor"/></svg>';
+const MOIC = '<svg viewBox="0 0 12 12"><path d="M6 .8l1.5 3.4 3.7.3-2.8 2.5.9 3.6L6 8.9 2.7 10.6l.9-3.6L.8 4.5l3.7-.3z" fill="currentColor"/></svg>';
 function shade(hex, mul) {
   const n = parseInt(hex.slice(1), 16);
   let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
@@ -684,14 +707,14 @@ function dayPhase(s) {
   return map[s.season] || map.spring_late;
 }
 
-// 자원 아이콘 (16x16 인라인 SVG)
-const ICON = {
-  food:  '<svg viewBox="0 0 16 16"><path d="M3 7h10a5 5 0 0 1-10 0z" fill="currentColor"/><path d="M5 3v3M8 2v4M11 3v3" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>',
-  water: '<svg viewBox="0 0 16 16"><path d="M8 2c3 4 4 6 4 8a4 4 0 0 1-8 0c0-2 1-4 4-8z" fill="currentColor"/></svg>',
-  fuel:  '<svg viewBox="0 0 16 16"><path d="M8 2c2 3 3.5 4.5 3.5 7a3.5 3.5 0 0 1-7 0c0-1.6 1-2.6 1.8-1.4C7 8 6.5 5 8 2z" fill="currentColor"/></svg>',
-  med:   '<svg viewBox="0 0 16 16"><rect x="6.5" y="3" width="3" height="10" rx="1" fill="currentColor"/><rect x="3" y="6.5" width="10" height="3" rx="1" fill="currentColor"/></svg>',
-  noise: '<svg viewBox="0 0 16 16"><path d="M3 6h2l3-2v8L5 10H3z" fill="currentColor"/><path d="M10 5a4 4 0 0 1 0 6M12 3a7 7 0 0 1 0 10" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>',
-  people:'<svg viewBox="0 0 16 16"><circle cx="8" cy="5" r="2.6" fill="currentColor"/><path d="M3 13c0-3 2.4-4.5 5-4.5S13 10 13 13z" fill="currentColor"/></svg>'
+// 자원 메타 — 고유 색 + 또렷한 실루엣 (색/형태만으로 즉시 구분)
+const RES = {
+  food:   { color: '#e0b24a', icon: '<svg viewBox="0 0 16 16"><path d="M2.4 8h11.2a5.6 5.6 0 0 1-11.2 0z" fill="currentColor"/><path d="M3.6 8a4.4 2.8 0 0 1 8.8 0z" fill="currentColor" opacity=".5"/><rect x="7.2" y="1.6" width="1.6" height="4" rx=".8" fill="currentColor"/></svg>' },
+  water:  { color: '#5ab0e0', icon: '<svg viewBox="0 0 16 16"><path d="M8 1.4c3.3 4.3 4.5 6.6 4.5 8.6a4.5 4.5 0 0 1-9 0c0-2 1.2-4.3 4.5-8.6z" fill="currentColor"/></svg>' },
+  fuel:   { color: '#e0823a', icon: '<svg viewBox="0 0 16 16"><rect x="3.3" y="5" width="8" height="9" rx="1" fill="currentColor"/><path d="M11.3 7l2.2 1.1v3.8L11.3 13z" fill="currentColor"/><rect x="5.4" y="2.4" width="4" height="2.6" rx="1" fill="currentColor"/></svg>' },
+  med:    { color: '#e05a5a', icon: '<svg viewBox="0 0 16 16"><rect x="2.4" y="4.4" width="11.2" height="8.2" rx="1.6" fill="currentColor"/><rect x="7" y="6" width="2" height="5" fill="#15140d"/><rect x="5.5" y="7.5" width="5" height="2" fill="#15140d"/></svg>' },
+  noise:  { color: '#b08ae0', icon: '<svg viewBox="0 0 16 16"><path d="M2.5 6h2.5l3-2.3v8.6L5 10H2.5z" fill="currentColor"/><path d="M9.6 5a4 4 0 0 1 0 6M11.6 3a7 7 0 0 1 0 10" stroke="currentColor" stroke-width="1.4" fill="none"/></svg>' },
+  people: { color: '#74c074', icon: '<svg viewBox="0 0 16 16"><circle cx="8" cy="4.8" r="2.9" fill="currentColor"/><path d="M2.7 13.6c0-3.3 2.6-4.9 5.3-4.9s5.3 1.6 5.3 4.9z" fill="currentColor"/></svg>' }
 };
 
 // ═══════════════════════════════════════════════════════
