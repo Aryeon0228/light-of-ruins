@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles-village.css">
 </head>
 <body>
 
@@ -18,6 +19,7 @@
   <div class="title-buttons">
     <button id="btnNewGame">새 게임 — Day 1부터</button>
     <button id="btnContinue">이어하기</button>
+    <button id="btnVillage">플레이 화면 — 마을 전경</button>
     <button id="btnAbout">기획에 대하여</button>
   </div>
   <div class="credits">
@@ -36,6 +38,7 @@
     </div>
     <div class="axes" id="topAxes"></div>
     <div class="actions">
+      <button id="btnVillageView">마을 전경</button>
       <button id="btnSave">수동 저장</button>
       <button id="btnTitle">타이틀로</button>
     </div>
@@ -146,6 +149,7 @@
 <script src="engine/drama.js"></script>
 <script src="engine/cutscene.js"></script>
 <script src="engine/render.js"></script>
+<script src="engine/village.js"></script>
 <script src="engine/loop.js"></script>
 <script src="engine/save.js"></script>
 <script src="engine/main.js"></script>

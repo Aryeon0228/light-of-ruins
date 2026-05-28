@@ -1,0 +1,221 @@
+/* 마을 전경 화면 — styles-village.css
+   기존 styles.css의 색 토큰(--c-*)을 그대로 사용 */
+
+#villageScreen {
+  position: fixed; inset: 0; z-index: 200;
+  display: none;
+  flex-direction: column;
+  background:
+    radial-gradient(ellipse at 50% 0%, #1a1d24 0%, #0a0b0e 70%);
+  color: var(--c-text);
+  overflow: hidden;
+}
+#villageScreen.active { display: flex; }
+
+/* ── 상단 바 ── */
+.vh-top {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 0.55rem 1.1rem;
+  background: linear-gradient(180deg, #20232b, #181a20);
+  border-bottom: 1px solid var(--c-border);
+}
+.vh-top-day { display: flex; align-items: baseline; gap: 0.6rem; }
+.vh-top-day #vhDay {
+  font-size: 1.5rem; font-weight: 700; letter-spacing: 0.02em;
+}
+.vh-top-day .vh-sub { font-size: 0.8rem; color: var(--c-text-dim); }
+.vh-top-day .vh-sub b { color: var(--c-warn); font-weight: 500; }
+.vh-top-day .vh-sub i { font-style: normal; }
+
+.vh-res { display: flex; gap: 0.45rem; flex-wrap: wrap; justify-content: center; }
+.vh-pill {
+  display: flex; align-items: center; gap: 0.32rem;
+  padding: 0.28rem 0.6rem 0.28rem 0.45rem;
+  background: #12141a; border: 1px solid var(--c-border);
+  border-radius: 20px; font-size: 0.85rem;
+}
+.vh-pill-ic { width: 16px; height: 16px; display: inline-flex; color: var(--c-text-dim); }
+.vh-pill-ic svg { width: 16px; height: 16px; }
+.vh-pill-lab { color: var(--c-text-faint); font-size: 0.72rem; }
+.vh-pill-val { font-weight: 600; }
+.vh-pill.warn { border-color: var(--c-warn); }
+.vh-pill.warn .vh-pill-val { color: var(--c-warn); }
+.vh-pill.danger { border-color: var(--c-danger); }
+.vh-pill.danger .vh-pill-val { color: var(--c-danger); }
+.vh-pill.dim .vh-pill-val { color: var(--c-text-dim); }
+
+.vh-cam { display: flex; gap: 0.35rem; align-items: center; }
+.vh-cam-btn {
+  padding: 0.4rem 0.9rem; border: 1px solid var(--c-border);
+  border-radius: 6px; background: var(--c-panel); color: var(--c-text-dim);
+  font-size: 0.85rem; transition: all 0.18s;
+}
+.vh-cam-btn:hover { color: var(--c-text); border-color: var(--c-blue); }
+.vh-cam-btn.active {
+  background: var(--c-blue); color: #fff; border-color: var(--c-blue);
+}
+.vh-cam-x {
+  margin-left: 0.4rem; padding: 0.4rem 0.7rem; border: 1px solid var(--c-border);
+  border-radius: 6px; background: none; color: var(--c-text-faint); font-size: 0.8rem;
+}
+.vh-cam-x:hover { color: var(--c-danger); border-color: var(--c-danger); }
+
+/* ── 위협 배너 ── */
+.vh-alert {
+  padding: 0.3rem 1.1rem; font-size: 0.82rem; text-align: center;
+  border-bottom: 1px solid var(--c-border); letter-spacing: 0.01em;
+}
+.vh-alert.calm { background: #15171d; color: var(--c-text-faint); }
+.vh-alert.warn { background: #2a2316; color: var(--c-warn); }
+.vh-alert.danger { background: #2c1818; color: var(--c-danger); font-weight: 600; }
+
+/* ── 본문 그리드 ── */
+.vh-grid {
+  flex: 1; min-height: 0;
+  display: grid;
+  grid-template-columns: 232px 1fr 248px;
+  gap: 0.7rem; padding: 0.7rem;
+}
+.vh-left, .vh-right {
+  display: flex; flex-direction: column; gap: 0.6rem;
+  min-height: 0; overflow-y: auto;
+}
+.vh-left-h, .vh-card h4 {
+  font-size: 0.74rem; color: var(--c-text-faint);
+  letter-spacing: 0.12em; text-transform: uppercase;
+  margin: 0 0 0.1rem;
+}
+
+/* ── 생존자 명단 ── */
+.vh-roster { display: flex; flex-direction: column; gap: 0.3rem; }
+.vh-rost {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center;
+  gap: 0.5rem; padding: 0.4rem 0.5rem; text-align: left;
+  background: #15171d; border: 1px solid #23262e; border-left: 3px solid var(--cc);
+  border-radius: 5px; transition: all 0.15s;
+}
+.vh-rost:hover { background: #1c1f27; }
+.vh-rost.selected { background: #232733; border-color: var(--c-blue); }
+.vh-rost.dead { opacity: 0.4; }
+.vh-rost-dot { width: 8px; height: 8px; border-radius: 50%; }
+.vh-rost-name { font-size: 0.9rem; font-weight: 600; display: block; }
+.vh-rost-name em { font-style: normal; font-size: 0.72rem; color: var(--c-text-faint); margin-left: 0.35rem; font-weight: 400; }
+.vh-rost-bars { display: flex; flex-direction: column; gap: 2px; margin-top: 3px; }
+.vh-mini { display: block; height: 3px; background: #000; border-radius: 2px; overflow: hidden; }
+.vh-mini i { display: block; height: 100%; }
+.vh-rost-state { font-size: 0.7rem; color: var(--c-text-dim); }
+
+/* ── 선택 인물 디테일 ── */
+.vh-detail {
+  margin-top: auto;
+  background: #14161c; border: 1px solid var(--c-border); border-radius: 8px;
+  padding: 0.7rem;
+}
+.vh-det-head { display: flex; gap: 0.6rem; align-items: center; }
+.vh-det-port {
+  width: 46px; height: 46px; border-radius: 8px; overflow: hidden;
+  background: radial-gradient(circle at 50% 30%, #2a2d36, #14161c);
+  border: 1px solid var(--c-border); flex-shrink: 0;
+}
+.vh-det-port svg { width: 100%; height: 100%; display: block; }
+.vh-det-name { font-size: 1rem; font-weight: 700; }
+.vh-det-name em { font-style: normal; font-size: 0.72rem; color: var(--c-text-dim); margin-left: 0.4rem; font-weight: 400; }
+.vh-det-act { font-size: 0.8rem; color: var(--c-warn); margin-top: 1px; }
+.vh-det-bio { font-size: 0.78rem; color: var(--c-text-dim); margin: 0.5rem 0; line-height: 1.5; }
+.vh-det-row { display: grid; grid-template-columns: 2.4em 1fr auto; align-items: center; gap: 0.4rem; font-size: 0.76rem; margin-bottom: 0.25rem; }
+.vh-det-row > span:first-child { color: var(--c-text-faint); }
+.vh-detbar { height: 6px; background: #000; border-radius: 3px; overflow: hidden; }
+.vh-detbar i { display: block; height: 100%; }
+.vh-det-row b { font-weight: 500; font-size: 0.72rem; }
+.vh-det-sens { font-size: 0.7rem; color: var(--c-text-faint); margin-top: 0.4rem; border-top: 1px solid #23262e; padding-top: 0.4rem; }
+
+/* ── 중앙 씬 ── */
+.vh-center { display: flex; flex-direction: column; gap: 0.6rem; min-height: 0; }
+.vh-scene {
+  flex: 1; min-height: 0;
+  border: 1px solid var(--c-border); border-radius: 10px; overflow: hidden;
+  background: #0c0d11;
+  box-shadow: inset 0 0 60px #000a;
+}
+.vh-scene svg { width: 100%; height: 100%; display: block; }
+
+.vh-fig { cursor: pointer; }
+.vh-fig:hover { filter: brightness(1.18); }
+.vh-fig.sel { filter: drop-shadow(0 0 6px #ffcf8688); }
+.vh-nm { font-size: 11px; fill: var(--c-text); font-weight: 600; font-family: 'Noto Sans KR', sans-serif; }
+.vh-nm.dim { fill: var(--c-text-faint); }
+.vh-zzz { font-size: 13px; fill: #8fa6c4; font-weight: 700; opacity: 0.7; }
+.vh-zt { font-size: 12px; fill: #8a8270; font-family: 'Noto Sans KR', sans-serif; letter-spacing: 0.04em; }
+
+/* ── 액션 바 ── */
+.vh-actbar {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.5rem 0.7rem; background: #14161c;
+  border: 1px solid var(--c-border); border-radius: 8px;
+}
+.vh-act {
+  padding: 0.45rem 0.9rem; border: 1px solid var(--c-border); border-radius: 6px;
+  background: var(--c-panel); color: var(--c-text); font-size: 0.85rem; transition: all 0.15s;
+}
+.vh-act:hover { background: var(--c-panel-2); border-color: var(--c-blue); }
+.vh-hint { margin-left: auto; font-size: 0.74rem; color: var(--c-text-faint); }
+
+/* ── 우측 시스템 카드 ── */
+.vh-card {
+  background: #14161c; border: 1px solid var(--c-border); border-radius: 8px;
+  padding: 0.6rem 0.7rem;
+}
+.vh-spiral { display: flex; gap: 0.3rem; margin: 0.3rem 0; }
+.vh-spiral span {
+  flex: 1; text-align: center; padding: 0.25rem 0; font-size: 0.78rem;
+  background: #1b1d24; border: 1px solid #262a33; border-radius: 5px; color: var(--c-text-faint);
+}
+.vh-spiral span.on { background: #233026; border-color: var(--c-spiral); color: #aecbb0; font-weight: 600; }
+.vh-line { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; margin: 0.2rem 0; }
+.vh-line span { color: var(--c-text-faint); }
+.vh-line b { font-weight: 500; }
+.vh-line b.warn { color: var(--c-warn); }
+.vh-line b.bad { color: var(--c-danger); }
+.vh-bar { height: 6px; background: #000; border-radius: 3px; overflow: hidden; margin-top: 0.35rem; }
+.vh-bar i { display: block; height: 100%; }
+.vh-sys-empty { font-size: 0.78rem; color: var(--c-text-faint); font-style: italic; }
+.vh-prec {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.78rem; padding: 0.3rem 0.4rem; border-radius: 5px; margin-top: 0.2rem;
+  background: #1d1718; border-left: 3px solid var(--c-precedent);
+}
+.vh-prec.pos { background: #18201a; border-left-color: var(--c-precedent-pos); }
+.vh-prec-i { color: var(--c-text-dim); font-size: 0.72rem; }
+
+/* ── 마당 실사 배경 모드 (이미지 레이어) ── */
+.vh-scene.compound { background: #08090c; display: flex; align-items: center; justify-content: center; }
+.vh-stagebox { position: relative; margin: auto; }
+.vh-layer { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; user-select: none; }
+.vh-bg { z-index: 0; }
+.vh-glow { z-index: 1; opacity: 0; transition: opacity .22s ease, transform .22s ease; will-change: opacity, transform; }
+.vh-glow.on { opacity: 1; transform: scale(1.035); }
+.vh-campfire { z-index: 2; animation: vhFlick 2.4s ease-in-out infinite; }
+@keyframes vhFlick { 0%, 100% { opacity: .86; } 50% { opacity: 1; } }
+.vh-actor { position: absolute; transform: translate(-50%, -50%); z-index: 5; pointer-events: none; user-select: none; transition: filter .15s; filter: drop-shadow(0 4px 7px rgba(0, 0, 0, .55)); }
+.vh-actor.sel { filter: drop-shadow(0 0 13px rgba(255, 207, 134, .7)); }
+.vh-actorfull { z-index: 5; transition: filter .15s; }
+.vh-actorfull.sel { filter: drop-shadow(0 0 13px rgba(255, 207, 134, .7)); }
+.vh-hot { position: absolute; z-index: 4; background: transparent; border: 0; padding: 0; margin: 0; cursor: pointer; }
+.vh-hotlab {
+  position: absolute; left: 50%; bottom: 100%;
+  transform: translateX(-50%) translateY(-4px); white-space: nowrap;
+  font-size: 0.74rem; color: var(--c-text);
+  background: #0b0c0fcc; border: 1px solid var(--c-border); border-radius: 5px;
+  padding: 2px 8px; opacity: 0; transition: opacity .18s; pointer-events: none;
+}
+.vh-hot.hot-on .vh-hotlab { opacity: 1; }
+
+/* ── 반응형 ── */
+@media (max-width: 980px) {
+  .vh-grid { grid-template-columns: 1fr; grid-auto-rows: auto; }
+  .vh-left, .vh-right { flex-direction: row; flex-wrap: wrap; overflow: visible; }
+  .vh-scene { min-height: 320px; }
+}
