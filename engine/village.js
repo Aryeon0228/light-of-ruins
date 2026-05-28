@@ -69,16 +69,17 @@ const ZONES = [
 ];
 // 인물 스프라이트 — 전원 풀캔버스(2896×2172) 제자리. 0,0에 그대로 겹침(작가가 맞춘 위치/크기 유지).
 //  (개별 크롭으로 줄 경우엔 inplace 빼고 cx/cy + h|w(%)로 배치 가능)
+//  box=[l,t,w,h]% 형상 영역(호버 핫스팟), ox/oy=확대 기준점(형상 중심x·발끝y) — 인물 PNG 알파 bbox에서 산출
 const PEOPLE_FILES = [
-  { file:'jeonghun',       char:'jeonghun',  inplace:true },
-  { file:'eunseo',         char:'eunseo',    inplace:true },
-  { file:'sujin',          char:'sujin',     inplace:true },
-  { file:'yeongsu',        char:'yeongsu',   inplace:true },
-  { file:'miyeon',         char:'miyeon',    inplace:true },
-  { file:'dongho',         char:'dongho',    inplace:true },
-  { file:'jonghyeok',      char:'jonghyeok', inplace:true },
-  { file:'hayeong',        char:'hayeong',   inplace:true },
-  { file:'jaehyeok_minsu', char:'jaehyeok',  inplace:true }
+  { file:'jeonghun',       char:'jeonghun',  inplace:true, box:[21.5,48.3,7.5,17.9], ox:25.3, oy:66.2 },
+  { file:'eunseo',         char:'eunseo',    inplace:true, box:[25.3,27.1,7.3,9.2],  ox:28.9, oy:36.2 },
+  { file:'sujin',          char:'sujin',     inplace:true, box:[74.7,38.5,5.2,15.9], ox:77.3, oy:54.4 },
+  { file:'yeongsu',        char:'yeongsu',   inplace:true, box:[67.2,30.6,9.6,7.9],  ox:72.0, oy:38.5 },
+  { file:'miyeon',         char:'miyeon',    inplace:true, box:[60.6,44.2,5.0,11.6], ox:63.1, oy:55.8 },
+  { file:'dongho',         char:'dongho',    inplace:true, box:[58.0,61.9,7.6,15.7], ox:61.8, oy:77.7 },
+  { file:'jonghyeok',      char:'jonghyeok', inplace:true, box:[72.3,70.2,7.6,15.0], ox:76.1, oy:85.2 },
+  { file:'hayeong',        char:'hayeong',   inplace:true, box:[86.7,5.2,3.4,12.0],  ox:88.4, oy:17.2 },
+  { file:'jaehyeok_minsu', char:'jaehyeok',  inplace:true, box:[44.3,50.0,9.5,13.2], ox:49.0, oy:63.2 }
 ];
 
 // ═══════════════════════════════════════════════════════
@@ -257,11 +258,12 @@ function renderDetail(s) {
   if (!c || !def) return;
   const ht = LR.healthTier(c.health);
   const mt = LR.moraleTier(c.morale);
-  document.getElementById('vhDetail').innerHTML = `
+  const d = document.getElementById('vhDetail');
+  d.innerHTML = `
     <div class="vh-det-head">
       <span class="vh-det-port" style="--cc:${def.color}">${portraitSvg(c, def)}</span>
       <div class="vh-det-id">
-        <div class="vh-det-name">${c.name}<em>${c.role} · ${def.age}세</em></div>
+        <div class="vh-det-name"><span class="vh-det-dot" style="background:${def.color}"></span>${c.name}<em>${c.role} · ${def.age}세</em></div>
         <div class="vh-det-act">${activityOf(c)}</div>
       </div>
     </div>
@@ -272,6 +274,13 @@ function renderDetail(s) {
     </div>
     <div class="vh-det-sens">전례 감수성 · 부정 ×${def.negSens} / 긍정 ×${def.posSens}</div>
   `;
+  // 클릭 선택 시 패널 강조 + 팝 (재생 재시작)
+  if (LR.village.picked) {
+    d.classList.add('active');
+    d.classList.remove('pop'); void d.offsetWidth; d.classList.add('pop');
+  } else {
+    d.classList.remove('active');
+  }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -293,6 +302,13 @@ LR.village.renderScene = function() {
       const glow = host.querySelector('.vh-glow[data-zone="' + h.dataset.zone + '"]');
       h.addEventListener('mouseenter', () => { if (glow) glow.classList.add('on'); h.classList.add('hot-on'); });
       h.addEventListener('mouseleave', () => { if (glow) glow.classList.remove('on'); h.classList.remove('hot-on'); });
+    });
+    // 인물 핫스팟 — 호버 시 그 인물만 살짝 확대, 클릭 시 선택
+    host.querySelectorAll('.vh-phot').forEach(h => {
+      const actor = host.querySelector('.vh-actorfull[data-char="' + h.dataset.pchar + '"]');
+      h.addEventListener('mouseenter', () => { if (actor) actor.classList.add('hover'); h.classList.add('hot-on'); });
+      h.addEventListener('mouseleave', () => { if (actor) actor.classList.remove('hover'); h.classList.remove('hot-on'); });
+      h.addEventListener('click', () => LR.village.select(h.dataset.pchar));
     });
     fitStage();
   }
@@ -385,8 +401,9 @@ function sceneCompound(s) {
     const isSel = LR.village.picked && (p.char === sel || (p.file === 'jaehyeok_minsu' && (sel === 'jaehyeok' || sel === 'minsu')));
     if (p.inplace) {
       // 풀캔버스 제자리 — 무대에 그대로 포갬. dx/dy(%)는 인물만 미세 이동(나머지는 투명).
+      const origin = (p.ox != null) ? `transform-origin:${p.ox}% ${p.oy}%;` : '';
       const off = (p.dx || p.dy) ? `transform:translate(${p.dx || 0}%,${p.dy || 0}%);` : '';
-      return `<img class="vh-layer vh-actorfull${isSel ? ' sel' : ''}" data-char="${p.char}" src="${A}${p.file}.png" alt="" style="${off}${dead}" onerror="this.style.display='none'">`;
+      return `<img class="vh-layer vh-actorfull${isSel ? ' sel' : ''}" data-char="${p.char}" src="${A}${p.file}.png" alt="" style="${origin}${off}${dead}" onerror="this.style.display='none'">`;
     }
     const size = (p.h != null) ? `height:${p.h}%` : `width:${p.w}%`;
     return `<img class="vh-actor${isSel ? ' sel' : ''}" data-char="${p.char}" src="${A}${p.file}.png" alt="" style="left:${p.cx}%;top:${p.cy}%;${size};${dead}" onerror="this.style.display='none'">`;
@@ -394,12 +411,21 @@ function sceneCompound(s) {
   const hots = ZONES.map(zn =>
     `<button class="vh-hot" data-zone="${zn.z}" style="left:${zn.box[0]}%;top:${zn.box[1]}%;width:${zn.box[2]}%;height:${zn.box[3]}%"><span class="vh-hotlab">${zn.label}</span></button>`
   ).join('');
+  // 인물 핫스팟 (형상 위) — 호버 시 확대, 클릭 시 선택
+  const phots = PEOPLE_FILES.map(p => {
+    const c = s.characters[p.char];
+    if (!c || !c.alive || !p.box) return '';
+    const pl = Math.max(0, p.box[0] - 1), pt = Math.max(0, p.box[1] - 1), pw = p.box[2] + 2, ph = p.box[3] + 2;
+    const nm = (c.name || '') + (p.file === 'jaehyeok_minsu' ? ' · 민수' : '');
+    return `<button class="vh-phot" data-pchar="${p.char}" style="left:${pl}%;top:${pt}%;width:${pw}%;height:${ph}%"><span class="vh-plab">${nm}</span></button>`;
+  }).join('');
   return `<div class="vh-stagebox">
     <img class="vh-layer vh-bg" src="${A}bg_village.png" alt="">
     ${glows}
     ${fire}
     ${people}
     ${hots}
+    ${phots}
   </div>`;
 }
 
