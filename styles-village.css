@@ -430,3 +430,56 @@
 .vh-pip svg { width: 100%; height: 100%; display: block; }
 @keyframes vhPipFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 @keyframes vhPulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+
+/* ═══════════════════════════════════════════════════════
+   레이아웃 오버홀 (2차): 씬 전면 + HUD 오버레이 (디스워이즈마인식)
+   ═══════════════════════════════════════════════════════ */
+
+/* 격자 해체 → 씬을 전면 배경으로 */
+#villageScreen .vh-grid { position: relative; display: block; padding: 0; gap: 0; }
+#villageScreen .vh-center { position: absolute; inset: 0; gap: 0; }
+#villageScreen .vh-scene {
+  position: absolute; inset: 0; border: 0; border-radius: 0;
+  box-shadow: inset 0 0 120px #000c;
+}
+
+/* 좌측 명단 = 왼쪽 가장자리 플로팅 (반투명 금속 + 블러) */
+#villageScreen .vh-left {
+  position: absolute; top: 10px; left: 10px; bottom: 10px;
+  width: 198px; z-index: 12; gap: 8px; padding: 0;
+  overflow-y: auto; overflow-x: hidden;
+}
+/* 우측 시스템 = 오른쪽 가장자리 플로팅 */
+#villageScreen .vh-right {
+  position: absolute; top: 10px; right: 10px;
+  width: 210px; z-index: 12; gap: 8px; padding: 0;
+  max-height: calc(100% - 78px); overflow-y: auto; overflow-x: hidden;
+}
+
+/* 오버레이 카드 = 반투명 금속 + 프로스트 블러 (씬이 은은히 비침) */
+#villageScreen .vh-card, #villageScreen .vh-detail {
+  backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+  background:
+    radial-gradient(circle 2.5px at 6px 6px, #74774f, #74774f00 70%),
+    radial-gradient(circle 2.5px at calc(100% - 6px) 6px, #74774f, #74774f00 70%),
+    radial-gradient(circle 2.5px at 6px calc(100% - 6px), #74774f, #74774f00 70%),
+    radial-gradient(circle 2.5px at calc(100% - 6px) calc(100% - 6px), #74774f, #74774f00 70%),
+    linear-gradient(180deg, rgba(53, 56, 41, .84), rgba(30, 32, 23, .9));
+}
+#villageScreen .vh-rost {
+  backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+  background: linear-gradient(180deg, rgba(42, 44, 32, .82), rgba(22, 24, 16, .86));
+}
+#villageScreen .vh-rost:hover { background: linear-gradient(180deg, rgba(54, 57, 40, .9), rgba(28, 30, 20, .9)); }
+#villageScreen .vh-left-h {
+  background: rgba(10, 11, 8, .66); backdrop-filter: blur(2px);
+  padding: 4px 8px; border-radius: 2px; border: 1px solid #14130d;
+}
+
+/* 액션바 = 하단 중앙 플로팅 */
+#villageScreen .vh-actbar {
+  position: absolute; bottom: 12px; left: 218px; right: 230px; z-index: 12;
+  backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+  background: linear-gradient(180deg, rgba(42, 44, 32, .86), rgba(24, 26, 18, .9));
+}
+#villageScreen .vh-hint { color: #9a9a6a; }
