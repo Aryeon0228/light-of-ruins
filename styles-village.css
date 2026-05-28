@@ -500,3 +500,9 @@
 }
 .vh-scope-read b { font-size: 0.95rem; text-shadow: 1px 1px 0 #000; }
 .vh-scope-dot { width: 9px; height: 9px; border-radius: 50%; background: #5fae8a; flex-shrink: 0; }
+
+/* 호버 시 그 인물 경고 핀 숨김 → 이름 라벨이 안 가려짐 */
+.vh-pips { transition: opacity .15s ease; }
+.vh-pips-hidden { opacity: 0; }
+/* 이름 라벨은 핀보다 위 (만일 동시 노출돼도 안 가리게) */
+#villageScreen .vh-plab { z-index: 9; }

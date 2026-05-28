@@ -380,8 +380,9 @@ LR.village.renderScene = function() {
     // 인물 핫스팟 — 호버 시 그 인물만 살짝 확대, 클릭 시 선택
     host.querySelectorAll('.vh-phot').forEach(h => {
       const actor = host.querySelector('.vh-actorfull[data-char="' + h.dataset.pchar + '"]');
-      h.addEventListener('mouseenter', () => { if (actor) actor.classList.add('hover'); h.classList.add('hot-on'); });
-      h.addEventListener('mouseleave', () => { if (actor) actor.classList.remove('hover'); h.classList.remove('hot-on'); });
+      const pip = host.querySelector('.vh-pips[data-pchar="' + h.dataset.pchar + '"]');
+      h.addEventListener('mouseenter', () => { if (actor) actor.classList.add('hover'); h.classList.add('hot-on'); if (pip) pip.classList.add('vh-pips-hidden'); });
+      h.addEventListener('mouseleave', () => { if (actor) actor.classList.remove('hover'); h.classList.remove('hot-on'); if (pip) pip.classList.remove('vh-pips-hidden'); });
       h.addEventListener('click', () => LR.village.select(h.dataset.pchar));
     });
     fitStage();
@@ -505,7 +506,7 @@ function sceneCompound(s) {
     if (c.morale < 50) items.push(`<span class="vh-pip" style="color:${moColor(c.morale)}">${MOIC}</span>`);
     if (!items.length) return '';
     const cx = p.box[0] + p.box[2] / 2, ty = p.box[1];
-    return `<div class="vh-pips" style="left:${cx}%;top:${ty}%">${items.join('')}</div>`;
+    return `<div class="vh-pips" data-pchar="${p.char}" style="left:${cx}%;top:${ty}%">${items.join('')}</div>`;
   }).join('');
   return `<div class="vh-stagebox">
     <img class="vh-layer vh-bg" src="${A}bg_village.png" alt="">
