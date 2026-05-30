@@ -527,7 +527,7 @@ LR.village.renderScene = function() {
   if (LR.village.mode === 'compound') {
     // 구역 호버 → 해당 글로우 켜기 + 살짝 확대
     host.querySelectorAll('.vh-hot').forEach(h => {
-      const glow = host.querySelector('.vh-glow[data-zone="' + h.dataset.zone + '"]');
+      const glow = host.querySelector('.vh-glowcss[data-zone="' + h.dataset.zone + '"]');
       h.addEventListener('mouseenter', () => { if (glow) glow.classList.add('on'); h.classList.add('hot-on'); });
       h.addEventListener('mouseleave', () => { if (glow) glow.classList.remove('on'); h.classList.remove('hot-on'); });
     });
@@ -624,10 +624,16 @@ function sceneSection(s) {
 function sceneCompound(s) {
   const A = VILLAGE_ASSET;
   const sel = LR.village.selected;
-  const glows = ZONES.map(zn =>
-    `<img class="vh-layer vh-glow" data-zone="${zn.z}" src="${A}glow_${zn.z}.png" alt="" style="transform-origin:${zn.o[0]}% ${zn.o[1]}%" onerror="this.remove()">`
-  ).join('');
-  const fire = `<img class="vh-layer vh-campfire" src="${A}campfire.png" alt="" onerror="this.remove()">`;
+  // 구역 글로우 — PNG 윤곽선 대신 부드러운 CSS 빛무리(호버 시 켜짐).
+  // 건물 박스보다 살짝 넓게 잡아 빛이 자연스럽게 번지게.
+  const glows = ZONES.map(zn => {
+    const pad = 4;
+    const l = zn.box[0] - pad, t = zn.box[1] - pad, w = zn.box[2] + pad * 2, h = zn.box[3] + pad * 2;
+    return `<div class="vh-glowcss" data-zone="${zn.z}" style="left:${l}%;top:${t}%;width:${w}%;height:${h}%"></div>`;
+  }).join('');
+  // 모닥불 — PNG flicker + 맥동하는 따뜻한 빛무리(중앙)
+  const fire = `<img class="vh-layer vh-campfire" src="${A}campfire.png" alt="" onerror="this.remove()">
+    <div class="vh-layer vh-firelight"></div>`;
   const people = PEOPLE_FILES.map(p => {
     const c = s.characters[p.char];
     const dead = (!c || !c.alive) ? 'display:none;' : '';
