@@ -124,6 +124,142 @@ LR.village.select = function(id) {
 };
 
 // ═══════════════════════════════════════════════════════
+//  오늘의 결정 — 마을을 메인 플레이 표면으로
+//  loop.js의 시나리오 노드(state.pendingChoice)를 마을 안에서
+//  렌더하고, 동일한 LR.engine.applyChoice()로 결정을 적용한다.
+// ═══════════════════════════════════════════════════════
+
+// 이름 → 캐릭터 id (대사 화자를 씬에서 하이라이트하기 위함)
+function nameToId(name) {
+  for (const id of LR.CHARACTER_ORDER) {
+    if (LR.CHARACTER_DEFS[id] && LR.CHARACTER_DEFS[id].name === name) return id;
+  }
+  return null;
+}
+
+// 시나리오 노드에서 '관련 인물' 추려내기 (대사 화자 + 인물별 델타 대상)
+function decisionActors(node, state) {
+  const set = new Set();
+  for (const part of (node.body || [])) {
+    if (part.kind === 'dialog' && part.speaker) {
+      const id = nameToId(part.speaker);
+      if (id) set.add(id);
+    }
+  }
+  for (const ch of (node.choices || [])) {
+    let pc = ch.perCharDeltas;
+    if (typeof pc === 'function') { try { pc = pc(state); } catch (e) { pc = null; } }
+    if (pc) for (const id in pc) set.add(id);
+  }
+  return [...set];
+}
+
+LR.village.renderDecision = function() {
+  const s = LR.village.state;
+  const dec = document.getElementById('vhDecision');
+  if (!dec || !s) return;
+  const node = s.pendingChoice;
+  if (LR.village.isDemo || !node || !s.awaitingChoice) {
+    dec.classList.remove('open');
+    LR.village.highlightChars = [];
+    return;
+  }
+
+  // 본문 조각
+  const bodyHtml = (node.body || []).map(part => {
+    if (part.kind === 'narration') return `<p class="vd-narr">${part.text}</p>`;
+    if (part.kind === 'dialog')   return `<p class="vd-dlg"><span class="vd-spk">${part.speaker}</span>${part.text}</p>`;
+    if (part.kind === 'systemNote') return `<p class="vd-note">※ ${part.text}</p>`;
+    return '';
+  }).join('');
+
+  // 어젯밤 습격 / 비컨 해소 결과 (텍스트 화면 대신 여기서 소비)
+  let banners = '';
+  if (s.raidLastNightSummary) banners += `<p class="vd-banner danger">🩸 ${s.raidLastNightSummary}</p>`;
+  if (s.pendingBeaconResolution) {
+    const r = s.pendingBeaconResolution;
+    banners += `<p class="vd-banner beacon">📡 <b>${LR.BEACON_TYPES[r.type].name} ${r.label}</b> — ${r.text}</p>`;
+    s.pendingBeaconResolution = null;
+  }
+
+  // 선택지 (render.js와 동일한 필터 규칙)
+  const choicesHtml = (node.choices || []).map(choice => {
+    if (choice.requireSpiral && s.spiral.state !== choice.requireSpiral) return '';
+    if (choice.enabled === false) return '';
+    const risk = choice.risk === 'danger' ? ' danger' : choice.risk === 'warn' ? ' warn' : '';
+    const sub = choice.body ? `<span class="vd-csub">${choice.body}</span>` : '';
+    return `<button class="vd-choice${risk}" data-cid="${choice.id}">
+      <span class="vd-clet">${choice.id}</span>
+      <span class="vd-cbody"><b>${choice.label}</b>${sub}</span>
+    </button>`;
+  }).join('');
+
+  dec.innerHTML = `
+    <div class="vd-head">
+      <span class="vd-day">DAY ${s.day}</span>
+      <h3 class="vd-title">${node.title || '오늘의 결정'}</h3>
+      <button class="vd-min" id="vdMin" title="접기">▾</button>
+    </div>
+    <div class="vd-scroll">
+      ${banners}
+      <div class="vd-body">${bodyHtml}</div>
+      ${node.keyLine ? `<p class="vd-key">${node.keyLine}</p>` : ''}
+    </div>
+    <div class="vd-choices">${choicesHtml}</div>
+  `;
+  dec.classList.add('open');
+
+  dec.querySelectorAll('.vd-choice').forEach(b => {
+    b.addEventListener('click', () => {
+      if (LR.village._busy) return;
+      LR.village._busy = true;
+      LR.engine.applyChoice(b.dataset.cid);
+      // endOfDay → (350ms) → beginDay → syncFromGame 가 다음 결정을 그림
+    });
+  });
+  const minb = document.getElementById('vdMin');
+  if (minb) minb.addEventListener('click', () => LR.village.toggleDecision(false));
+
+  // 관련 인물 하이라이트
+  LR.village.highlightChars = decisionActors(node, s);
+  applyDecisionHighlights();
+};
+
+function applyDecisionHighlights() {
+  const host = document.getElementById('vhScene');
+  if (!host) return;
+  host.querySelectorAll('.vh-actorfull.vd-hl').forEach(a => a.classList.remove('vd-hl'));
+  (LR.village.highlightChars || []).forEach(id => {
+    const a = host.querySelector('.vh-actorfull[data-char="' + id + '"]');
+    if (a) a.classList.add('vd-hl');
+  });
+}
+LR.village._applyDecisionHighlights = applyDecisionHighlights;
+
+LR.village.toggleDecision = function(force) {
+  const dec = document.getElementById('vhDecision');
+  if (!dec) return;
+  const open = (force === undefined) ? !dec.classList.contains('open') : force;
+  dec.classList.toggle('open', open);
+};
+
+// loop.js(beginDay)에서 매일 호출 — 마을이 활성 플레이 표면이면 갱신
+LR.village.syncFromGame = function(state) {
+  LR.village._busy = false;
+  const el = document.getElementById('villageScreen');
+  if (!LR.village.playMode || !el || !el.classList.contains('active')) return;
+  LR.village.state = state;
+  LR.village.isDemo = false;
+  LR.village.render();          // 패널 + 씬 + 오늘의 결정 갱신
+};
+
+// 새 게임/이어하기에서 마을을 메인 플레이 표면으로 진입
+LR.village.openAsPlay = function() {
+  LR.village.playMode = true;
+  LR.village.open(LR.state);
+};
+
+// ═══════════════════════════════════════════════════════
 //  렌더
 // ═══════════════════════════════════════════════════════
 LR.village.render = function() {
@@ -135,6 +271,7 @@ LR.village.render = function() {
   renderDetail(s);
   updateScopeReadout(s);
   LR.village.renderScene();
+  LR.village.renderDecision();
 };
 
 function renderTopbar(s) {
@@ -155,7 +292,24 @@ function renderTopbar(s) {
     pill('noise', '소음', s.noiseToday, raid.p >= 0.6 ? 'danger' : raid.p >= 0.25 ? 'warn' : ''),
     pill('people', '생존자', alive + '/10', alive < 10 ? 'warn' : '')
   ].join('');
-  document.getElementById('vhResources').innerHTML = pills;
+  const resEl = document.getElementById('vhResources');
+  resEl.innerHTML = pills;
+
+  // 자원 변동 즉각 피드백 — 직전 값과 비교해 오른/내린 자원만 플래시
+  const cur = { food: s.food, water: s.water, fuel: s.fuel, med: s.medicine, noise: s.noiseToday };
+  const prev = LR.village._prevRes;
+  if (prev) {
+    for (const k in cur) {
+      if (cur[k] === prev[k]) continue;
+      const el = resEl.querySelector('.vh-pill[data-res="' + k + '"]');
+      if (!el) continue;
+      // 소음은 오를수록 나쁨 → 방향 반전
+      const rose = cur[k] > prev[k];
+      const good = (k === 'noise') ? !rose : rose;
+      el.classList.add(good ? 'flash-up' : 'flash-dn');
+    }
+  }
+  LR.village._prevRes = cur;
 
   // 위협 배너
   const banner = document.getElementById('vhAlert');
@@ -173,7 +327,7 @@ function renderTopbar(s) {
 
 function pill(key, label, value, cls) {
   const m = RES[key];
-  return `<div class="vh-pill ${cls || ''}" style="--rc:${m.color}">
+  return `<div class="vh-pill ${cls || ''}" data-res="${key}" style="--rc:${m.color}">
     <span class="vh-pill-ic" style="color:${m.color}">${m.icon}</span>
     <span class="vh-pill-lab">${label}</span>
     <span class="vh-pill-val">${value}</span>
@@ -386,6 +540,7 @@ LR.village.renderScene = function() {
       h.addEventListener('click', () => LR.village.select(h.dataset.pchar));
     });
     fitStage();
+    if (LR.village._applyDecisionHighlights) LR.village._applyDecisionHighlights();
   }
 };
 
@@ -844,13 +999,15 @@ function ensureDom() {
       </aside>
 
       <main class="vh-center">
-        <div class="vh-scene compound" id="vhScene"></div>
+        <div class="vh-stage">
+          <div class="vh-scene compound" id="vhScene"></div>
+          <div class="vh-decision" id="vhDecision"></div>
+        </div>
         <div class="vh-actbar">
-          <button class="vh-act" title="오늘의 결정 화면으로">⚑ 행동</button>
-          <button class="vh-act" title="보유 물자">🎒 인벤토리</button>
-          <button class="vh-act" title="거점 지도">🗺 지도</button>
-          <button class="vh-act" title="지난 기록">📓 기록</button>
-          <span class="vh-hint">인물을 클릭하면 상태를 볼 수 있어요</span>
+          <button class="vh-act vh-act-main" id="vhActDecide" title="오늘의 결정">⚑ 오늘의 결정</button>
+          <button class="vh-act" title="텍스트 상세 화면" id="vhActDetail">📋 상세</button>
+          <button class="vh-act" title="지난 기록" id="vhActLog">📓 기록</button>
+          <span class="vh-hint" id="vhHint">인물을 클릭하면 상태를 볼 수 있어요</span>
         </div>
       </main>
 
@@ -873,6 +1030,23 @@ function ensureDom() {
     b.addEventListener('click', () => LR.village.setMode(b.dataset.mode));
   });
   document.getElementById('vhClose').addEventListener('click', () => LR.village.close());
+
+  // 액션바 — 오늘의 결정 토글 / 텍스트 상세 / 기록
+  const ad = document.getElementById('vhActDecide');
+  if (ad) ad.addEventListener('click', () => LR.village.toggleDecision());
+  const adt = document.getElementById('vhActDetail');
+  if (adt) adt.addEventListener('click', () => {
+    // 텍스트 대시보드(상세)로 — 마을은 닫고 뒤의 #gameRoot 노출
+    if (LR.state && LR.render && LR.render.renderAll) LR.render.renderAll(LR.state);
+    LR.village.close();
+  });
+  const al = document.getElementById('vhActLog');
+  if (al) al.addEventListener('click', () => {
+    const s = LR.village.state;
+    if (!s || !s.log || !s.log.length) { LR.render.toast('아직 기록이 없습니다', ''); return; }
+    const last = s.log[s.log.length - 1];
+    LR.render.toast(`D${last.day} 기록 — 식량 ${last.food} · 사기 ${last.avgMorale} · 생존 ${last.survivors}${last.raided ? ' · 습격🩸' : ''}`, '');
+  });
 }
 
 document.addEventListener('DOMContentLoaded', () => {

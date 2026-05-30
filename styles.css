@@ -402,7 +402,7 @@ button {
 #endingOverlay {
   position: fixed; inset: 0;
   background: var(--c-bg);
-  z-index: 50;
+  z-index: 340;       /* 마을(200) 위 — 마을이 메인 표면일 때도 엔딩이 보이도록 */
   overflow-y: auto;
   padding: 3rem 2rem;
   display: none;
@@ -477,7 +477,7 @@ button {
   position: fixed; inset: 0;
   background: rgba(10, 11, 14, 0.92);
   backdrop-filter: blur(6px);
-  z-index: 60;
+  z-index: 320;       /* 마을(200) 위 — 컷씬이 마을 위에서 재생 */
   display: none;
   align-items: center; justify-content: center;
   flex-direction: column;
@@ -552,7 +552,7 @@ button {
 /* ─── 토스트 / 시스템 알림 ─── */
 #toastContainer {
   position: fixed; top: 70px; right: 20px;
-  z-index: 30;
+  z-index: 360;       /* 항상 최상단 — 마을/컷씬/엔딩 위 */
   display: flex; flex-direction: column; gap: 0.5rem;
   pointer-events: none;
 }

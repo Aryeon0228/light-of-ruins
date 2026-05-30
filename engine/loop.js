@@ -43,6 +43,9 @@ LR.engine.beginDay = function() {
   if (state.recentScenarios.length > 4) state.recentScenarios.shift();
 
   LR.render.renderAll(state);
+
+  // 마을이 메인 플레이 표면이면 오늘의 결정을 마을 안에서 갱신
+  if (LR.village && LR.village.syncFromGame) LR.village.syncFromGame(state);
 };
 
 LR.engine.recomputeDerived = function(state) {

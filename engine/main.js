@@ -21,6 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('titleScreen').style.display = 'none';
     document.getElementById('gameRoot').classList.add('active');
     LR.engine.startNewGame();
+    // 마을을 메인 플레이 표면으로 — 오늘의 결정이 마을 안에서 진행
+    if (LR.village && LR.village.openAsPlay) LR.village.openAsPlay();
   });
 
   btnContinue.addEventListener('click', () => {
@@ -33,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
       LR.render.showEnding(state);
     } else {
       LR.engine.beginDay();
+      if (LR.village && LR.village.openAsPlay) LR.village.openAsPlay();
     }
   });
 
