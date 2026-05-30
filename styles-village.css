@@ -691,3 +691,138 @@
 @media (max-width: 980px) {
   .vh-decision { max-height: 80%; }
 }
+
+/* ═══════════════════════════════════════════════════════
+   상단 상황바 직관화 — 게이지(찬 정도) + 전일 대비 추세 화살표
+   ═══════════════════════════════════════════════════════ */
+.vh-pill { align-items: center; }
+.vh-pill-main { display: flex; flex-direction: column; gap: 3px; min-width: 56px; }
+.vh-pill-top { display: flex; align-items: center; gap: 0.3rem; }
+.vh-pill-top .vh-pill-lab { margin-right: auto; }
+.vh-pill-bar {
+  display: block; width: 100%; height: 4px; background: #0a0b06;
+  border: 1px solid #14130d; border-radius: 1px; overflow: hidden; position: relative;
+}
+.vh-pill-bar i { display: block; height: 100%; border-radius: 0; transition: width .3s ease; }
+#villageScreen .vh-pill-bar::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(90deg, #000a 0 1px, transparent 1px 7px);
+}
+.vh-pill-tr { font-size: 0.6rem; line-height: 1; font-weight: 700; }
+.vh-pill-tr.good { color: #74c074; }
+.vh-pill-tr.bad  { color: #e07070; }
+.vh-pill-tr.flat { color: #6a6a48; }
+
+/* ═══════════════════════════════════════════════════════
+   캐릭터 상태 팝오버 — 클릭한 인물 바로 위/옆 (말풍선)
+   ═══════════════════════════════════════════════════════ */
+.vh-pop {
+  position: absolute; left: 0; top: 0; width: 234px; z-index: 45;
+  opacity: 0; transform: scale(.96); pointer-events: none;
+  transition: opacity .14s ease, transform .14s ease;
+  border-radius: 4px; border: 2px solid #14130d;
+  background:
+    radial-gradient(circle 2.5px at 7px 7px, #74774f, #74774f00 70%),
+    radial-gradient(circle 2.5px at calc(100% - 7px) 7px, #74774f, #74774f00 70%),
+    linear-gradient(180deg, #2e3022, #1a1c13);
+  box-shadow: inset 0 1px 0 #5a5e43, 0 6px 22px #000b;
+  font-family: 'Galmuri11', monospace;
+}
+.vh-pop.open { opacity: 1; transform: scale(1); pointer-events: auto; }
+/* 말풍선 꼬리 (아래쪽 = 카드가 인물 위) */
+.vh-pop::after {
+  content: ''; position: absolute; top: 100%; left: var(--arrow, 50%);
+  transform: translateX(-50%); width: 0; height: 0;
+  border: 7px solid transparent; border-top-color: #1a1c13; margin-top: -1px;
+}
+.vh-pop.below::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: #2e3022; margin: 0 0 -1px; }
+.vh-pop-x {
+  position: absolute; top: 3px; right: 4px; z-index: 2; width: 18px; height: 18px;
+  border: none; background: none; color: #8e8f5e; font-size: 0.78rem; line-height: 1; cursor: pointer;
+}
+.vh-pop-x:hover { color: #e07070; }
+.vh-pop-head { display: flex; gap: 0.5rem; align-items: center; padding: 0.5rem 0.55rem 0.4rem; }
+.vh-pop-port {
+  width: 46px; height: 46px; flex-shrink: 0; border-radius: 3px; overflow: hidden;
+  border: 1px solid #14130d; background: linear-gradient(180deg, #20221a, #14160f);
+  box-shadow: inset 0 0 8px #000a; display: block;
+}
+.vh-pop-port svg { width: 100%; height: 100%; display: block; }
+.vh-pop-name { color: #ffcf86; font-size: 0.92rem; text-shadow: 1px 1px 0 #000; }
+.vh-pop-name em { font-style: normal; font-size: 0.68rem; color: #8e8f5e; margin-left: 0.35rem; }
+.vh-pop-act { font-size: 0.72rem; color: #d4a14f; margin-top: 2px; font-family: 'Noto Sans KR', sans-serif; }
+.vh-pop-stat { padding: 0 0.55rem 0.45rem; display: flex; flex-direction: column; gap: 5px; }
+.vh-pop-row { display: flex; align-items: center; gap: 6px; }
+.vh-pop-ic { width: 12px; height: 12px; flex-shrink: 0; display: inline-flex; }
+.vh-pop-ic svg { width: 12px; height: 12px; }
+.vh-pop-bar {
+  flex: 1; height: 7px; background: #0a0b06; border: 1px solid #14130d; border-radius: 1px;
+  overflow: hidden; position: relative;
+}
+.vh-pop-bar i { display: block; height: 100%; }
+.vh-pop-bar::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(90deg, #000a 0 1px, transparent 1px 6px);
+}
+.vh-pop-row b { font-size: 0.82rem; min-width: 22px; text-align: right; text-shadow: 1px 1px 0 #000; }
+.vh-pop-row em { font-style: normal; font-size: 0.66rem; color: #8e8f5e; min-width: 30px; }
+.vh-pop-foot {
+  border-top: 1px solid #2a2c1e; padding: 0.35rem 0.55rem; font-size: 0.66rem; color: #8e8f5e;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* 클릭 가능한 구역(망루·보강문) */
+.vh-hot-act { cursor: pointer; }
+
+/* ═══════════════════════════════════════════════════════
+   망루 · 외부 정찰 카드
+   ═══════════════════════════════════════════════════════ */
+.vh-outside {
+  position: absolute; left: 50%; top: 11%; transform: translateX(-50%) scale(.96);
+  width: 300px; max-width: 86%; z-index: 46;
+  opacity: 0; pointer-events: none; transition: opacity .16s ease, transform .16s ease;
+  border-radius: 5px; border: 2px solid #14130d;
+  background:
+    radial-gradient(circle 2.5px at 8px 8px, #74774f, #74774f00 70%),
+    radial-gradient(circle 2.5px at calc(100% - 8px) 8px, #74774f, #74774f00 70%),
+    linear-gradient(180deg, #2e3022, #181a12);
+  box-shadow: inset 0 1px 0 #5a5e43, 0 10px 30px #000c;
+  font-family: 'Galmuri11', monospace;
+}
+.vh-outside.open { opacity: 1; pointer-events: auto; transform: translateX(-50%) scale(1); }
+.vh-out-h {
+  padding: 0.45rem 0.6rem; color: #d8c882; letter-spacing: 1px; font-size: 0.85rem;
+  border-bottom: 2px solid #14130d; background: linear-gradient(180deg, #3a3520, #241f12);
+  text-shadow: 1px 1px 0 #000;
+}
+.vh-out-view {
+  height: 78px; margin: 0; position: relative; overflow: hidden; border-bottom: 2px solid #14130d;
+}
+/* 폐허 실루엣 + 비 느낌 */
+.vh-out-view::after {
+  content: ''; position: absolute; inset: 0;
+  background:
+    linear-gradient(180deg, transparent 52%, #0a0b08 53%),
+    repeating-linear-gradient(96deg, transparent 0 16px, #0d0f0b 16px 19px, transparent 19px 34px);
+  opacity: .85;
+}
+.vh-out-view.rain::before, .vh-out-view.night::before {
+  content: ''; position: absolute; inset: 0; z-index: 1;
+  background: repeating-linear-gradient(102deg, rgba(180,200,220,.10) 0 1px, transparent 1px 5px);
+}
+.vh-out-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; padding: 0.55rem 0.6rem 0.4rem;
+}
+.vh-out-grid > div { display: flex; justify-content: space-between; align-items: baseline; }
+.vh-out-grid span { color: #8e8f5e; font-size: 0.72rem; }
+.vh-out-grid b { font-size: 0.85rem; color: #e8e5d0; text-shadow: 1px 1px 0 #000; }
+.vh-out-desc {
+  padding: 0 0.6rem 0.5rem; font-size: 0.78rem; color: #d8d4c2; line-height: 1.5;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.vh-out-row {
+  margin: 0 0.6rem 0.55rem; padding: 0.35rem 0.55rem; border-radius: 2px;
+  font-size: 0.76rem; border: 1px solid #14130d; font-family: 'Noto Sans KR', sans-serif;
+}
+.vh-out-row.danger { background: #2c1818; color: #e08a8a; border-left: 3px solid var(--c-danger); }
+.vh-out-row.calm { background: #15171d; color: #8e8f5e; }

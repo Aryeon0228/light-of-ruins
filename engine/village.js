@@ -120,7 +120,109 @@ LR.village.setMode = function(mode) {
 LR.village.select = function(id) {
   LR.village.selected = id;
   LR.village.picked = true;   // 클릭 이후부터 씬에 선택 글로우 표시
+  LR.village.popChar = id;    // 그 인물 위에 상태 팝오버
   LR.village.render();
+};
+
+// ─── 캐릭터 상태 팝오버 (씬에서 그 인물 바로 옆에) ───
+LR.village.fillPopover = function() {
+  const pop = document.getElementById('vhPop');
+  if (!pop) return;
+  const s = LR.village.state;
+  const id = LR.village.popChar;
+  if (!s || !id || LR.village.mode !== 'compound') { pop.classList.remove('open'); return; }
+  const c = s.characters[id], def = LR.CHARACTER_DEFS[id];
+  if (!c || !def) { pop.classList.remove('open'); return; }
+  const ht = LR.healthTier(c.health), mt = LR.moraleTier(c.morale);
+  pop.innerHTML = `
+    <button class="vh-pop-x" id="vhPopX">✕</button>
+    <div class="vh-pop-head">
+      <span class="vh-pop-port" style="--cc:${def.color}">${portraitSvg(c, def)}</span>
+      <div class="vh-pop-id">
+        <div class="vh-pop-name">${c.name}<em>${c.role} · ${def.age}세</em></div>
+        <div class="vh-pop-act">${activityOf(c)}</div>
+      </div>
+    </div>
+    <div class="vh-pop-stat">
+      <div class="vh-pop-row">
+        <span class="vh-pop-ic" style="color:${hpColor(c.health)}">${HPIC}</span>
+        <span class="vh-pop-bar"><i style="width:${c.health}%;background:${hpColor(c.health)}"></i></span>
+        <b style="color:${hpColor(c.health)}">${c.alive ? c.health : '—'}</b>
+        <em>${c.alive ? ht.label : '사망'}</em>
+      </div>
+      <div class="vh-pop-row">
+        <span class="vh-pop-ic" style="color:${moColor(c.morale)}">${MOIC}</span>
+        <span class="vh-pop-bar"><i style="width:${c.morale}%;background:${moColor(c.morale)}"></i></span>
+        <b style="color:${moColor(c.morale)}">${c.alive ? c.morale : '—'}</b>
+        <em>${c.alive ? mt.label : ''}</em>
+      </div>
+    </div>
+    <div class="vh-pop-foot">전례 감수성 · 부정 ×${def.negSens} / 긍정 ×${def.posSens}</div>
+  `;
+  pop.classList.add('open');
+  const x = document.getElementById('vhPopX');
+  if (x) x.addEventListener('click', (e) => { e.stopPropagation(); LR.village.closePopover(); });
+  LR.village.positionPopover();
+};
+
+LR.village.positionPopover = function() {
+  const pop = document.getElementById('vhPop');
+  const stage = document.querySelector('.vh-stage');
+  const host = document.getElementById('vhScene');
+  if (!pop || !stage || !host || !pop.classList.contains('open')) return;
+  const hot = host.querySelector('.vh-phot[data-pchar="' + LR.village.popChar + '"]');
+  if (!hot) { pop.classList.remove('open'); return; }
+  const sr = stage.getBoundingClientRect(), hr = hot.getBoundingClientRect();
+  const cx = hr.left + hr.width / 2 - sr.left;       // 인물 중앙 x (스테이지 기준)
+  const headTop = hr.top - sr.top;
+  const pw = pop.offsetWidth, ph = pop.offsetHeight;
+  let left = Math.max(6, Math.min(sr.width - pw - 6, cx - pw / 2));
+  let top = headTop - ph - 12, below = false;
+  if (top < 4) { top = (hr.bottom - sr.top) + 12; below = true; }   // 위 공간 부족 → 아래로
+  pop.style.left = Math.round(left) + 'px';
+  pop.style.top = Math.round(top) + 'px';
+  pop.classList.toggle('below', below);
+  pop.style.setProperty('--arrow', Math.round(cx - left) + 'px');   // 말풍선 꼬리 위치
+};
+
+LR.village.closePopover = function() {
+  LR.village.popChar = null;
+  const pop = document.getElementById('vhPop');
+  if (pop) pop.classList.remove('open');
+};
+
+// ─── 망루 · 외부 정찰 (방어탑 클릭) ───
+LR.village.showOutside = function() {
+  const el = document.getElementById('vhOutside');
+  const s = LR.village.state;
+  if (!el || !s) return;
+  const n = s.noiseToday, raid = LR.raidProbability(n), pct = Math.round(raid.p * 100);
+  const ph = dayPhase(s), col = scopeColor(n);
+  const desc = {
+    '위험': '담장 너머에서 여러 그림자가 어슬렁댄다. 오늘 밤이 위험하다.',
+    '경계': '멀리서 무리의 기척이 느껴진다. 소음을 줄여야 한다.',
+    '주의': '한둘이 거리를 배회한다. 아직은 견딜 만하다.',
+    '낮음': '거리는 조용하다. 바람과 빗소리뿐이다.'
+  }[raid.scale] || '거리는 조용하다.';
+  const lastNight = s.raidLastNightSummary
+    ? `<div class="vh-out-row danger">🩸 ${s.raidLastNightSummary}</div>`
+    : `<div class="vh-out-row calm">지난밤은 조용히 지나갔다.</div>`;
+  el.innerHTML = `
+    <button class="vh-pop-x" id="vhOutX">✕</button>
+    <div class="vh-out-h">⌖ 망루 · 외부 정찰</div>
+    <div class="vh-out-view ${ph.cls}" style="background:linear-gradient(180deg, ${ph.sky0}, ${ph.sky1})"></div>
+    <div class="vh-out-grid">
+      <div><span>시간</span><b>${ph.label}</b></div>
+      <div><span>소음</span><b style="color:${col}">${n}</b></div>
+      <div><span>위협</span><b style="color:${col}">${raid.scale}</b></div>
+      <div><span>습격 확률</span><b style="color:${col}">${pct}%</b></div>
+    </div>
+    <div class="vh-out-desc">${desc}</div>
+    ${lastNight}
+  `;
+  el.classList.add('open');
+  const x = document.getElementById('vhOutX');
+  if (x) x.addEventListener('click', () => el.classList.remove('open'));
 };
 
 // ═══════════════════════════════════════════════════════
@@ -207,7 +309,7 @@ LR.village.renderDecision = function() {
     </div>
     <div class="vd-choices">${choicesHtml}</div>
   `;
-  dec.classList.add('open');
+  dec.classList.toggle('open', !LR.village.decisionCollapsed);   // 접힘 상태 유지
 
   dec.querySelectorAll('.vd-choice').forEach(b => {
     b.addEventListener('click', () => {
@@ -240,6 +342,7 @@ LR.village.toggleDecision = function(force) {
   const dec = document.getElementById('vhDecision');
   if (!dec) return;
   const open = (force === undefined) ? !dec.classList.contains('open') : force;
+  LR.village.decisionCollapsed = !open;
   dec.classList.toggle('open', open);
 };
 
@@ -250,6 +353,8 @@ LR.village.syncFromGame = function(state) {
   if (!LR.village.playMode || !el || !el.classList.contains('active')) return;
   LR.village.state = state;
   LR.village.isDemo = false;
+  LR.village.decisionCollapsed = false;   // 새 날엔 오늘의 결정 자동 표시
+  LR.village.closePopover();              // 이전 선택 팝오버 닫기
   LR.village.render();          // 패널 + 씬 + 오늘의 결정 갱신
 };
 
@@ -272,6 +377,7 @@ LR.village.render = function() {
   updateScopeReadout(s);
   LR.village.renderScene();
   LR.village.renderDecision();
+  LR.village.fillPopover();
 };
 
 function renderTopbar(s) {
@@ -284,26 +390,33 @@ function renderTopbar(s) {
   document.getElementById('vhSeason').textContent = seasonName;
   document.getElementById('vhClock').textContent = dayPhase(s).label;
 
+  // 직관화: 게이지(찬 정도) + 전일 대비 추세 화살표
+  const cur = { food: s.food, water: s.water, fuel: s.fuel, med: s.medicine, noise: s.noiseToday, alive };
+  const prev = LR.village._prevRes;
+  function tr(key, invert) {
+    if (!prev || prev[key] === undefined) return null;
+    if (cur[key] === prev[key]) return { glyph: '─', cls: 'flat' };
+    const up = cur[key] > prev[key];
+    const good = invert ? !up : up;   // 소음·생존자감소는 반전
+    return { glyph: up ? '▲' : '▼', cls: good ? 'good' : 'bad' };
+  }
   const pills = [
-    pill('food',  '식량', s.food, foodT.tier === 'famine' ? 'danger' : foodT.tier === 'crisis' ? 'warn' : ''),
-    pill('water', '물',   s.water, s.water < 12 ? 'danger' : s.water < 25 ? 'warn' : ''),
-    pill('fuel',  '연료', s.fuel,  s.fuel < 6 ? 'danger' : s.fuel < 12 ? 'warn' : ''),
-    pill('med',   '의약품', s.medicine, s.medicine === 0 ? 'danger' : s.medicine <= 1 ? 'warn' : ''),
-    pill('noise', '소음', s.noiseToday, raid.p >= 0.6 ? 'danger' : raid.p >= 0.25 ? 'warn' : ''),
-    pill('people', '생존자', alive + '/10', alive < 10 ? 'warn' : '')
+    pill('food',  '식량', s.food, foodT.tier === 'famine' ? 'danger' : foodT.tier === 'crisis' ? 'warn' : '', s.food / 100, tr('food')),
+    pill('water', '물',   s.water, s.water < 12 ? 'danger' : s.water < 25 ? 'warn' : '', s.water / 100, tr('water')),
+    pill('fuel',  '연료', s.fuel,  s.fuel < 6 ? 'danger' : s.fuel < 12 ? 'warn' : '', s.fuel / 100, tr('fuel')),
+    pill('med',   '의약품', s.medicine, s.medicine === 0 ? 'danger' : s.medicine <= 1 ? 'warn' : '', Math.min(1, s.medicine / 8), tr('med')),
+    pill('noise', '소음', s.noiseToday, raid.p >= 0.6 ? 'danger' : raid.p >= 0.25 ? 'warn' : '', s.noiseToday / 100, tr('noise', true)),
+    pill('people', '생존자', alive + '/10', alive < 10 ? 'warn' : '', alive / 10, tr('alive'))
   ].join('');
   const resEl = document.getElementById('vhResources');
   resEl.innerHTML = pills;
 
   // 자원 변동 즉각 피드백 — 직전 값과 비교해 오른/내린 자원만 플래시
-  const cur = { food: s.food, water: s.water, fuel: s.fuel, med: s.medicine, noise: s.noiseToday };
-  const prev = LR.village._prevRes;
   if (prev) {
-    for (const k in cur) {
+    for (const k of ['food', 'water', 'fuel', 'med', 'noise']) {
       if (cur[k] === prev[k]) continue;
       const el = resEl.querySelector('.vh-pill[data-res="' + k + '"]');
       if (!el) continue;
-      // 소음은 오를수록 나쁨 → 방향 반전
       const rose = cur[k] > prev[k];
       const good = (k === 'noise') ? !rose : rose;
       el.classList.add(good ? 'flash-up' : 'flash-dn');
@@ -325,12 +438,18 @@ function renderTopbar(s) {
   }
 }
 
-function pill(key, label, value, cls) {
+function pill(key, label, value, cls, pct, trend) {
   const m = RES[key];
+  const fill = (pct != null)
+    ? `<span class="vh-pill-bar"><i style="width:${Math.round(Math.max(0, Math.min(1, pct)) * 100)}%;background:${m.color}"></i></span>`
+    : '';
+  const tr = trend ? `<span class="vh-pill-tr ${trend.cls}">${trend.glyph}</span>` : '';
   return `<div class="vh-pill ${cls || ''}" data-res="${key}" style="--rc:${m.color}">
     <span class="vh-pill-ic" style="color:${m.color}">${m.icon}</span>
-    <span class="vh-pill-lab">${label}</span>
-    <span class="vh-pill-val">${value}</span>
+    <span class="vh-pill-main">
+      <span class="vh-pill-top"><span class="vh-pill-lab">${label}</span><span class="vh-pill-val">${value}</span>${tr}</span>
+      ${fill}
+    </span>
   </div>`;
 }
 
@@ -530,6 +649,15 @@ LR.village.renderScene = function() {
       const glow = host.querySelector('.vh-glowcss[data-zone="' + h.dataset.zone + '"]');
       h.addEventListener('mouseenter', () => { if (glow) glow.classList.add('on'); h.classList.add('hot-on'); });
       h.addEventListener('mouseleave', () => { if (glow) glow.classList.remove('on'); h.classList.remove('hot-on'); });
+      // 망루·보강문 클릭 → 외부 정찰 패널
+      if (h.dataset.zone === 'watchtower' || h.dataset.zone === 'gate') {
+        h.classList.add('vh-hot-act');
+        h.addEventListener('click', (e) => { e.stopPropagation(); LR.village.showOutside(); });
+      }
+    });
+    // 빈 곳 클릭 → 팝오버 닫기
+    host.addEventListener('click', (e) => {
+      if (!e.target.closest('.vh-phot') && !e.target.closest('.vh-hot')) LR.village.closePopover();
     });
     // 인물 핫스팟 — 호버 시 그 인물만 살짝 확대, 클릭 시 선택
     host.querySelectorAll('.vh-phot').forEach(h => {
@@ -561,6 +689,7 @@ if (!window.__vhResizeBound) {
   window.addEventListener('resize', () => {
     if (LR.village.mode === 'compound') fitStage();
     if (LR.village._scopeResize) LR.village._scopeResize();
+    if (LR.village.positionPopover) LR.village.positionPopover();
   });
 }
 
@@ -1007,6 +1136,8 @@ function ensureDom() {
       <main class="vh-center">
         <div class="vh-stage">
           <div class="vh-scene compound" id="vhScene"></div>
+          <div class="vh-pop" id="vhPop"></div>
+          <div class="vh-outside" id="vhOutside"></div>
           <div class="vh-decision" id="vhDecision"></div>
         </div>
         <div class="vh-actbar">
