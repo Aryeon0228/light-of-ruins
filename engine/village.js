@@ -101,12 +101,14 @@ LR.village.open = function(state) {
   document.getElementById('villageScreen').classList.add('active');
   LR.village.render();
   LR.village.startScope();
+  LR.village.startFx();
 };
 
 LR.village.close = function() {
   const el = document.getElementById('villageScreen');
   if (el) el.classList.remove('active');
   LR.village.stopScope();
+  LR.village.stopFx();
 };
 
 LR.village.setMode = function(mode) {
@@ -378,6 +380,7 @@ LR.village.render = function() {
   LR.village.renderScene();
   LR.village.renderDecision();
   LR.village.fillPopover();
+  LR.village.refreshZombies();   // 위협도 따라 좀비 수 갱신
 };
 
 function renderTopbar(s) {
@@ -631,6 +634,126 @@ LR.village.startScope = function() {
 LR.village.stopScope = function() { if (LR.village._scopeStop) LR.village._scopeStop(); };
 
 // ═══════════════════════════════════════════════════════
+//  동적 FX — 외부 좀비 · 비 · 안개 · 모닥불 불씨 · 포인터 패럴렉스
+//  영속 #vhFx 레이어에서 동작 (씬 재렌더에도 안 지워짐)
+// ═══════════════════════════════════════════════════════
+function zombieSvg(i) {
+  const lean = (i % 2 === 0) ? 1 : -1;
+  return `<svg viewBox="0 0 24 48" preserveAspectRatio="xMidYMax meet">
+    <g fill="#10140e">
+      <ellipse cx="12" cy="6" rx="3.3" ry="3.7"/>
+      <path d="M8.6 10 Q12 8.6 15.4 10 L16.4 27 Q12 29 7.6 27 Z"/>
+      <path d="M8.8 12 Q5 16 ${5 + lean} 25 L7 26 Q9.4 18 10 13 Z"/>
+      <path d="M15.2 12 Q19 16 ${19 - lean} 25 L17 26 Q14.6 18 14 13 Z"/>
+      <path d="M9 26 L8 41 L10 41 L11 28 Z"/>
+      <path d="M15 26 L16 41 L14 41 L13 28 Z"/>
+    </g>
+  </svg>`;
+}
+
+// 위협도(소음)에 따라 좀비 수/불투명도 — 변화 없으면 재생성 안 함(애니 유지)
+LR.village.refreshZombies = function() {
+  const host = document.getElementById('vhZombies');
+  const s = LR.village.state;
+  if (!host || !s) return;
+  const raid = LR.raidProbability(s.noiseToday);
+  const n = Math.max(1, Math.min(7, 1 + Math.round(s.noiseToday / 16)));
+  const sig = n + '|' + raid.scale;
+  if (LR.village._zSig === sig) return;
+  LR.village._zSig = sig;
+  const op = raid.p >= 0.6 ? 0.9 : raid.p >= 0.25 ? 0.62 : 0.42;
+  let html = '';
+  for (let i = 0; i < n; i++) {
+    const band = 8 + (i * 13 + i * i * 7) % 9;          // y 8~17% (뒷담장 너머 원경)
+    const x = 5 + (i * 37 + i * i * 11) % 86;
+    const dur = 16 + (i * 7) % 16;                       // 배회 주기
+    const dir = (i % 2) ? 1 : -1;
+    const scale = 0.85 + (band - 8) / 9 * 0.5;           // 아래쪽 살짝 큼
+    const delay = -((i * 3) % 11);
+    html += `<span class="vh-zombie" style="top:${band}%; left:${x}%; --zdur:${dur}s; height:${(5.6 * scale).toFixed(2)}%; opacity:${op}; animation-delay:${delay}s"><span class="vh-zinner" style="transform:scaleX(${dir})">${zombieSvg(i)}</span></span>`;
+  }
+  host.innerHTML = html;
+};
+
+LR.village.buildEmbers = function() {
+  const host = document.getElementById('vhEmbers');
+  if (!host || host.childElementCount) return;
+  let html = '<span class="vh-smoke"></span>';
+  for (let i = 0; i < 10; i++) {
+    const dur = 2.6 + (i % 5) * 0.55;
+    const dx = (i % 3 - 1) * 2;
+    html += `<span class="vh-ember" style="--edur:${dur}s; --edx:${dx}; animation-delay:${(-i * 0.5).toFixed(2)}s"></span>`;
+  }
+  host.innerHTML = html;
+};
+
+LR.village.startRain = function() {
+  const canvas = document.getElementById('vhRain');
+  if (!canvas) return;
+  LR.village.stopRain();   // 중복 루프 방지
+  const ctx = canvas.getContext('2d');
+  let drops = [], W = 1, H = 1;
+  const dpr = window.devicePixelRatio || 1, wind = 2.2 * dpr;
+  function newDrop(rand) {
+    return { x: Math.random() * W, y: rand ? Math.random() * H : -20 * dpr,
+      len: (10 + Math.random() * 16) * dpr, sp: (7 + Math.random() * 7) * dpr };
+  }
+  function resize() {
+    const r = canvas.getBoundingClientRect();
+    W = canvas.width = Math.max(1, Math.round(r.width * dpr));
+    H = canvas.height = Math.max(1, Math.round(r.height * dpr));
+    const s = LR.village.state;
+    const heavy = s && dayPhase(s).cls === 'rain';
+    const count = Math.round((W * H) / (heavy ? 10000 : 24000));
+    drops = []; for (let i = 0; i < count; i++) drops.push(newDrop(true));
+  }
+  LR.village._rainResize = resize;
+  resize();
+  let stopped = false;
+  LR.village._rainStop = () => { stopped = true; if (LR.village._rainRaf) cancelAnimationFrame(LR.village._rainRaf); };
+  function frame() {
+    if (stopped) return;
+    ctx.clearRect(0, 0, W, H);
+    ctx.strokeStyle = 'rgba(184,202,222,0.22)'; ctx.lineWidth = Math.max(1, dpr * 0.9);
+    ctx.beginPath();
+    for (const d of drops) {
+      ctx.moveTo(d.x, d.y); ctx.lineTo(d.x + wind, d.y + d.len);
+      d.y += d.sp; d.x += wind * 0.4;
+      if (d.y > H) Object.assign(d, newDrop(false));
+    }
+    ctx.stroke();
+    LR.village._rainRaf = requestAnimationFrame(frame);
+  }
+  LR.village._rainRaf = requestAnimationFrame(frame);
+};
+LR.village.stopRain = function() { if (LR.village._rainStop) LR.village._rainStop(); };
+
+LR.village.bindParallax = function() {
+  if (LR.village._plxBound) return;
+  const stage = document.querySelector('.vh-stage');
+  const screen = document.getElementById('villageScreen');
+  if (!stage || !screen) return;
+  LR.village._plxBound = true;
+  let raf = 0, tx = 0, ty = 0;
+  function apply() { raf = 0; screen.style.setProperty('--px', tx.toFixed(3)); screen.style.setProperty('--py', ty.toFixed(3)); }
+  stage.addEventListener('pointermove', (e) => {
+    const r = stage.getBoundingClientRect();
+    tx = ((e.clientX - r.left) / r.width - 0.5) * 2;
+    ty = ((e.clientY - r.top) / r.height - 0.5) * 2;
+    if (!raf) raf = requestAnimationFrame(apply);
+  });
+  stage.addEventListener('pointerleave', () => { tx = 0; ty = 0; if (!raf) raf = requestAnimationFrame(apply); });
+};
+
+LR.village.startFx = function() {
+  LR.village.buildEmbers();
+  LR.village.refreshZombies();
+  LR.village.startRain();
+  LR.village.bindParallax();
+};
+LR.village.stopFx = function() { LR.village.stopRain(); };
+
+// ═══════════════════════════════════════════════════════
 //  씬 (중앙 거점 조망)
 // ═══════════════════════════════════════════════════════
 LR.village.renderScene = function() {
@@ -683,6 +806,19 @@ function fitStage() {
   if (h > ch) { h = ch; w = ch * ar; }
   box.style.width = Math.round(w) + 'px';
   box.style.height = Math.round(h) + 'px';
+
+  // FX 레이어(비·안개·좀비·불씨)를 스테이지박스(이미지 영역)에 픽셀 정렬
+  const fx = document.getElementById('vhFx');
+  const stage = document.querySelector('.vh-stage');
+  if (fx && stage) {
+    const offX = (cw - w) / 2, offY = (ch - h) / 2;
+    const hr = host.getBoundingClientRect(), sr = stage.getBoundingClientRect();
+    fx.style.left = Math.round((hr.left - sr.left) + offX) + 'px';
+    fx.style.top = Math.round((hr.top - sr.top) + offY) + 'px';
+    fx.style.width = Math.round(w) + 'px';
+    fx.style.height = Math.round(h) + 'px';
+    if (LR.village._rainResize) LR.village._rainResize();
+  }
 }
 if (!window.__vhResizeBound) {
   window.__vhResizeBound = true;
@@ -1141,6 +1277,12 @@ function ensureDom() {
       <main class="vh-center">
         <div class="vh-stage">
           <div class="vh-scene compound" id="vhScene"></div>
+          <div class="vh-fx" id="vhFx">
+            <div class="vh-fx-zombies" id="vhZombies"></div>
+            <div class="vh-fx-embers" id="vhEmbers"></div>
+            <div class="vh-fx-fog"></div>
+            <canvas class="vh-fx-rain" id="vhRain"></canvas>
+          </div>
           <div class="vh-pop" id="vhPop"></div>
           <div class="vh-outside" id="vhOutside"></div>
           <div class="vh-decision" id="vhDecision"></div>
