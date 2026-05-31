@@ -239,13 +239,13 @@
 /* 모닥불 빛무리 — 중앙(45% 56%)에서 맥동하는 따뜻한 빛 */
 .vh-firelight {
   z-index: 3;
-  background: radial-gradient(circle at 54% 60%,
+  background: radial-gradient(circle at 50% 50%,
     rgba(255, 170, 70, .55) 0%,
     rgba(255, 130, 45, .30) 6%,
     rgba(255, 110, 40, .12) 12%,
     transparent 19%);
   mix-blend-mode: screen;
-  transform-origin: 54% 60%;
+  transform-origin: 50% 50%;
   animation: vhFire 1.7s ease-in-out infinite;
   will-change: opacity, transform;
 }
@@ -863,18 +863,18 @@
 
 /* 모닥불 불씨 + 연기 (중앙 ~45% 56%) */
 .vh-ember {
-  position: absolute; left: 54%; top: 61%; width: 3px; height: 3px; margin-left: -1.5px;
+  position: absolute; left: 50%; top: 51%; width: 3px; height: 3px; margin-left: -1.5px;
   border-radius: 50%; background: #ffc46a; box-shadow: 0 0 4px 1px #ff8c33;
   mix-blend-mode: screen; opacity: 0;
   animation: vhEmber var(--edur,3s) ease-out infinite;
 }
 @keyframes vhEmber {
-  0%   { top: 61%; opacity: 0; transform: translateX(0) scale(1); }
+  0%   { top: 51%; opacity: 0; transform: translateX(0) scale(1); }
   15%  { opacity: .95; }
-  100% { top: 54%; opacity: 0; transform: translateX(calc(var(--edx,0) * 5px)) scale(.3); }
+  100% { top: 44%; opacity: 0; transform: translateX(calc(var(--edx,0) * 5px)) scale(.3); }
 }
 .vh-smoke {
-  position: absolute; left: 54%; top: 49%; width: 8%; height: 12%; margin-left: -4%;
+  position: absolute; left: 50%; top: 39%; width: 8%; height: 12%; margin-left: -4%;
   background: radial-gradient(ellipse at 50% 100%, rgba(120,124,128,.14), transparent 72%);
   mix-blend-mode: screen; filter: blur(5px);
   animation: vhSmoke 6.5s ease-in-out infinite;
@@ -932,3 +932,14 @@
   animation: vhOzPace var(--od,10s) ease-in-out infinite alternate;
 }
 @keyframes vhOzPace { from { margin-left: -4%; } to { margin-left: 4%; } }
+
+/* ═══════════════════════════════════════════════════════
+   패럴렉스 배경 5레이어 (하늘→담장→마당→건물→정문)
+   스테이지박스 자체가 mid 기준(--px*-7px)으로 이동 →
+   하늘/담장은 추가 +translate로 덜 움직이고, 정문은 -translate로 더 움직임
+   ═══════════════════════════════════════════════════════ */
+.vh-px { z-index: 0; }
+.vh-px-front { z-index: 6; }   /* 정문 = 인물(z5) 앞 */
+.vh-px-sky   { transform: translate(calc(var(--px,0) *  5px), calc(var(--py,0) *  3px)); transition: transform .25s ease-out; }
+.vh-px-wall  { transform: translate(calc(var(--px,0) *  3px), calc(var(--py,0) *  2px)); transition: transform .25s ease-out; }
+.vh-px-front { transform: translate(calc(var(--px,0) * -6px), calc(var(--py,0) * -3px)); transition: transform .25s ease-out; }

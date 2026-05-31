@@ -783,7 +783,7 @@ function fitStage() {
   if (!host) return;
   const box = host.querySelector('.vh-stagebox');
   if (!box) return;
-  const cw = host.clientWidth, ch = host.clientHeight, ar = 2896 / 2172;
+  const cw = host.clientWidth, ch = host.clientHeight, ar = 1484 / 1060;
   let w = cw, h = cw / ar;
   if (h > ch) { h = ch; w = ch * ar; }
   box.style.width = Math.round(w) + 'px';
@@ -878,9 +878,8 @@ function sceneCompound(s) {
     const l = zn.box[0] - pad, t = zn.box[1] - pad, w = zn.box[2] + pad * 2, h = zn.box[3] + pad * 2;
     return `<div class="vh-glowcss" data-zone="${zn.z}" style="left:${l}%;top:${t}%;width:${w}%;height:${h}%"></div>`;
   }).join('');
-  // 모닥불 — PNG flicker + 맥동하는 따뜻한 빛무리(중앙)
-  const fire = `<img class="vh-layer vh-campfire" src="${A}campfire.png" alt="" onerror="this.remove()">
-    <div class="vh-layer vh-firelight"></div>`;
+  // 모닥불 빛무리 — 패럴렉스 배경(px3_main)에 모닥불이 baked-in이라 glow만 얹음
+  const fire = `<div class="vh-layer vh-firelight"></div>`;
   const people = PEOPLE_FILES.map(p => {
     const c = s.characters[p.char];
     const dead = (!c || !c.alive) ? 'display:none;' : '';
@@ -917,11 +916,15 @@ function sceneCompound(s) {
     return `<div class="vh-pips" data-pchar="${p.char}" style="left:${cx}%;top:${ty}%">${items.join('')}</div>`;
   }).join('');
   return `<div class="vh-stagebox">
-    <img class="vh-layer vh-bg" src="${A}bg_village.png" alt="">
+    <img class="vh-layer vh-px vh-px-sky"   src="${A}bg_px1_sky.png"   alt="" onerror="this.remove()">
+    <img class="vh-layer vh-px vh-px-wall"  src="${A}bg_px2_wall.png"  alt="" onerror="this.remove()">
+    <img class="vh-layer vh-px vh-px-main"  src="${A}bg_px3_main.png"  alt="" onerror="this.remove()">
+    <img class="vh-layer vh-px vh-px-build" src="${A}bg_px4_build.png" alt="" onerror="this.remove()">
     ${glows}
     ${fire}
     ${people}
     ${pips}
+    <img class="vh-layer vh-px vh-px-front" src="${A}bg_px5_front.png" alt="" onerror="this.remove()">
     ${hots}
     ${phots}
   </div>`;
