@@ -239,13 +239,13 @@
 /* 모닥불 빛무리 — 중앙(45% 56%)에서 맥동하는 따뜻한 빛 */
 .vh-firelight {
   z-index: 3;
-  background: radial-gradient(circle at 45% 56%,
+  background: radial-gradient(circle at 54% 60%,
     rgba(255, 170, 70, .55) 0%,
     rgba(255, 130, 45, .30) 6%,
     rgba(255, 110, 40, .12) 12%,
     transparent 19%);
   mix-blend-mode: screen;
-  transform-origin: 45% 56%;
+  transform-origin: 54% 60%;
   animation: vhFire 1.7s ease-in-out infinite;
   will-change: opacity, transform;
 }
@@ -882,19 +882,19 @@
 
 /* 모닥불 불씨 + 연기 (중앙 ~45% 56%) */
 .vh-ember {
-  position: absolute; left: 45%; top: 56%; width: 3px; height: 3px; margin-left: -1.5px;
+  position: absolute; left: 54%; top: 61%; width: 3px; height: 3px; margin-left: -1.5px;
   border-radius: 50%; background: #ffc46a; box-shadow: 0 0 4px 1px #ff8c33;
   mix-blend-mode: screen; opacity: 0;
   animation: vhEmber var(--edur,3s) ease-out infinite;
 }
 @keyframes vhEmber {
-  0%   { top: 56%; opacity: 0; transform: translateX(0) scale(1); }
-  12%  { opacity: .95; }
-  100% { top: 40%; opacity: 0; transform: translateX(calc(var(--edx,0) * 6px)) scale(.25); }
+  0%   { top: 61%; opacity: 0; transform: translateX(0) scale(1); }
+  15%  { opacity: .95; }
+  100% { top: 54%; opacity: 0; transform: translateX(calc(var(--edx,0) * 5px)) scale(.3); }
 }
 .vh-smoke {
-  position: absolute; left: 45%; top: 50%; width: 9%; height: 22%; margin-left: -4.5%;
-  background: radial-gradient(ellipse at 50% 100%, rgba(120,124,128,.16), transparent 72%);
+  position: absolute; left: 54%; top: 49%; width: 8%; height: 12%; margin-left: -4%;
+  background: radial-gradient(ellipse at 50% 100%, rgba(120,124,128,.14), transparent 72%);
   mix-blend-mode: screen; filter: blur(5px);
   animation: vhSmoke 6.5s ease-in-out infinite;
 }

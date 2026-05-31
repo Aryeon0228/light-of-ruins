@@ -79,7 +79,8 @@ const PEOPLE_FILES = [
   { file:'dongho',         char:'dongho',    inplace:true, box:[58.0,61.9,7.6,15.7], ox:61.8, oy:77.7 },
   { file:'jonghyeok',      char:'jonghyeok', inplace:true, box:[72.3,70.2,7.6,15.0], ox:76.1, oy:85.2 },
   { file:'hayeong',        char:'hayeong',   inplace:true, box:[86.7,5.2,3.4,12.0],  ox:88.4, oy:17.2 },
-  { file:'jaehyeok_minsu', char:'jaehyeok',  inplace:true, box:[44.3,50.0,9.5,13.2], ox:49.0, oy:63.2 }
+  { file:'jaehyeok',       char:'jaehyeok',  inplace:true, box:[44.3,50.0,6.1,13.1], ox:47.3, oy:63.1 },
+  { file:'minsu',          char:'minsu',     inplace:true, box:[50.4,55.4,3.4,7.7],  ox:52.1, oy:63.2 }
 ];
 
 // ═══════════════════════════════════════════════════════
@@ -906,7 +907,7 @@ function sceneCompound(s) {
   const people = PEOPLE_FILES.map(p => {
     const c = s.characters[p.char];
     const dead = (!c || !c.alive) ? 'display:none;' : '';
-    const isSel = LR.village.picked && (p.char === sel || (p.file === 'jaehyeok_minsu' && (sel === 'jaehyeok' || sel === 'minsu')));
+    const isSel = LR.village.picked && p.char === sel;
     if (p.inplace) {
       // 풀캔버스 제자리 — 무대에 그대로 포갬. dx/dy(%)는 인물만 미세 이동(나머지는 투명).
       const origin = (p.ox != null) ? `transform-origin:${p.ox}% ${p.oy}%;` : '';
@@ -924,7 +925,7 @@ function sceneCompound(s) {
     const c = s.characters[p.char];
     if (!c || !c.alive || !p.box) return '';
     const pl = Math.max(0, p.box[0] - 1), pt = Math.max(0, p.box[1] - 1), pw = p.box[2] + 2, ph = p.box[3] + 2;
-    const nm = (c.name || '') + (p.file === 'jaehyeok_minsu' ? ' · 민수' : '');
+    const nm = c.name || '';
     return `<button class="vh-phot" data-pchar="${p.char}" style="left:${pl}%;top:${pt}%;width:${pw}%;height:${ph}%"><span class="vh-plab">${nm}</span></button>`;
   }).join('');
   // 상태 경고 핀 — 다치거나 사기 낮은 사람 머리 위 (멀쩡하면 안 뜸)
