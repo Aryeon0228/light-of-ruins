@@ -796,7 +796,7 @@
   text-shadow: 1px 1px 0 #000;
 }
 .vh-out-view {
-  height: 78px; margin: 0; position: relative; overflow: hidden; border-bottom: 2px solid #14130d;
+  height: 160px; margin: 0; position: relative; overflow: hidden; border-bottom: 2px solid #14130d;
 }
 /* 폐허 실루엣 + 비 느낌 */
 .vh-out-view::after {
@@ -915,3 +915,20 @@
 }
 .vh-beacon-sig::after { animation-delay: 1.05s; }
 @keyframes vhSig { 0% { transform: scale(.3); opacity: .9; } 100% { transform: scale(4.6); opacity: 0; } }
+
+/* ═══════════════════════════════════════════════════════
+   망루 외부 정찰 — 실사 외부 전경(outside_normal01) + 도트 좀비(zombie01)
+   ═══════════════════════════════════════════════════════ */
+.vh-out-view::after, .vh-out-view::before { content: none; }   /* 기존 CSS 실루엣/빗줄기 끔 (실사 배경 사용) */
+.vh-out-bg {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; object-position: center 42%; display: block;
+}
+.vh-out-z { position: absolute; inset: 0; pointer-events: none; }
+.vh-ozombie {
+  position: absolute; width: auto; transform-origin: 50% 100%;
+  image-rendering: auto;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,.6));
+  animation: vhOzPace var(--od,10s) ease-in-out infinite alternate;
+}
+@keyframes vhOzPace { from { margin-left: -4%; } to { margin-left: 4%; } }

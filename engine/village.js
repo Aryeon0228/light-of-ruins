@@ -79,8 +79,8 @@ const PEOPLE_FILES = [
   { file:'dongho',         char:'dongho',    inplace:true, box:[58.0,61.9,7.6,15.7], ox:61.8, oy:77.7 },
   { file:'jonghyeok',      char:'jonghyeok', inplace:true, box:[72.3,70.2,7.6,15.0], ox:76.1, oy:85.2 },
   { file:'hayeong',        char:'hayeong',   inplace:true, box:[86.7,5.2,3.4,12.0],  ox:88.4, oy:17.2 },
-  { file:'jaehyeok',       char:'jaehyeok',  inplace:true, box:[44.3,50.0,6.1,13.1], ox:47.3, oy:63.1 },
-  { file:'minsu',          char:'minsu',     inplace:true, box:[50.4,55.4,3.4,7.7],  ox:52.1, oy:63.2 }
+  { file:'jaehyeok',       char:'jaehyeok',  inplace:true, box:[44.3,50.0,6.1,11.7], ox:47.3, oy:61.7 },
+  { file:'minsu',          char:'minsu',     inplace:true, box:[49.1,55.4,4.6,7.7],  ox:51.5, oy:63.2 }
 ];
 
 // ═══════════════════════════════════════════════════════
@@ -210,10 +210,25 @@ LR.village.showOutside = function() {
   const lastNight = s.raidLastNightSummary
     ? `<div class="vh-out-row danger">🩸 ${s.raidLastNightSummary}</div>`
     : `<div class="vh-out-row calm">지난밤은 조용히 지나갔다.</div>`;
+  // 위협도(소음)에 따라 담장 밖 좀비 수
+  const OUT = 'assets/images/outside/';
+  const zN = { '위험': 6, '경계': 4, '주의': 2, '낮음': 1 }[raid.scale] ?? 1;
+  let zh = '';
+  for (let i = 0; i < zN; i++) {
+    const x = 6 + (i * 31 + i * i * 17) % 80;
+    const gb = 6 + (i * 13 + i * i * 7) % 26;        // 바닥에서 띄운 정도(원근) 6~32%
+    const dur = 8 + (i * 5) % 8;
+    const dir = (i % 2) ? 1 : -1;
+    const sc = 1.15 - gb / 32 * 0.55;                // 아래(가까움)일수록 큼
+    zh += `<img class="vh-ozombie" src="${OUT}zombie01.png" alt="" style="left:${x}%; bottom:${gb}%; height:${(46 * sc).toFixed(0)}%; --od:${dur}s; transform:scaleX(${dir}); animation-delay:${-(i * 2) % 7}s">`;
+  }
   el.innerHTML = `
     <button class="vh-pop-x" id="vhOutX">✕</button>
     <div class="vh-out-h">⌖ 망루 · 외부 정찰</div>
-    <div class="vh-out-view ${ph.cls}" style="background:linear-gradient(180deg, ${ph.sky0}, ${ph.sky1})"></div>
+    <div class="vh-out-view ${ph.cls}">
+      <img class="vh-out-bg" src="${OUT}outside_normal01.png" alt="">
+      <div class="vh-out-z">${zh}</div>
+    </div>
     <div class="vh-out-grid">
       <div><span>시간</span><b>${ph.label}</b></div>
       <div><span>소음</span><b style="color:${col}">${n}</b></div>
