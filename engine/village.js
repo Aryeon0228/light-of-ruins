@@ -381,7 +381,6 @@ LR.village.render = function() {
   LR.village.renderScene();
   LR.village.renderDecision();
   LR.village.fillPopover();
-  LR.village.refreshZombies();   // 위협도 따라 좀비 수 갱신
 };
 
 function renderTopbar(s) {
@@ -642,43 +641,7 @@ LR.village.stopScope = function() { if (LR.village._scopeStop) LR.village._scope
 //  동적 FX — 외부 좀비 · 비 · 안개 · 모닥불 불씨 · 포인터 패럴렉스
 //  영속 #vhFx 레이어에서 동작 (씬 재렌더에도 안 지워짐)
 // ═══════════════════════════════════════════════════════
-function zombieSvg(i) {
-  const lean = (i % 2 === 0) ? 1 : -1;
-  return `<svg viewBox="0 0 24 48" preserveAspectRatio="xMidYMax meet">
-    <g fill="#10140e">
-      <ellipse cx="12" cy="6" rx="3.3" ry="3.7"/>
-      <path d="M8.6 10 Q12 8.6 15.4 10 L16.4 27 Q12 29 7.6 27 Z"/>
-      <path d="M8.8 12 Q5 16 ${5 + lean} 25 L7 26 Q9.4 18 10 13 Z"/>
-      <path d="M15.2 12 Q19 16 ${19 - lean} 25 L17 26 Q14.6 18 14 13 Z"/>
-      <path d="M9 26 L8 41 L10 41 L11 28 Z"/>
-      <path d="M15 26 L16 41 L14 41 L13 28 Z"/>
-    </g>
-  </svg>`;
-}
-
-// 위협도(소음)에 따라 좀비 수/불투명도 — 변화 없으면 재생성 안 함(애니 유지)
-LR.village.refreshZombies = function() {
-  const host = document.getElementById('vhZombies');
-  const s = LR.village.state;
-  if (!host || !s) return;
-  const raid = LR.raidProbability(s.noiseToday);
-  const n = Math.max(1, Math.min(7, 1 + Math.round(s.noiseToday / 16)));
-  const sig = n + '|' + raid.scale;
-  if (LR.village._zSig === sig) return;
-  LR.village._zSig = sig;
-  const op = raid.p >= 0.6 ? 0.9 : raid.p >= 0.25 ? 0.62 : 0.42;
-  let html = '';
-  for (let i = 0; i < n; i++) {
-    const band = 8 + (i * 13 + i * i * 7) % 9;          // y 8~17% (뒷담장 너머 원경)
-    const x = 5 + (i * 37 + i * i * 11) % 86;
-    const dur = 16 + (i * 7) % 16;                       // 배회 주기
-    const dir = (i % 2) ? 1 : -1;
-    const scale = 0.85 + (band - 8) / 9 * 0.5;           // 아래쪽 살짝 큼
-    const delay = -((i * 3) % 11);
-    html += `<span class="vh-zombie" style="top:${band}%; left:${x}%; --zdur:${dur}s; height:${(5.6 * scale).toFixed(2)}%; opacity:${op}; animation-delay:${delay}s"><span class="vh-zinner" style="transform:scaleX(${dir})">${zombieSvg(i)}</span></span>`;
-  }
-  host.innerHTML = html;
-};
+// (외부 좀비는 절차적 SVG 대신 도트 스프라이트로 추후 재구현 예정 — refreshZombies 제거됨)
 
 LR.village.buildEmbers = function() {
   const host = document.getElementById('vhEmbers');
@@ -752,7 +715,6 @@ LR.village.bindParallax = function() {
 
 LR.village.startFx = function() {
   LR.village.buildEmbers();
-  LR.village.refreshZombies();
   LR.village.startRain();
   LR.village.bindParallax();
 };
@@ -1283,8 +1245,7 @@ function ensureDom() {
         <div class="vh-stage">
           <div class="vh-scene compound" id="vhScene"></div>
           <div class="vh-fx" id="vhFx">
-            <div class="vh-fx-zombies" id="vhZombies"></div>
-            <div class="vh-fx-embers" id="vhEmbers"></div>
+              <div class="vh-fx-embers" id="vhEmbers"></div>
             <div class="vh-fx-fog"></div>
             <canvas class="vh-fx-rain" id="vhRain"></canvas>
           </div>
