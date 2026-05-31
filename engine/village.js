@@ -137,7 +137,7 @@ LR.village.fillPopover = function() {
   pop.innerHTML = `
     <button class="vh-pop-x" id="vhPopX">✕</button>
     <div class="vh-pop-head">
-      <span class="vh-pop-port" style="--cc:${def.color}">${portraitSvg(c, def)}</span>
+      <span class="vh-pop-port" style="--cc:${def.color}">${portraitInner(id, c, def)}</span>
       <div class="vh-pop-id">
         <div class="vh-pop-name">${c.name}<em>${c.role} · ${def.age}세</em></div>
         <div class="vh-pop-act">${activityOf(c)}</div>
@@ -539,7 +539,7 @@ function renderDetail(s) {
   const d = document.getElementById('vhDetail');
   d.innerHTML = `
     <div class="vh-det-head">
-      <span class="vh-det-port" style="--cc:${def.color}">${portraitSvg(c, def)}</span>
+      <span class="vh-det-port" style="--cc:${def.color}">${portraitInner(id, c, def)}</span>
       <div class="vh-det-id">
         <div class="vh-det-name"><span class="vh-det-dot" style="background:${def.color}"></span>${c.name}<em>${c.role} · ${def.age}세</em></div>
         <div class="vh-det-act">${activityOf(c)}</div>
@@ -884,6 +884,11 @@ function fig(c, def, st) {
 }
 
 // 작은 흉상 (디테일 패널용)
+// 포트레이트: 실사 PNG가 있으면 그 위에 덮고, 없으면(onerror) 절차적 SVG로 폴백.
+// assets/images/portraits/<id>.png 만 떨어뜨리면 자동 적용.
+function portraitInner(id, c, def) {
+  return `${portraitSvg(c, def)}<img class="vh-port-img" src="assets/images/portraits/${id}.png" alt="" onerror="this.remove()">`;
+}
 function portraitSvg(c, def) {
   const skin = '#d8b48f', col = def.color;
   return `<svg viewBox="-30 -64 60 64">
