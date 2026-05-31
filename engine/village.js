@@ -512,8 +512,12 @@ function renderSystems(s) {
       <div class="vh-line"><span>현재</span><b>${spName} · 평균 사기 ${avg}</b></div>
     </section>
 
-    <section class="vh-card">
+    <section class="vh-card vh-beacon-card">
       <h4>주간 비컨</h4>
+      <div class="vh-beacon-dev ${(s.beacon.phase === 'reach' || s.beacon.phase === 'resolve_pre' || s.beacon.phase === 'resolve') ? 'tx-strong' : s.beacon.phase === 'develop' ? 'tx-mid' : 'tx-idle'}">
+        <img src="assets/images/portraits/bc.png" alt="비컨 통신기">
+        <span class="vh-beacon-sig"></span>
+      </div>
       <div class="vh-line"><span>신호</span><b>${beaconDef.name}</b></div>
       <div class="vh-line"><span>단계</span><b>D${LR.beaconDayInWeek(s)} · ${phaseLabel}</b></div>
       <div class="vh-bar"><i style="width:${Math.min(100, LR.beaconScore(s))}%;background:var(--c-beacon)"></i></div>

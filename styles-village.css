@@ -899,3 +899,38 @@
   animation: vhSmoke 6.5s ease-in-out infinite;
 }
 @keyframes vhSmoke { 0%,100% { opacity: .25; transform: translateY(0) scale(1); } 50% { opacity: .5; transform: translateY(-12%) scale(1.12); } }
+
+/* ═══════════════════════════════════════════════════════
+   주간 비컨 통신기 (bc.png) — 단계별 전원 글로우 + 신호 파동
+   ═══════════════════════════════════════════════════════ */
+.vh-beacon-dev {
+  position: relative; width: 112px; margin: 3px auto 9px;
+  border-radius: 3px; overflow: visible;
+  --bo: .35;
+}
+.vh-beacon-dev.tx-mid { --bo: .7; }
+.vh-beacon-dev.tx-strong { --bo: 1; }
+.vh-beacon-dev img {
+  display: block; width: 100%; height: auto; border-radius: 3px;
+  border: 1px solid #14130d; box-shadow: inset 0 1px 0 #4a443366, 0 2px 5px #0008;
+}
+/* 전원/송신 글로우 (게이지·버튼 불빛 강조) */
+.vh-beacon-dev::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: 3px;
+  background: radial-gradient(ellipse 42% 30% at 30% 62%, rgba(255,184,96,.5), transparent 70%);
+  mix-blend-mode: screen; opacity: var(--bo);
+  animation: vhBeaconFlick 2.3s ease-in-out infinite;
+}
+@keyframes vhBeaconFlick { 0%,100% { opacity: var(--bo); } 50% { opacity: calc(var(--bo) * .62); } }
+/* 안테나 신호 파동 — 송신 단계에서만 */
+.vh-beacon-sig { position: absolute; top: 7%; left: 57%; width: 8px; height: 8px; pointer-events: none; }
+.vh-beacon-dev.tx-idle .vh-beacon-sig { display: none; }
+.vh-beacon-sig::before, .vh-beacon-sig::after {
+  content: ''; position: absolute; left: 50%; top: 50%;
+  width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px;
+  border: 1.5px solid rgba(150,205,255,.85); border-radius: 50%;
+  transform: scale(.3); opacity: 0;
+  animation: vhSig 2.1s ease-out infinite;
+}
+.vh-beacon-sig::after { animation-delay: 1.05s; }
+@keyframes vhSig { 0% { transform: scale(.3); opacity: .9; } 100% { transform: scale(4.6); opacity: 0; } }
