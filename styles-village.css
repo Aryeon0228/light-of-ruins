@@ -967,3 +967,34 @@
 .vh-resrow-tr.flat { color: #6a6a48; }
 #villageScreen .vh-resrow.flash-up { animation: vhFlashUp .7s ease-out; }
 #villageScreen .vh-resrow.flash-dn { animation: vhFlashDn .7s ease-out; }
+
+/* ═══════════════════════════════════════════════════════
+   컴팩트 로스터 (세로 축소) + 클릭 시 전신사진 디테일
+   ═══════════════════════════════════════════════════════ */
+.vh-rost { display: block; padding: 0.3rem 0.5rem; }
+.vh-rost-top { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
+.vh-rost-top .vh-rost-name { font-size: 0.85rem; }
+.vh-rost-top .vh-rost-state { flex-shrink: 0; }
+.vh-rost-stats { display: flex; gap: 9px; margin-top: 3px; }
+.vh-rost-stats .vh-stat { flex: 1; display: flex; align-items: center; gap: 4px; min-width: 0; }
+.vh-rost-stats .vh-mini { flex: 1; }
+
+/* 전신사진 디테일 */
+.vh-det-photo {
+  position: relative; width: 100%; height: 190px; border-radius: 6px; overflow: hidden;
+  border: 1px solid #14130d; margin-bottom: 0.5rem;
+  background: radial-gradient(circle at 50% 28%, #24272f, #0d0f15);
+  box-shadow: inset 0 0 18px #000a;
+}
+.vh-det-photo > svg { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .45; }
+.vh-det-fullimg {
+  position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1;
+  object-fit: contain; object-position: center bottom; background: #0d0f15;
+}
+.vh-det-photo.dead .vh-det-fullimg { filter: grayscale(1) brightness(.55); }
+.vh-det-tag {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+  padding: 0.32rem 0.5rem 0.3rem; background: linear-gradient(transparent, #000d);
+  font-family: 'Galmuri11', monospace; color: #ffcf86; font-size: 0.95rem; text-shadow: 1px 1px 0 #000;
+}
+.vh-det-tag em { font-style: normal; font-size: 0.66rem; color: #cfcaa8; margin-left: 0.35rem; }

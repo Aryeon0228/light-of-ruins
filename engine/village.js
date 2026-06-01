@@ -487,12 +487,14 @@ function renderRoster(s) {
     const hpLow = c.alive && c.health < 50 ? ' low' : '';
     const moLow = c.alive && c.morale < 50 ? ' low' : '';
     return `<button class="vh-rost${sel}${dead}${danger}" data-rost="${id}" style="--cc:${def.color}">
-      <span class="vh-rost-body">
+      <span class="vh-rost-top">
         <span class="vh-rost-name">${c.name}<em>${c.role}</em></span>
+        <span class="vh-rost-state" style="color:${c.alive ? (c.health < 50 || c.morale < 50 ? hpc : 'var(--c-text-dim)') : '#777'}">${c.alive ? ht.label : '사망'}</span>
+      </span>
+      <span class="vh-rost-stats">
         <span class="vh-stat${hpLow}"><span class="vh-stat-ic" style="color:${hpc}">${HPIC}</span><span class="vh-mini"><i style="width:${c.health}%;background:${hpc}"></i></span></span>
         <span class="vh-stat${moLow}"><span class="vh-stat-ic" style="color:${moc}">${MOIC}</span><span class="vh-mini"><i style="width:${c.morale}%;background:${moc}"></i></span></span>
       </span>
-      <span class="vh-rost-state" style="color:${c.alive ? (c.health < 50 || c.morale < 50 ? hpc : 'var(--c-text-dim)') : '#777'}">${c.alive ? ht.label : '사망'}</span>
     </button>`;
   }).join('');
   root.querySelectorAll('[data-rost]').forEach(b => {
@@ -579,17 +581,16 @@ function renderDetail(s) {
   const mt = LR.moraleTier(c.morale);
   const d = document.getElementById('vhDetail');
   d.innerHTML = `
-    <div class="vh-det-head">
-      <span class="vh-det-port" style="--cc:${def.color}">${portraitInner(id, c, def)}</span>
-      <div class="vh-det-id">
-        <div class="vh-det-name"><span class="vh-det-dot" style="background:${def.color}"></span>${c.name}<em>${c.role} · ${def.age}세</em></div>
-        <div class="vh-det-act">${activityOf(c)}</div>
-      </div>
+    <div class="vh-det-photo ${c.alive ? '' : 'dead'}" style="--cc:${def.color}">
+      ${portraitSvg(c, def)}
+      <img class="vh-det-fullimg" src="assets/images/portraits/${id}.png" alt="" onerror="this.remove()">
+      <div class="vh-det-tag"><span class="vh-det-dot" style="background:${def.color}"></span>${c.name}<em>${c.role} · ${def.age}세</em></div>
     </div>
+    <div class="vh-det-act">${activityOf(c)}</div>
     <div class="vh-det-bio">${def.bio}</div>
     <div class="vh-det-stat">
-      <div class="vh-det-row"><span>체력</span><span class="vh-detbar"><i style="width:${c.health}%;background:${hpColor(c.health)}"></i></span><b>${c.health} · ${c.alive ? ht.label : '사망'}</b></div>
-      <div class="vh-det-row"><span>사기</span><span class="vh-detbar"><i style="width:${c.morale}%;background:var(--c-axis-morale)"></i></span><b>${c.morale} · ${mt.label}</b></div>
+      <div class="vh-det-row"><span>체력</span><span class="vh-detbar"><i style="width:${c.health}%;background:${hpColor(c.health)}"></i></span><b style="color:${hpColor(c.health)}">${c.alive ? c.health : '—'} · ${c.alive ? ht.label : '사망'}</b></div>
+      <div class="vh-det-row"><span>사기</span><span class="vh-detbar"><i style="width:${c.morale}%;background:${moColor(c.morale)}"></i></span><b style="color:${moColor(c.morale)}">${c.alive ? c.morale : '—'} · ${c.alive ? mt.label : ''}</b></div>
     </div>
     <div class="vh-det-sens">전례 감수성 · 부정 ×${def.negSens} / 긍정 ×${def.posSens}</div>
   `;
