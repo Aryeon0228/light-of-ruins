@@ -400,47 +400,13 @@ LR.village.render = function() {
 
 function renderTopbar(s) {
   const seasonName = LR.SEASONS[s.season].name;
-  const alive = LR.aliveChars(s).length;
   const raid = LR.raidProbability(s.noiseToday);
-  const foodT = LR.foodTier(s.food);
 
   document.getElementById('vhDay').textContent = 'Day ' + s.day;
   document.getElementById('vhSeason').textContent = seasonName;
   document.getElementById('vhClock').textContent = dayPhase(s).label;
-
-  // 직관화: 게이지(찬 정도) + 전일 대비 추세 화살표
-  const cur = { food: s.food, water: s.water, fuel: s.fuel, med: s.medicine, noise: s.noiseToday, alive };
-  const prev = LR.village._prevRes;
-  function tr(key, invert) {
-    if (!prev || prev[key] === undefined) return null;
-    if (cur[key] === prev[key]) return { glyph: '─', cls: 'flat' };
-    const up = cur[key] > prev[key];
-    const good = invert ? !up : up;   // 소음·생존자감소는 반전
-    return { glyph: up ? '▲' : '▼', cls: good ? 'good' : 'bad' };
-  }
-  const pills = [
-    pill('food',  '식량', s.food, foodT.tier === 'famine' ? 'danger' : foodT.tier === 'crisis' ? 'warn' : '', s.food / 100, tr('food')),
-    pill('water', '물',   s.water, s.water < 12 ? 'danger' : s.water < 25 ? 'warn' : '', s.water / 100, tr('water')),
-    pill('fuel',  '연료', s.fuel,  s.fuel < 6 ? 'danger' : s.fuel < 12 ? 'warn' : '', s.fuel / 100, tr('fuel')),
-    pill('med',   '의약품', s.medicine, s.medicine === 0 ? 'danger' : s.medicine <= 1 ? 'warn' : '', Math.min(1, s.medicine / 8), tr('med')),
-    pill('noise', '소음', s.noiseToday, raid.p >= 0.6 ? 'danger' : raid.p >= 0.25 ? 'warn' : '', s.noiseToday / 100, tr('noise', true)),
-    pill('people', '생존자', alive + '/10', alive < 10 ? 'warn' : '', alive / 10, tr('alive'))
-  ].join('');
   const resEl = document.getElementById('vhResources');
-  resEl.innerHTML = pills;
-
-  // 자원 변동 즉각 피드백 — 직전 값과 비교해 오른/내린 자원만 플래시
-  if (prev) {
-    for (const k of ['food', 'water', 'fuel', 'med', 'noise']) {
-      if (cur[k] === prev[k]) continue;
-      const el = resEl.querySelector('.vh-pill[data-res="' + k + '"]');
-      if (!el) continue;
-      const rose = cur[k] > prev[k];
-      const good = (k === 'noise') ? !rose : rose;
-      el.classList.add(good ? 'flash-up' : 'flash-dn');
-    }
-  }
-  LR.village._prevRes = cur;
+  if (resEl) resEl.innerHTML = '';   // 자원 현황은 우측 패널(renderSystems)로 이동
 
   // 위협 배너
   const banner = document.getElementById('vhAlert');
@@ -469,6 +435,43 @@ function pill(key, label, value, cls, pct, trend) {
       ${fill}
     </span>
   </div>`;
+}
+
+// 우측 패널용 자원 행 (아이콘 + 라벨 + 게이지 + 값 + 추세) — 상황 파악 쉽게
+function resRow(key, label, value, cls, pct, trend) {
+  const m = RES[key];
+  const tr = trend ? `<span class="vh-resrow-tr ${trend.cls}">${trend.glyph}</span>` : '<span class="vh-resrow-tr"></span>';
+  return `<div class="vh-resrow ${cls || ''}" data-res="${key}">
+    <span class="vh-resrow-ic" style="color:${m.color}">${m.icon}</span>
+    <span class="vh-resrow-lab">${label}</span>
+    <span class="vh-resrow-bar"><i style="width:${Math.round(Math.max(0, Math.min(1, pct)) * 100)}%;background:${m.color}"></i></span>
+    <b class="vh-resrow-val">${value}</b>${tr}
+  </div>`;
+}
+
+// 자원 현황 카드 HTML (우측 패널 최상단). 추세는 _prevRes와 비교.
+function resourceCardHtml(s) {
+  const alive = LR.aliveChars(s).length;
+  const raid = LR.raidProbability(s.noiseToday);
+  const foodT = LR.foodTier(s.food);
+  const prev = LR.village._prevRes;
+  const cur = { food: s.food, water: s.water, fuel: s.fuel, med: s.medicine, noise: s.noiseToday, alive };
+  function tr(key, invert) {
+    if (!prev || prev[key] === undefined) return null;
+    if (cur[key] === prev[key]) return { glyph: '─', cls: 'flat' };
+    const up = cur[key] > prev[key];
+    const good = invert ? !up : up;   // 소음·생존자감소는 반전
+    return { glyph: up ? '▲' : '▼', cls: good ? 'good' : 'bad' };
+  }
+  const rows = [
+    resRow('food',  '식량', s.food, foodT.tier === 'famine' ? 'danger' : foodT.tier === 'crisis' ? 'warn' : '', s.food / 100, tr('food')),
+    resRow('water', '물',   s.water, s.water < 12 ? 'danger' : s.water < 25 ? 'warn' : '', s.water / 100, tr('water')),
+    resRow('fuel',  '연료', s.fuel,  s.fuel < 6 ? 'danger' : s.fuel < 12 ? 'warn' : '', s.fuel / 100, tr('fuel')),
+    resRow('med',   '의약품', s.medicine, s.medicine === 0 ? 'danger' : s.medicine <= 1 ? 'warn' : '', Math.min(1, s.medicine / 8), tr('med')),
+    resRow('noise', '소음', s.noiseToday, raid.p >= 0.6 ? 'danger' : raid.p >= 0.25 ? 'warn' : '', s.noiseToday / 100, tr('noise', true)),
+    resRow('people', '생존자', alive + '/10', alive < 10 ? 'warn' : '', alive / 10, tr('alive'))
+  ].join('');
+  return `<section class="vh-card vh-res-card"><h4>자원 현황</h4>${rows}</section>`;
 }
 
 function renderRoster(s) {
@@ -517,6 +520,7 @@ function renderSystems(s) {
   const swFired = ['SW1','SW2','SW3','SW4','SW5'].filter(id => s.smallWins[id].lastFired > 0).length;
 
   document.getElementById('vhSystems').innerHTML = `
+    ${resourceCardHtml(s)}
     <section class="vh-card">
       <h4>상승 나선</h4>
       <div class="vh-spiral">
@@ -549,6 +553,21 @@ function renderSystems(s) {
       <div class="vh-line"><span>TI</span><b class="${s.TI > 75 ? 'bad' : s.TI > 50 ? 'warn' : ''}">${s.TI} · ${LR.tiState(s.TI)}</b></div>
     </section>
   `;
+
+  // 자원 변동 즉각 피드백(우측 자원 행 플래시) + 직전값 갱신
+  const sysEl = document.getElementById('vhSystems');
+  const prev = LR.village._prevRes;
+  const cur = { food: s.food, water: s.water, fuel: s.fuel, med: s.medicine, noise: s.noiseToday, alive: LR.aliveChars(s).length };
+  if (prev) {
+    for (const k of ['food', 'water', 'fuel', 'med', 'noise']) {
+      if (cur[k] === prev[k]) continue;
+      const el = sysEl.querySelector('.vh-resrow[data-res="' + k + '"]');
+      if (!el) continue;
+      const rose = cur[k] > prev[k];
+      el.classList.add(((k === 'noise') ? !rose : rose) ? 'flash-up' : 'flash-dn');
+    }
+  }
+  LR.village._prevRes = cur;
 }
 
 function renderDetail(s) {
