@@ -12,16 +12,16 @@ LR.selectScenarioNode = function(state) {
   const scripted = LR.scriptedDayFor(state.day);
   if (scripted) return scripted;
 
-  // ── 비컨 announce / resolve 단계 (스크립트 없을 때) ──
-  if (state.beacon.phase === 'announce' || state.beacon.phase === 'resolve') {
+  // ── Tier 2: 비컨 핵심 비트 (예고·도달·해소) — 투입 결정/결과는 유지 ──
+  if (state.beacon.phase === 'announce' || state.beacon.phase === 'reach' ||
+      state.beacon.phase === 'resolve' || state.beacon.phase === 'resolve_pre') {
     return LR.beaconScenarioNode(state);
   }
 
-  // ── Tier 2: 교차 이벤트 5.1~5.6 ──
+  // ── Tier 3: 교차 이벤트 5.1~5.6 (조건 충족 시) ──
   const eligible = LR.eligibleCrossEvents(state)
     .filter(e => !state.recentScenarios.includes(e.id));
   if (eligible.length > 0) {
-    // 가중치 기반 픽
     const totalW = eligible.reduce((s, e) => s + (e.weight || 1), 0);
     let r = Math.random() * totalW;
     for (const e of eligible) {
@@ -31,24 +31,20 @@ LR.selectScenarioNode = function(state) {
     return eligible[0];
   }
 
-  // ── Tier 2.5: 비컨 develop / reach ──
-  if (state.beacon.phase === 'develop' || state.beacon.phase === 'reach') {
-    return LR.beaconScenarioNode(state);
-  }
-
-  // ── Tier 3: TI 기반 ──
+  // ── Tier 4: TI 기반 위기/구원 (긴장의 정점) ──
   const ti = state.TI;
-  if (ti >= 76 && state.rescueCooldown === 0) {
-    return LR.tiRescueNode(state);
-  }
-  if (ti >= 51 && state.crisisStreak >= 2 && state.rescueCooldown === 0) {
-    return LR.tiRescueNode(state);
-  }
-  if (ti <= 25 && state.releaseStreak >= 3) {
-    return LR.tiPressureNode(state);
+  if (ti >= 76 && state.rescueCooldown === 0) return LR.tiRescueNode(state);
+  if (ti >= 51 && state.crisisStreak >= 2 && state.rescueCooldown === 0) return LR.tiRescueNode(state);
+  if (ti <= 25 && state.releaseStreak >= 3) return LR.tiPressureNode(state);
+
+  // ── Tier 5: 마을 하루 이벤트 — 반복되던 비컨 발전/템플릿 자리를 다양한 내부 사건으로 ──
+  if (LR.pickVillageDay) {
+    const vd = LR.pickVillageDay(state);
+    if (vd) return vd;
   }
 
-  // ── Fallback: 템플릿 데이 ──
+  // ── Fallback: 비컨 발전 플레이버 / 템플릿 ──
+  if (state.beacon.phase === 'develop') return LR.beaconScenarioNode(state);
   return LR.generateTemplatedDay(state);
 };
 
