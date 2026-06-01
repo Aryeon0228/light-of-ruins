@@ -1,13 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid slice">
   <defs>
-    <radialGradient id="steam" cx="0.5" cy="0.6" r="0.4">
-      <stop offset="0%" stop-color="#D4A14F" stop-opacity="0.5"/>
-      <stop offset="100%" stop-color="#D4A14F" stop-opacity="0"/>
+    <radialGradient id="g2" cx="50%" cy="64%" r="62%">
+      <stop offset="0%" stop-color="#4a2f12"/><stop offset="45%" stop-color="#180f08"/><stop offset="100%" stop-color="#060504"/>
+    </radialGradient>
+    <radialGradient id="fire2" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffd591" stop-opacity="1"/><stop offset="40%" stop-color="#ff8c33" stop-opacity=".5"/><stop offset="100%" stop-color="#ff6a1f" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <rect width="1600" height="900" fill="#1A1410"/>
-  <ellipse cx="800" cy="540" rx="500" ry="300" fill="url(#steam)"/>
-  <text x="800" y="350" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="22" fill="#5C7DA0" letter-spacing="0.2em">[ 컷씬 시안 2/3 ]</text>
-  <text x="800" y="420" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="40" fill="#D4A14F" font-weight="300">국 한 솥, 김이 오른다</text>
-  <text x="800" y="470" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="20" fill="#9A9388">절제된 양념, 여전한 김</text>
+  <rect width="640" height="360" fill="url(#g2)"/>
+  <!-- 불빛 -->
+  <ellipse cx="320" cy="250" rx="260" ry="150" fill="url(#fire2)" opacity=".85"/>
+  <!-- 솥 -->
+  <path d="M232 232 h176 l-14 70 q-4 18 -22 18 h-104 q-18 0 -22 -18 z" fill="#0c0a07"/>
+  <rect x="222" y="222" width="196" height="16" rx="6" fill="#15110b"/>
+  <path d="M214 230 a10 10 0 0 1 0 -20" fill="none" stroke="#15110b" stroke-width="7"/>
+  <path d="M426 230 a10 10 0 0 0 0 -20" fill="none" stroke="#15110b" stroke-width="7"/>
+  <!-- 불꽃 -->
+  <path d="M300 236 q8 -22 20 -8 q12 -16 22 4 q8 18 -20 22 q-26 -2 -22 -18z" fill="#ffae53" opacity=".9"/>
+  <!-- 김 -->
+  <g fill="none" stroke="#c9c2b0" stroke-width="5" stroke-linecap="round" opacity=".4">
+    <path d="M290 210 q-14 -26 6 -44 q16 -16 2 -40"/><path d="M330 206 q14 -28 -4 -48 q-14 -16 4 -42"/><path d="M366 212 q-10 -22 8 -40"/>
+  </g>
+  <rect width="640" height="360" fill="#000" opacity=".16"/>
 </svg>

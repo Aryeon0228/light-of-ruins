@@ -1,7 +1,26 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
-  <rect width="1600" height="900" fill="#1F1A14"/>
-  <text x="800" y="350" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="22" fill="#5C7DA0" letter-spacing="0.2em">[ 컷씬 시안 3/3 ]</text>
-  <text x="800" y="420" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="40" fill="#D4A14F" font-weight="300">동호의 첫 한 입</text>
-  <text x="800" y="470" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="20" fill="#9A9388">"… 의외로 괜찮은데."</text>
-  <text x="800" y="510" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="18" fill="#7A7368">정훈이 표정 없이 고개만 끄덕인다.</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="g3" cx="50%" cy="60%" r="60%">
+      <stop offset="0%" stop-color="#3e2c16"/><stop offset="50%" stop-color="#15100a"/><stop offset="100%" stop-color="#060504"/>
+    </radialGradient>
+    <radialGradient id="bowl3" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffd08a" stop-opacity=".95"/><stop offset="55%" stop-color="#d08a3a" stop-opacity=".3"/><stop offset="100%" stop-color="#d08a3a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#g3)"/>
+  <!-- 가운데 그릇 온기 -->
+  <ellipse cx="320" cy="240" rx="170" ry="96" fill="url(#bowl3)"/>
+  <!-- 낮은 상 -->
+  <rect x="210" y="252" width="220" height="12" rx="3" fill="#0c0a07"/>
+  <!-- 그릇 -->
+  <path d="M286 236 q34 22 68 0 l-6 18 q-28 14 -56 0z" fill="#1a140d"/>
+  <path d="M292 238 q28 16 56 0" fill="none" stroke="#ffbf73" stroke-width="3" opacity=".8"/>
+  <!-- 두 인물 실루엣 -->
+  <g fill="#000" opacity=".84">
+    <path d="M120 360 q6 -96 60 -116 q34 -12 50 16 q14 30 -6 54 q30 16 26 46 l-180 0z"/>
+    <ellipse cx="176" cy="150" rx="20" ry="22"/>
+    <path d="M520 360 q-6 -96 -60 -116 q-34 -12 -50 16 q-14 30 6 54 q-30 16 -26 46 l180 0z"/>
+    <ellipse cx="464" cy="150" rx="20" ry="22"/>
+  </g>
+  <rect width="640" height="360" fill="#000" opacity=".15"/>
 </svg>

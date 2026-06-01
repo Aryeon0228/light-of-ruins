@@ -247,7 +247,17 @@ LR.render.toast = function(text, kind) {
 // ─── 엔딩 화면 ───
 LR.render.showEnding = function(state) {
   const ending = state.ending;
-  document.getElementById('endingOverlay').classList.add('active');
+  const ov = document.getElementById('endingOverlay');
+  // 엔딩별 무드(연출) — 색조/등장
+  const moodMap = {
+    totalDeath: 'dark', collapse: 'dark', contagion: 'dark',
+    lightVillage: 'warm', safezone: 'warm',
+    forgottenVillage: 'grey', shakingVillage: 'grey', weightedSurvival: 'grey'
+  };
+  ov.classList.remove('mood-dark', 'mood-warm', 'mood-grey', 'enter');
+  ov.classList.add('active', 'mood-' + (moodMap[ending.id] || 'grey'));
+  void ov.offsetWidth;            // 리플로우 → 등장 애니메이션 재생
+  ov.classList.add('enter');
   document.getElementById('endingTitle').textContent = ending.title;
   document.getElementById('endingSubtitle').textContent = ending.subtitle;
 

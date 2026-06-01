@@ -693,3 +693,36 @@ button {
   background: linear-gradient(180deg, #7a6526, #4a3c14); border-color: #14130d; color: #ffcf86;
 }
 .ending-actions button:active { transform: translateY(1px); box-shadow: inset 0 2px 5px #000a; }
+
+/* ═══════════════════════════════════════════════════════
+   엔딩 연출 — 시네마틱 페이드인 + 엔딩별 무드 색 + 타이틀 극적 등장
+   ═══════════════════════════════════════════════════════ */
+#endingOverlay { opacity: 0; transition: opacity .7s ease; }
+#endingOverlay.enter { opacity: 1; }
+
+/* 엔딩별 무드: 어둠(소멸/붕괴) · 따뜻함(빛의마을/안전지대) · 씁쓸(잊혀진/흔들리는/생존) */
+#endingOverlay.mood-dark { background: radial-gradient(ellipse at 50% -5%, #1c1418 0%, #07080a 68%); --mood: #c08080; --moodglow: rgba(190,95,95,.28); }
+#endingOverlay.mood-warm { background: radial-gradient(ellipse at 50% -5%, #261e12 0%, #0a0907 68%); --mood: #ffcf86; --moodglow: rgba(255,200,120,.34); }
+#endingOverlay.mood-grey { background: radial-gradient(ellipse at 50% -5%, #161a20 0%, #08090b 68%); --mood: #a6b2bd; --moodglow: rgba(160,175,190,.22); }
+
+/* 타이틀 — 무드 색 + 극적 등장(레터스페이싱 수렴 + 글로우 점등) */
+#endingOverlay .ending-title { color: var(--mood, #ffcf86); }
+#endingOverlay.enter .ending-title    { animation: edTitle 1.5s cubic-bezier(.2,.7,.2,1) both; }
+#endingOverlay.enter .ending-subtitle { animation: edSub 1s ease .75s both; }
+#endingOverlay.enter .ending-section,
+#endingOverlay.enter .ending-actions  { animation: edFade .9s ease .95s both; }
+@keyframes edTitle {
+  0%   { opacity: 0; transform: translateY(16px) scale(.95); letter-spacing: .3em; text-shadow: none; }
+  55%  { opacity: 1; }
+  100% { opacity: 1; transform: none; letter-spacing: .04em; text-shadow: 2px 2px 0 #000, 0 0 28px var(--moodglow); }
+}
+@keyframes edSub  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes edFade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* 생존자 명단/전례 좌측바도 무드 색으로 미세 통일 */
+#endingOverlay .ending-section h2::before { color: var(--mood); }
+
+/* 컷씬 시네마틱 마감 — 비네트 + 프레임 */
+.cutscene-image { border: 1px solid #2a2620; box-shadow: 0 18px 54px #000c, inset 0 0 70px #0007; }
+.cutscene-image::after { content: ''; position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 95px 20px rgba(0,0,0,.55); border-radius: 4px; }
+.cutscene-hint { font-family: 'Galmuri11', monospace; letter-spacing: 1px; }

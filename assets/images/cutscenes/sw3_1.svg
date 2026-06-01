@@ -1,13 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid slice">
   <defs>
-    <linearGradient id="bg1" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#2A2418"/>
-      <stop offset="100%" stop-color="#0F0D08"/>
-    </linearGradient>
+    <radialGradient id="g1" cx="28%" cy="34%" r="60%">
+      <stop offset="0%" stop-color="#3a2c18"/><stop offset="45%" stop-color="#16120c"/><stop offset="100%" stop-color="#070605"/>
+    </radialGradient>
+    <radialGradient id="lamp1" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffcf86" stop-opacity=".9"/><stop offset="60%" stop-color="#c8843a" stop-opacity=".25"/><stop offset="100%" stop-color="#c8843a" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-  <rect width="1600" height="900" fill="url(#bg1)"/>
-  <text x="800" y="350" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="22" fill="#5C7DA0" letter-spacing="0.2em">[ 컷씬 시안 1/3 ]</text>
-  <text x="800" y="420" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="40" fill="#D4A14F" font-weight="300" letter-spacing="0.05em">정훈, 비축한 나물을 꺼내다</text>
-  <text x="800" y="470" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="20" fill="#9A9388">SW-3 · 정훈의 작은 간식 (개그톤 검증)</text>
-  <text x="800" y="560" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="14" fill="#6A6358">교체: assets/images/cutscenes/sw3_1.jpg · 비율 16:9</text>
+  <rect width="640" height="360" fill="url(#g1)"/>
+  <!-- 선반 -->
+  <g fill="#0d0b08" opacity=".9">
+    <rect x="40" y="70" width="220" height="10"/><rect x="40" y="150" width="220" height="10"/>
+    <rect x="70" y="40" width="22" height="32" rx="3"/><rect x="110" y="36" width="26" height="36" rx="3"/><rect x="160" y="44" width="20" height="28" rx="3"/>
+  </g>
+  <!-- 등불 -->
+  <circle cx="180" cy="120" r="120" fill="url(#lamp1)"/>
+  <rect x="174" y="108" width="12" height="22" rx="2" fill="#1a140c"/><circle cx="180" cy="106" r="4" fill="#ffe2a6"/>
+  <!-- 웅크린 인물 실루엣 -->
+  <path d="M300 360 q10 -130 80 -150 q40 -10 52 26 q14 40 -6 70 q34 18 30 54 l4 -0 z" fill="#000" opacity=".82"/>
+  <ellipse cx="386" cy="176" rx="22" ry="24" fill="#000" opacity=".85"/>
+  <!-- 손 안의 작은 온기 -->
+  <circle cx="356" cy="246" r="30" fill="url(#lamp1)" opacity=".7"/>
+  <rect width="640" height="360" fill="#000" opacity=".18"/>
 </svg>
