@@ -204,10 +204,10 @@ LR.engine.endOfDay = function() {
   const totalFood = state.food + state.driedFood + state.pickledFood;
   const foodTier = LR.foodTier(totalFood);
   if (foodTier.tier === 'famine' || need > 0) {
-    // 신선+비축으로도 부족 → 기근
+    // 신선+비축으로도 부족 → 기근 (아프지만 즉사 나선은 아니게: -4/-8 → -3/-5)
     for (const c of LR.aliveChars(state)) {
-      c.health = Math.max(0, c.health - 4);
-      c.morale = Math.max(0, c.morale - 8);
+      c.health = Math.max(0, c.health - 3);
+      c.morale = Math.max(0, c.morale - 5);
     }
   } else if (foodTier.tier === 'crisis') {
     // 체력 회복 속도 50% 감소는 회복 단계에서
@@ -218,15 +218,17 @@ LR.engine.endOfDay = function() {
   const villageMul = LR.villageMoraleMultiplier(state.spiral.state, avg);
   for (const c of LR.aliveChars(state)) {
     const recMul = LR.recoveryMultiplier(state, c) * villageMul;
-    // 휴식: +5/일, 충분한 식사: +3/일, 사기 회복: +2/일
-    if (c.health < 100 && totalFood >= 40 * 0.5) {
-      const heal = Math.round((5 + 3) * recMul * (foodTier.tier === 'crisis' ? 0.5 : 1));
+    // 체력 회복(기존 +8) — 단, 배수에 하한(0.5)을 둬 사기 붕괴 시에도 회복이 멈추지 않게(죽음의 나선 차단)
+    if (c.health < 100 && totalFood >= 20) {
+      const heal = Math.round(8 * Math.max(0.5, recMul) * (foodTier.tier === 'crisis' ? 0.5 : 1));
       c.health = Math.min(100, c.health + heal);
     }
-    if (c.morale < 100) {
-      const moraleHeal = Math.round(2 * recMul);
-      c.morale = Math.min(100, c.morale + moraleHeal);
-    }
+    // 사기: 공동체 상태가 정한 '기준선'으로 매일 조금씩 수렴.
+    //   자동 100 수렴 방지(평시 ~55에서 weary) + 좋은 하루(이벤트 moraleAll+)는 위로, 방치는 기준선으로.
+    //   나선 없음 60 · 교감 68 · 결속 78 · 단합 88. (긴장은 있되 영구 비참은 아니게)
+    const moraleTarget = { danhap: 88, gyeolsok: 78, gyogam: 68 }[state.spiral.state] || 60;
+    const drift = (moraleTarget - c.morale) * 0.22;
+    c.morale = Math.max(0, Math.min(100, Math.round(c.morale + drift)));
   }
   // 사망 처리 (별도 패스 — 회복 후 체력 0이면 사망)
   for (const id of LR.CHARACTER_ORDER) {
