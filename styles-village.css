@@ -453,13 +453,38 @@
   padding: 4px 8px; border-radius: 2px; border: 1px solid #14130d;
 }
 
-/* 액션바 = 하단 중앙 플로팅 */
+/* 액션바 = 하단 중앙 플로팅 (패널 노출 여부와 무관하게 화면 중앙 고정) */
 #villageScreen .vh-actbar {
-  position: absolute; bottom: 12px; left: 218px; right: 230px; z-index: 12;
+  position: absolute; bottom: 12px; left: 50%; right: auto; z-index: 14;
+  transform: translateX(-50%);
+  width: max-content; max-width: calc(100% - 32px);
   backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
   background: linear-gradient(180deg, rgba(42, 44, 32, .86), rgba(24, 26, 18, .9));
 }
 #villageScreen .vh-hint { color: #9a9a6a; }
+
+/* ═══════════════════════════════════════════════════════
+   감상 우선(immersive) — 평소엔 풍경만, '정보' 토글로 패널 노출
+   좌/우 패널·경고배너는 기본 숨김 → panels-open일 때만 슬라이드 인
+   ═══════════════════════════════════════════════════════ */
+#villageScreen .vh-left,
+#villageScreen .vh-right {
+  transition: transform .3s cubic-bezier(.2, .8, .2, 1), opacity .22s ease;
+}
+#villageScreen:not(.panels-open) .vh-left {
+  transform: translateX(calc(-100% - 18px)); opacity: 0; pointer-events: none;
+}
+#villageScreen:not(.panels-open) .vh-right {
+  transform: translateX(calc(100% + 18px)); opacity: 0; pointer-events: none;
+}
+#villageScreen:not(.panels-open) .vh-alert { display: none; }
+/* 장황한 안내 힌트는 숨김 — 화면을 깔끔하게 */
+#villageScreen .vh-hint { display: none; }
+/* '정보' 토글 버튼 — 펼침 상태 표시 */
+#villageScreen .vh-info-toggle.active {
+  background: linear-gradient(180deg, #4a4d36, #2c2e20);
+  color: #ffcf86; border-color: #d4a14f;
+}
 
 /* ═══════ 음향 감지 스코프 (소음 실시간 파형) ═══════ */
 #villageScreen #vhSystems { display: flex; flex-direction: column; gap: 8px; }

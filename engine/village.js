@@ -493,7 +493,18 @@ function renderTopbar(s) {
   document.getElementById('vhSeason').textContent = seasonName;
   document.getElementById('vhClock').textContent = dayPhase(s).label;
   const resEl = document.getElementById('vhResources');
-  if (resEl) resEl.innerHTML = '';   // 자원 현황은 우측 패널(renderSystems)로 이동
+  if (resEl) {
+    // 상단엔 한눈에 위급도를 읽는 핵심 3개만(식량·생존자·위협). 나머지는 '정보' 토글 패널에서.
+    const alive = LR.aliveChars(s).length;
+    const foodT = LR.foodTier(s.food);
+    const foodCls = foodT.tier === 'famine' ? 'danger' : foodT.tier === 'crisis' ? 'warn' : '';
+    const peopleCls = alive < 10 ? 'warn' : '';
+    const threatCls = raid.p >= 0.6 ? 'danger' : raid.p >= 0.25 ? 'warn' : 'dim';
+    resEl.innerHTML =
+      pill('food',   '식량',   s.food,        foodCls,   s.food / 100) +
+      pill('people', '생존자', alive + '/10', peopleCls, alive / 10) +
+      pill('noise',  '위협',   raid.scale,    threatCls);
+  }
 
   // 위협 배너
   const banner = document.getElementById('vhAlert');
@@ -1330,6 +1341,7 @@ function ensureDom() {
       </div>
       <div class="vh-res" id="vhResources"></div>
       <div class="vh-cam">
+        <button class="vh-cam-btn vh-info-toggle" id="vhPanelToggle" title="생존자 명단 · 시스템 정보 펼치기">정보</button>
         <button class="vh-cam-btn" data-mode="section">측면</button>
         <button class="vh-cam-btn active" data-mode="compound">마당</button>
         <button class="vh-cam-x" id="vhClose">닫기 ✕</button>
@@ -1385,6 +1397,13 @@ function ensureDom() {
     b.addEventListener('click', () => LR.village.setMode(b.dataset.mode));
   });
   document.getElementById('vhClose').addEventListener('click', () => LR.village.close());
+
+  // 정보 토글 — 평소엔 풍경만, 누르면 좌(명단)·우(시스템) 패널 슬라이드 노출
+  const pt = document.getElementById('vhPanelToggle');
+  if (pt) pt.addEventListener('click', () => {
+    const open = document.getElementById('villageScreen').classList.toggle('panels-open');
+    pt.classList.toggle('active', open);
+  });
 
   // 액션바 — 오늘의 결정 토글 / 텍스트 상세 / 기록
   const ad = document.getElementById('vhActDecide');
