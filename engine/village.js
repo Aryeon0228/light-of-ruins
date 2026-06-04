@@ -109,12 +109,14 @@ LR.village.open = function(state) {
 LR.village.close = function() {
   const el = document.getElementById('villageScreen');
   if (el) el.classList.remove('active');
+  LR.village.closeZoneInfo();
   LR.village.stopScope();
   LR.village.stopFx();
 };
 
 LR.village.setMode = function(mode) {
   LR.village.mode = mode;
+  LR.village.closeZoneInfo();
   document.querySelectorAll('.vh-cam-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.mode === mode);
   });
@@ -125,6 +127,7 @@ LR.village.select = function(id) {
   LR.village.selected = id;
   LR.village.picked = true;   // 클릭 이후부터 씬에 선택 글로우 표시
   LR.village.popChar = id;    // 그 인물 위에 상태 팝오버
+  LR.village.closeZoneInfo();  // 인물 선택 시 건물 정보창은 닫기
   LR.village.render();
 };
 
@@ -193,6 +196,90 @@ LR.village.closePopover = function() {
   LR.village.popChar = null;
   const pop = document.getElementById('vhPop');
   if (pop) pop.classList.remove('open');
+};
+
+// ─── 건물(구역) 정보창 — 구역 클릭 시 그 위에 카드로 표시 ───
+const ZONE_RES_COLOR = { '식량': '#e0b24a', '물': '#5ab0e0', '연료': '#e0823a', '의약품': '#e05a5a', '생존자': '#74c074' };
+function zoneInfoData(z, s) {
+  const alive = LR.aliveChars(s);
+  const n = alive.length;
+  const avgMo = n ? Math.round(alive.reduce((a, c) => a + c.morale, 0) / n) : 0;
+  const hurt = alive.filter(c => c.health < 60).length;
+  const phaseLabel = { announce: '예고', develop: '발전', reach: '도달', resolve_pre: '해소 전야', resolve: '해소' }[s.beacon && s.beacon.phase] || (s.beacon && s.beacon.phase) || '—';
+  const bday = s.beacon ? LR.beaconDayInWeek(s) : 0;
+  const C = id => s.characters[id];
+  const lead = id => { const c = C(id); return c && c.alive ? `${c.name} · ${c.role}` : null; };
+  const M = {
+    kitchen:   { title: '요리시설',     desc: '솥에 국을 끓여 식량을 조리한다.',
+                 rows: [['식량', s.food], ['하루 소비', '−' + n]], lead: lead('jeonghun') },
+    field:     { title: '밭',           desc: '남은 땅에 작물을 길러 식량을 보탠다.',
+                 rows: [['식량', s.food], ['물', s.water]], lead: lead('eunseo') },
+    barracks:  { title: '숙소',         desc: '생존자들이 몸을 누이고 쉬는 곳.',
+                 rows: [['생존자', n + '/10'], ['평균 사기', avgMo]], lead: null },
+    infirmary: { title: '의무실',       desc: '다친 사람과 환자를 돌본다.',
+                 rows: [['의약품', s.medicine], ['부상·환자', hurt + '명']], lead: lead('sujin') },
+    workshop:  { title: '작업장 · 통신', desc: '통신 비컨을 손보고 신호를 키운다.',
+                 rows: [['비컨', 'D' + bday + ' · ' + phaseLabel], ['연료', s.fuel]], lead: lead('jonghyeok') },
+    storage:   { title: '정문 · 울타리', desc: '물자를 보관하고 울타리를 보강한다.',
+                 rows: [['식량', s.food], ['물', s.water], ['연료', s.fuel]], lead: lead('dongho') },
+    water:     { title: '물 · 빗물받이', desc: '빗물을 받아 식수를 모은다.',
+                 rows: [['물', s.water], ['하루 소비', '−' + n]], lead: null },
+  };
+  return M[z];
+}
+
+LR.village.showZoneInfo = function(z) {
+  const el = document.getElementById('vhZinfo');
+  const s = LR.village.state;
+  if (!el || !s) return;
+  const d = zoneInfoData(z, s);
+  if (!d) { el.classList.remove('open'); return; }   // 망루·보강문 등은 다른 패널
+  LR.village.closePopover();                          // 인물 팝오버와 동시 표시 X
+  const out = document.getElementById('vhOutside');   // 외부 정찰 패널도 닫기
+  if (out) out.classList.remove('open');
+  LR.village._zinfoZone = z;
+  const rows = d.rows.map(([k, v]) => {
+    const col = ZONE_RES_COLOR[k] || '';
+    return `<div class="vh-zinfo-row"><span>${k}</span><b${col ? ` style="color:${col}"` : ''}>${v}</b></div>`;
+  }).join('');
+  el.innerHTML = `
+    <button class="vh-pop-x" id="vhZinfoX">✕</button>
+    <div class="vh-zinfo-h">⌖ ${d.title}</div>
+    <div class="vh-zinfo-desc">${d.desc}</div>
+    <div class="vh-zinfo-rows">${rows}</div>
+    ${d.lead ? `<div class="vh-zinfo-lead">담당 · ${d.lead}</div>` : ''}`;
+  el.classList.add('open');
+  const x = document.getElementById('vhZinfoX');
+  if (x) x.addEventListener('click', (e) => { e.stopPropagation(); LR.village.closeZoneInfo(); });
+  LR.village.positionZinfo();
+};
+
+LR.village.positionZinfo = function() {
+  const el = document.getElementById('vhZinfo');
+  const stage = document.querySelector('.vh-stage');
+  const host = document.getElementById('vhScene');
+  if (!el || !stage || !host || !el.classList.contains('open')) return;
+  const hot = host.querySelector('.vh-hot[data-zone="' + LR.village._zinfoZone + '"]');
+  if (!hot) { el.classList.remove('open'); return; }
+  const sr = stage.getBoundingClientRect(), hr = hot.getBoundingClientRect();
+  const cx = hr.left + hr.width / 2 - sr.left;
+  const headTop = hr.top - sr.top;
+  const pw = el.offsetWidth, ph = el.offsetHeight;
+  // 좌우 플로팅 HUD(좌 ~210, 우 ~224)를 피해 카드를 가둠
+  const lim = sr.width > 760 ? { l: 210, r: 224 } : { l: 6, r: 6 };
+  let left = Math.max(lim.l, Math.min(sr.width - pw - lim.r, cx - pw / 2));
+  let top = headTop - ph - 12, below = false;
+  if (top < 4) { top = (hr.bottom - sr.top) + 12; below = true; }
+  el.style.left = Math.round(left) + 'px';
+  el.style.top = Math.round(top) + 'px';
+  el.classList.toggle('below', below);
+  el.style.setProperty('--arrow', Math.round(cx - left) + 'px');
+};
+
+LR.village.closeZoneInfo = function() {
+  LR.village._zinfoZone = null;
+  const el = document.getElementById('vhZinfo');
+  if (el) el.classList.remove('open');
 };
 
 // ─── 망루 · 외부 정찰 (방어탑 클릭) ───
@@ -740,20 +827,23 @@ LR.village.renderScene = function() {
     g.addEventListener('click', () => LR.village.select(g.dataset.char));
   });
   if (LR.village.mode === 'compound') {
-    // 구역 호버 → 해당 글로우 켜기 + 살짝 확대
+    // 구역 호버 → 이름 라벨만 표시(빛무리 제거). 클릭 → 정보창(망루·보강문은 외부 정찰)
     host.querySelectorAll('.vh-hot').forEach(h => {
-      const glow = host.querySelector('.vh-glowcss[data-zone="' + h.dataset.zone + '"]');
-      h.addEventListener('mouseenter', () => { if (glow) glow.classList.add('on'); h.classList.add('hot-on'); });
-      h.addEventListener('mouseleave', () => { if (glow) glow.classList.remove('on'); h.classList.remove('hot-on'); });
-      // 망루·보강문 클릭 → 외부 정찰 패널
-      if (h.dataset.zone === 'watchtower' || h.dataset.zone === 'gate') {
-        h.classList.add('vh-hot-act');
-        h.addEventListener('click', (e) => { e.stopPropagation(); LR.village.showOutside(); });
-      }
+      const z = h.dataset.zone;
+      h.classList.add('vh-hot-act');
+      h.addEventListener('mouseenter', () => h.classList.add('hot-on'));
+      h.addEventListener('mouseleave', () => h.classList.remove('hot-on'));
+      h.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (z === 'watchtower' || z === 'gate') { LR.village.closeZoneInfo(); LR.village.showOutside(); }
+        else LR.village.showZoneInfo(z);
+      });
     });
-    // 빈 곳 클릭 → 팝오버 닫기
+    // 빈 곳 클릭 → 팝오버·정보창 닫기
     host.addEventListener('click', (e) => {
-      if (!e.target.closest('.vh-phot') && !e.target.closest('.vh-hot')) LR.village.closePopover();
+      if (!e.target.closest('.vh-phot') && !e.target.closest('.vh-hot') && !e.target.closest('.vh-zinfo')) {
+        LR.village.closePopover(); LR.village.closeZoneInfo();
+      }
     });
     // 인물 핫스팟 — 호버 시 그 인물만 살짝 확대, 클릭 시 선택
     host.querySelectorAll('.vh-phot').forEach(h => {
@@ -792,6 +882,7 @@ function fitStage() {
     fx.style.height = Math.round(h) + 'px';
     if (LR.village._rainResize) LR.village._rainResize();
   }
+  if (LR.village.positionZinfo) LR.village.positionZinfo();   // 구역 정보창도 재배치
 }
 if (!window.__vhResizeBound) {
   window.__vhResizeBound = true;
@@ -799,6 +890,7 @@ if (!window.__vhResizeBound) {
     if (LR.village.mode === 'compound') fitStage();
     if (LR.village._scopeResize) LR.village._scopeResize();
     if (LR.village.positionPopover) LR.village.positionPopover();
+    if (LR.village.positionZinfo) LR.village.positionZinfo();
   });
 }
 
@@ -862,13 +954,6 @@ function sceneSection(s) {
 function sceneCompound(s) {
   const A = VILLAGE_ASSET;
   const sel = LR.village.selected;
-  // 구역 글로우 — PNG 윤곽선 대신 부드러운 CSS 빛무리(호버 시 켜짐).
-  // 건물 박스보다 살짝 넓게 잡아 빛이 자연스럽게 번지게.
-  const glows = ZONES.map(zn => {
-    const pad = 4;
-    const l = zn.box[0] - pad, t = zn.box[1] - pad, w = zn.box[2] + pad * 2, h = zn.box[3] + pad * 2;
-    return `<div class="vh-glowcss" data-zone="${zn.z}" style="left:${l}%;top:${t}%;width:${w}%;height:${h}%"></div>`;
-  }).join('');
   // 모닥불 빛무리 — 패럴렉스 배경(px3_main)에 모닥불이 baked-in이라 glow만 얹음
   const fire = `<div class="vh-layer vh-firelight"></div>`;
   const people = PEOPLE_FILES.map(p => {
@@ -914,7 +999,6 @@ function sceneCompound(s) {
   return `<div class="vh-stagebox">
     <img class="vh-layer vh-px vh-px-sky"    src="${A}bg_sky.png"    alt="" onerror="this.remove()">
     <img class="vh-layer vh-px vh-px-ground" src="${A}bg_ground.png" alt="" onerror="this.remove()">
-    ${glows}
     ${fire}
     ${people}
     ${pips}
@@ -1270,6 +1354,7 @@ function ensureDom() {
           </div>
           <div class="vh-paper"></div>
           <div class="vh-pop" id="vhPop"></div>
+          <div class="vh-pop vh-zinfo" id="vhZinfo"></div>
           <div class="vh-outside" id="vhOutside"></div>
           <div class="vh-decision" id="vhDecision"></div>
         </div>

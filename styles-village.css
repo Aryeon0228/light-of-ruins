@@ -171,21 +171,6 @@
 .vh-stagebox { position: relative; margin: auto; }
 .vh-layer { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; user-select: none; }
 .vh-bg { z-index: 0; }
-/* 구역 글로우 — 부드러운 CSS 빛무리(호버 시 따뜻한 빛이 번짐). PNG 윤곽선 대체 */
-.vh-glowcss {
-  position: absolute; z-index: 1; pointer-events: none;
-  opacity: 0; transition: opacity .28s ease, transform .28s ease;
-  transform: scale(.92);
-  background: radial-gradient(ellipse at center,
-    rgba(255, 210, 140, .62) 0%,
-    rgba(255, 176, 88, .34) 34%,
-    rgba(255, 150, 70, .12) 56%,
-    transparent 72%);
-  filter: blur(7px);
-  mix-blend-mode: screen;
-  will-change: opacity, transform;
-}
-.vh-glowcss.on { opacity: 1; transform: scale(1.04); }
 
 /* 모닥불 — 불꽃 PNG 불규칙 flicker */
 .vh-campfire { z-index: 2; animation: vhFlick 1.5s steps(1, end) infinite; }
@@ -716,6 +701,25 @@
 .vh-pop-row em { font-style: normal; font-size: 0.66rem; color: #8e8f5e; min-width: 30px; }
 .vh-pop-foot {
   border-top: 1px solid #2a2c1e; padding: 0.35rem 0.55rem; font-size: 0.66rem; color: #8e8f5e;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* 건물(구역) 정보창 — .vh-pop 카드 재활용 + 전용 본문 */
+.vh-zinfo { width: 190px; }
+.vh-zinfo-h {
+  padding: 0.42rem 1.4rem 0.34rem 0.55rem; color: #ffcf86; font-size: 0.86rem;
+  text-shadow: 1px 1px 0 #000; border-bottom: 1px solid #2a2c1e;
+}
+.vh-zinfo-desc {
+  padding: 0.4rem 0.55rem 0.05rem; font-size: 0.7rem; color: #b9b48f; line-height: 1.5;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.vh-zinfo-rows { padding: 0.35rem 0.55rem 0.25rem; display: flex; flex-direction: column; gap: 4px; }
+.vh-zinfo-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.76rem; }
+.vh-zinfo-row > span { color: #8e8f5e; font-family: 'Noto Sans KR', sans-serif; }
+.vh-zinfo-row > b { color: #e8e2c4; font-size: 0.86rem; text-shadow: 1px 1px 0 #000; }
+.vh-zinfo-lead {
+  border-top: 1px solid #2a2c1e; padding: 0.32rem 0.55rem; font-size: 0.68rem; color: #a98f5a;
   font-family: 'Noto Sans KR', sans-serif;
 }
 
