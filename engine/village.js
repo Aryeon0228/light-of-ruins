@@ -57,30 +57,31 @@ const COMPOUND = {
 const VILLAGE_ASSET = 'assets/images/village/';
 // 글로우 구역: box=[left,top,w,h] %, o=[cx,cy] % (확대 기준점). glow PNG 알파 bbox에서 산출.
 const ZONES = [
-  { z:'kitchen',    label:'요리시설',    box:[3.2, 32.9, 29.5, 35.9], o:[18.0, 50.8] },
-  { z:'field',      label:'밭',          box:[8.6, 16.3, 31.9, 20.4], o:[24.6, 26.5] },
-  { z:'barracks',   label:'숙소',        box:[52.1, 15.3, 35.2, 30.6], o:[69.6, 30.6] },
-  { z:'workshop',   label:'작업장 · 통신', box:[68.5, 52.9, 31.5, 30.6], o:[84.3, 68.2] },
-  { z:'storage',    label:'정문 · 울타리', box:[38.6, 77.0, 22.6, 23.0], o:[49.9, 88.5] },
-  { z:'infirmary',  label:'의무실',      box:[77.8, 35.1, 21.8, 25.4], o:[88.7, 47.8] },
-  { z:'watchtower', label:'망루',        box:[80.7, 0.0, 18.3, 39.1], o:[89.9, 19.6] },
-  { z:'gate',       label:'보강문',      box:[44.2, 14.0, 11.0, 22.1], o:[49.7, 25.0] },
-  { z:'water',      label:'물 · 빗물받이', box:[0.0, 88.4, 7.5, 11.6], o:[2.9, 94.2] }
+  { z:'kitchen',    label:'요리시설',    box:[42.0, 43.0, 15.0, 12.0], o:[50.0, 52.0] },
+  { z:'field',      label:'밭',          box:[17.0, 44.0, 30.0, 17.0], o:[32.0, 55.0] },
+  { z:'barracks',   label:'숙소',        box:[63.0, 29.0, 22.0, 17.0], o:[74.0, 40.0] },
+  { z:'workshop',   label:'작업장 · 통신', box:[77.0, 53.0, 19.0, 16.0], o:[86.0, 63.0] },
+  { z:'storage',    label:'정문 · 울타리', box:[24.0, 64.0, 16.0, 14.0], o:[32.0, 73.0] },
+  { z:'infirmary',  label:'의무실',      box:[82.0, 39.0, 16.0, 18.0], o:[90.0, 51.0] },
+  { z:'watchtower', label:'망루',        box:[49.0, 21.0, 15.0, 24.0], o:[57.0, 35.0] },
+  { z:'gate',       label:'보강문',      box:[37.0, 56.0, 24.0, 15.0], o:[49.0, 67.0] },
+  { z:'water',      label:'물 · 빗물받이', box:[2.0, 62.0, 13.0, 16.0], o:[8.0, 72.0] }
 ];
 // 인물 스프라이트 — 전원 풀캔버스(2896×2172) 제자리. 0,0에 그대로 겹침(작가가 맞춘 위치/크기 유지).
 //  (개별 크롭으로 줄 경우엔 inplace 빼고 cx/cy + h|w(%)로 배치 가능)
 //  box=[l,t,w,h]% 형상 영역(호버 핫스팟), ox/oy=확대 기준점(형상 중심x·발끝y) — 인물 PNG 알파 bbox에서 산출
+// box/ox/oy는 각 인물 PNG(3577×2419)의 알파 bbox에서 산출 — 새 배경(bg_ground)에 맞춰 재배치됨
 const PEOPLE_FILES = [
-  { file:'jeonghun',       char:'jeonghun',  inplace:true, box:[21.5,48.3,7.5,17.9], ox:25.3, oy:66.2 },
-  { file:'eunseo',         char:'eunseo',    inplace:true, box:[25.3,27.1,7.3,9.2],  ox:28.9, oy:36.2 },
-  { file:'sujin',          char:'sujin',     inplace:true, box:[74.7,38.5,5.2,15.9], ox:77.3, oy:54.4 },
-  { file:'yeongsu',        char:'yeongsu',   inplace:true, box:[67.2,30.6,9.6,7.9],  ox:72.0, oy:38.5 },
-  { file:'miyeon',         char:'miyeon',    inplace:true, box:[60.6,44.2,5.0,11.6], ox:63.1, oy:55.8 },
-  { file:'dongho',         char:'dongho',    inplace:true, box:[58.0,61.9,7.6,15.7], ox:61.8, oy:77.7 },
-  { file:'jonghyeok',      char:'jonghyeok', inplace:true, box:[72.3,70.2,7.6,15.0], ox:76.1, oy:85.2 },
-  { file:'hayeong',        char:'hayeong',   inplace:true, box:[86.7,5.2,3.4,12.0],  ox:88.4, oy:17.2 },
-  { file:'jaehyeok',       char:'jaehyeok',  inplace:true, box:[44.3,50.0,6.1,11.7], ox:47.3, oy:61.7 },
-  { file:'minsu',          char:'minsu',     inplace:true, box:[49.1,55.4,4.6,7.7],  ox:51.5, oy:63.2 }
+  { file:'jeonghun',       char:'jeonghun',  inplace:true, box:[48.6,41.4,3.2,8.6], ox:50.2, oy:50.0 },
+  { file:'eunseo',         char:'eunseo',    inplace:true, box:[38.1,43.7,4.1,5.7], ox:40.2, oy:49.4 },
+  { file:'sujin',          char:'sujin',     inplace:true, box:[68.3,50.9,2.5,8.6], ox:69.6, oy:59.5 },
+  { file:'yeongsu',        char:'yeongsu',   inplace:true, box:[90.8,42.1,5.1,5.4], ox:93.3, oy:47.5 },
+  { file:'miyeon',         char:'miyeon',    inplace:true, box:[52.9,49.2,2.8,7.3], ox:54.3, oy:56.6 },
+  { file:'dongho',         char:'dongho',    inplace:true, box:[74.9,50.7,4.1,9.3], ox:76.9, oy:60.0 },
+  { file:'jonghyeok',      char:'jonghyeok', inplace:true, box:[85.0,59.2,4.0,8.7], ox:87.0, oy:67.9 },
+  { file:'hayeong',        char:'hayeong',   inplace:true, box:[60.2,30.0,1.9,7.6], ox:61.1, oy:37.6 },
+  { file:'jaehyeok',       char:'jaehyeok',  inplace:true, box:[42.5,50.7,3.5,7.4], ox:44.3, oy:58.0 },
+  { file:'minsu',          char:'minsu',     inplace:true, box:[45.4,54.9,2.6,4.9], ox:46.7, oy:59.8 }
 ];
 
 // ═══════════════════════════════════════════════════════
@@ -803,7 +804,7 @@ function fitStage() {
   if (!host) return;
   const box = host.querySelector('.vh-stagebox');
   if (!box) return;
-  const cw = host.clientWidth, ch = host.clientHeight, ar = 1484 / 1060;
+  const cw = host.clientWidth, ch = host.clientHeight, ar = 3577 / 2419;
   let w = cw, h = cw / ar;
   if (h > ch) { h = ch; w = ch * ar; }
   box.style.width = Math.round(w) + 'px';
@@ -936,15 +937,13 @@ function sceneCompound(s) {
     return `<div class="vh-pips" data-pchar="${p.char}" style="left:${cx}%;top:${ty}%">${items.join('')}</div>`;
   }).join('');
   return `<div class="vh-stagebox">
-    <img class="vh-layer vh-px vh-px-sky"   src="${A}bg_px1_sky.png"   alt="" onerror="this.remove()">
-    <img class="vh-layer vh-px vh-px-wall"  src="${A}bg_px2_wall.png"  alt="" onerror="this.remove()">
-    <img class="vh-layer vh-px vh-px-main"  src="${A}bg_px3_main.png"  alt="" onerror="this.remove()">
-    <img class="vh-layer vh-px vh-px-build" src="${A}bg_px4_build.png" alt="" onerror="this.remove()">
+    <img class="vh-layer vh-px vh-px-sky"    src="${A}bg_sky.png"    alt="" onerror="this.remove()">
+    <img class="vh-layer vh-px vh-px-ground" src="${A}bg_ground.png" alt="" onerror="this.remove()">
     ${glows}
     ${fire}
     ${people}
     ${pips}
-    <img class="vh-layer vh-px vh-px-front" src="${A}bg_px5_front.png" alt="" onerror="this.remove()">
+    <img class="vh-layer vh-px vh-px-front" src="${A}bg_block.png" alt="" onerror="this.remove()">
     ${hots}
     ${phots}
   </div>`;

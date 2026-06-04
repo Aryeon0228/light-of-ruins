@@ -239,7 +239,7 @@
 /* 모닥불 빛무리 — 중앙(45% 56%)에서 맥동하는 따뜻한 빛 */
 .vh-firelight {
   z-index: 3;
-  background: radial-gradient(circle at 50% 50%,
+  background: radial-gradient(circle at 53% 54%,
     rgba(255, 170, 70, .55) 0%,
     rgba(255, 130, 45, .30) 6%,
     rgba(255, 110, 40, .12) 12%,
@@ -842,8 +842,7 @@
 
 /* 포인터 패럴렉스 — 레이어별 다른 이동량(깊이감). 스테이지는 살짝 확대해 가장자리 빈틈 가림 */
 .vh-stagebox {
-  transform: scale(1.03) translate(calc(var(--px,0) * -7px), calc(var(--py,0) * -4px));
-  transition: transform .25s ease-out;
+  transform: scale(1.03);   /* 오버스캔만 유지(가장자리 빈틈 가림) — 전경은 고정, 패럴렉스는 sky만 */
 }
 .vh-fx-fog     { transform: translate(calc(var(--px,0) *  9px), calc(var(--py,0) *  3px)); transition: transform .25s ease-out; }
 
@@ -863,18 +862,18 @@
 
 /* 모닥불 불씨 + 연기 (중앙 ~45% 56%) */
 .vh-ember {
-  position: absolute; left: 50%; top: 51%; width: 3px; height: 3px; margin-left: -1.5px;
+  position: absolute; left: 53%; top: 54%; width: 3px; height: 3px; margin-left: -1.5px;
   border-radius: 50%; background: #ffc46a; box-shadow: 0 0 4px 1px #ff8c33;
   mix-blend-mode: screen; opacity: 0;
   animation: vhEmber var(--edur,3s) ease-out infinite;
 }
 @keyframes vhEmber {
-  0%   { top: 51%; opacity: 0; transform: translateX(0) scale(1); }
+  0%   { top: 54%; opacity: 0; transform: translateX(0) scale(1); }
   15%  { opacity: .95; }
-  100% { top: 44%; opacity: 0; transform: translateX(calc(var(--edx,0) * 5px)) scale(.3); }
+  100% { top: 47%; opacity: 0; transform: translateX(calc(var(--edx,0) * 5px)) scale(.3); }
 }
 .vh-smoke {
-  position: absolute; left: 50%; top: 39%; width: 8%; height: 12%; margin-left: -4%;
+  position: absolute; left: 53%; top: 42%; width: 8%; height: 12%; margin-left: -4%;
   background: radial-gradient(ellipse at 50% 100%, rgba(120,124,128,.14), transparent 72%);
   mix-blend-mode: screen; filter: blur(5px);
   animation: vhSmoke 6.5s ease-in-out infinite;
@@ -940,9 +939,10 @@
    ═══════════════════════════════════════════════════════ */
 .vh-px { z-index: 0; }
 .vh-px-front { z-index: 6; }   /* 정문 = 인물(z5) 앞 */
-.vh-px-sky   { transform: translate(calc(var(--px,0) *  5px), calc(var(--py,0) *  3px)); transition: transform .25s ease-out; }
-.vh-px-wall  { transform: translate(calc(var(--px,0) *  3px), calc(var(--py,0) *  2px)); transition: transform .25s ease-out; }
-.vh-px-front { transform: translate(calc(var(--px,0) * -6px), calc(var(--py,0) * -3px)); transition: transform .25s ease-out; }
+/* sky만 패럴렉스로 이동 — ground·block·인물은 완전 고정 */
+.vh-px-sky    { transform: translate(calc(var(--px,0) *  7px), calc(var(--py,0) *  4px)); transition: transform .25s ease-out; }
+.vh-px-ground { transform: none; }
+.vh-px-front  { transform: none; }
 
 /* ═══════════════════════════════════════════════════════
    자원 현황 카드 (우측 패널 최상단) — 세로 행, 상황 파악 쉽게
