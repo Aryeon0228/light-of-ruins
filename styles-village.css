@@ -108,43 +108,6 @@
 .vh-mini i { display: block; height: 100%; }
 .vh-rost-state { font-size: 0.7rem; color: var(--c-text-dim); }
 
-/* ── 선택 인물 디테일 ── */
-.vh-detail {
-  margin-top: auto;
-  background: #14161c; border: 1px solid var(--c-border); border-radius: 8px;
-  border-left: 3px solid transparent;
-  padding: 0.7rem;
-  transition: background .2s, box-shadow .2s, border-color .2s;
-}
-.vh-detail.active {
-  background: #1b1e26; border-left-color: var(--c-warn);
-  box-shadow: 0 0 0 1px rgba(212, 161, 79, .35), 0 0 22px rgba(212, 161, 79, .16);
-}
-.vh-detail.pop { animation: vhDetailPop .5s ease; }
-@keyframes vhDetailPop {
-  0%   { transform: scale(.96); }
-  45%  { transform: scale(1.025); box-shadow: 0 0 0 2px rgba(255, 207, 134, .65), 0 0 26px rgba(255, 207, 134, .4); }
-  100% { transform: scale(1); }
-}
-.vh-det-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: middle; box-shadow: 0 0 0 1px rgba(255, 255, 255, .25); }
-.vh-det-head { display: flex; gap: 0.6rem; align-items: center; }
-.vh-det-port {
-  width: 46px; height: 46px; border-radius: 8px; overflow: hidden;
-  background: radial-gradient(circle at 50% 30%, #2a2d36, #14161c);
-  border: 1px solid var(--c-border); flex-shrink: 0;
-}
-.vh-det-port svg { width: 100%; height: 100%; display: block; }
-.vh-det-name { font-size: 1rem; font-weight: 700; }
-.vh-det-name em { font-style: normal; font-size: 0.72rem; color: var(--c-text-dim); margin-left: 0.4rem; font-weight: 400; }
-.vh-det-act { font-size: 0.8rem; color: var(--c-warn); margin-top: 1px; }
-.vh-det-bio { font-size: 0.78rem; color: var(--c-text-dim); margin: 0.5rem 0; line-height: 1.5; }
-.vh-det-row { display: grid; grid-template-columns: 2.4em 1fr auto; align-items: center; gap: 0.4rem; font-size: 0.76rem; margin-bottom: 0.25rem; }
-.vh-det-row > span:first-child { color: var(--c-text-faint); }
-.vh-detbar { height: 6px; background: #000; border-radius: 3px; overflow: hidden; }
-.vh-detbar i { display: block; height: 100%; }
-.vh-det-row b { font-weight: 500; font-size: 0.72rem; }
-.vh-det-sens { font-size: 0.7rem; color: var(--c-text-faint); margin-top: 0.4rem; border-top: 1px solid #23262e; padding-top: 0.4rem; }
-
 /* ── 중앙 씬 ── */
 .vh-center { display: flex; flex-direction: column; gap: 0.6rem; min-height: 0; }
 .vh-scene {
@@ -305,17 +268,16 @@
 #villageScreen .vh-top-day #vhDay,
 #villageScreen .vh-pill-val,
 #villageScreen .vh-card h4, #villageScreen .vh-left-h,
-#villageScreen .vh-rost-name, #villageScreen .vh-det-name,
+#villageScreen .vh-rost-name,
 #villageScreen .vh-line b, #villageScreen .vh-rost-state,
 #villageScreen .vh-act, #villageScreen .vh-cam-btn,
 #villageScreen .vh-alert, #villageScreen .vh-spiral span {
   text-shadow: 1px 1px 0 #000;
 }
 
-/* 금속판 공통 (상단바/카드/디테일) — 리벳 4개 + 베벨 */
+/* 금속판 공통 (상단바/카드) — 리벳 4개 + 베벨 */
 #villageScreen .vh-top,
 #villageScreen .vh-card,
-#villageScreen .vh-detail,
 #villageScreen .vh-actbar {
   border-radius: 2px;
   border: 2px solid #14130d;
@@ -376,14 +338,14 @@
 #villageScreen .vh-rost-name em, #villageScreen .vh-rost-state { color: #8e8f5e; }
 
 /* 게이지 = 분절 (틱 오버레이) */
-#villageScreen .vh-bar, #villageScreen .vh-detbar {
+#villageScreen .vh-bar {
   position: relative; border: 1px solid #14130d; background: #0a0b06; border-radius: 0;
 }
-#villageScreen .vh-bar::after, #villageScreen .vh-detbar::after {
+#villageScreen .vh-bar::after {
   content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1;
   background: repeating-linear-gradient(90deg, #000a 0 1px, transparent 1px 6px);
 }
-#villageScreen .vh-bar i, #villageScreen .vh-detbar i { border-radius: 0; }
+#villageScreen .vh-bar i { border-radius: 0; }
 
 /* 버튼 = 금속 (눌리는 느낌) */
 #villageScreen .vh-act, #villageScreen .vh-cam-btn, #villageScreen .vh-cam-x {
@@ -408,20 +370,6 @@
 #villageScreen .vh-spiral span.on {
   background: linear-gradient(180deg, #3a4a2a, #20281a); border-color: var(--c-spiral); color: #bcd6a0;
 }
-
-/* 디테일 패널 강조 (메탈+앰버) */
-#villageScreen .vh-detail.active {
-  background:
-    radial-gradient(circle 2.5px at 6px 6px, #8a7a40, #8a7a4000 70%),
-    radial-gradient(circle 2.5px at calc(100% - 6px) 6px, #8a7a40, #8a7a4000 70%),
-    radial-gradient(circle 2.5px at 6px calc(100% - 6px), #8a7a40, #8a7a4000 70%),
-    radial-gradient(circle 2.5px at calc(100% - 6px) calc(100% - 6px), #8a7a40, #8a7a4000 70%),
-    linear-gradient(180deg, #3a3520, #241f12);
-  border-left: 3px solid var(--c-warn);
-  box-shadow: inset 0 1px 0 #6a5e30, 0 0 18px rgba(212, 161, 79, .22);
-}
-#villageScreen .vh-det-name { color: #ffcf86; }
-#villageScreen .vh-det-act { color: #d4a14f; }
 
 /* 위협 배너 = 군용 경고 */
 #villageScreen .vh-alert {
@@ -501,7 +449,7 @@
 }
 
 /* 오버레이 카드 = 반투명 금속 + 프로스트 블러 (씬이 은은히 비침) */
-#villageScreen .vh-card, #villageScreen .vh-detail {
+#villageScreen .vh-card {
   backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
   background:
     radial-gradient(circle 2.5px at 6px 6px, #74774f, #74774f00 70%),
@@ -828,7 +776,7 @@
 .vh-out-row.calm { background: #15171d; color: #8e8f5e; }
 
 /* 포트레이트 실사 PNG (있으면 SVG 위에 덮음) — 얼굴 위주 프레이밍 */
-.vh-pop-port, .vh-det-port { position: relative; }
+.vh-pop-port { position: relative; }
 .vh-port-img {
   position: absolute; inset: 0; width: 100%; height: 100%;
   object-fit: cover; object-position: center 14%; display: block;
@@ -979,22 +927,3 @@
 .vh-rost-stats .vh-stat { flex: 1; display: flex; align-items: center; gap: 4px; min-width: 0; }
 .vh-rost-stats .vh-mini { flex: 1; }
 
-/* 전신사진 디테일 */
-.vh-det-photo {
-  position: relative; width: 100%; height: 190px; border-radius: 6px; overflow: hidden;
-  border: 1px solid #14130d; margin-bottom: 0.5rem;
-  background: radial-gradient(circle at 50% 28%, #24272f, #0d0f15);
-  box-shadow: inset 0 0 18px #000a;
-}
-.vh-det-photo > svg { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .45; }
-.vh-det-fullimg {
-  position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1;
-  object-fit: contain; object-position: center bottom; background: #0d0f15;
-}
-.vh-det-photo.dead .vh-det-fullimg { filter: grayscale(1) brightness(.55); }
-.vh-det-tag {
-  position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
-  padding: 0.32rem 0.5rem 0.3rem; background: linear-gradient(transparent, #000d);
-  font-family: 'Galmuri11', monospace; color: #ffcf86; font-size: 0.95rem; text-shadow: 1px 1px 0 #000;
-}
-.vh-det-tag em { font-style: normal; font-size: 0.66rem; color: #cfcaa8; margin-left: 0.35rem; }

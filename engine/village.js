@@ -392,7 +392,6 @@ LR.village.render = function() {
   renderTopbar(s);
   renderRoster(s);
   renderSystems(s);
-  renderDetail(s);
   updateScopeReadout(s);
   LR.village.renderScene();
   LR.village.renderDecision();
@@ -573,36 +572,7 @@ function renderSystems(s) {
   LR.village._prevRes = cur;
 }
 
-function renderDetail(s) {
-  const id = LR.village.selected;
-  const c = s.characters[id];
-  const def = LR.CHARACTER_DEFS[id];
-  if (!c || !def) return;
-  const ht = LR.healthTier(c.health);
-  const mt = LR.moraleTier(c.morale);
-  const d = document.getElementById('vhDetail');
-  d.innerHTML = `
-    <div class="vh-det-photo ${c.alive ? '' : 'dead'}" style="--cc:${def.color}">
-      ${portraitSvg(c, def)}
-      <img class="vh-det-fullimg" src="assets/images/portraits/${id}.png" alt="" onerror="this.remove()">
-      <div class="vh-det-tag"><span class="vh-det-dot" style="background:${def.color}"></span>${c.name}<em>${c.role} · ${def.age}세</em></div>
-    </div>
-    <div class="vh-det-act">${activityOf(c)}</div>
-    <div class="vh-det-bio">${def.bio}</div>
-    <div class="vh-det-stat">
-      <div class="vh-det-row"><span>체력</span><span class="vh-detbar"><i style="width:${c.health}%;background:${hpColor(c.health)}"></i></span><b style="color:${hpColor(c.health)}">${c.alive ? c.health : '—'} · ${c.alive ? ht.label : '사망'}</b></div>
-      <div class="vh-det-row"><span>사기</span><span class="vh-detbar"><i style="width:${c.morale}%;background:${moColor(c.morale)}"></i></span><b style="color:${moColor(c.morale)}">${c.alive ? c.morale : '—'} · ${c.alive ? mt.label : ''}</b></div>
-    </div>
-    <div class="vh-det-sens">전례 감수성 · 부정 ×${def.negSens} / 긍정 ×${def.posSens}</div>
-  `;
-  // 클릭 선택 시 패널 강조 + 팝 (재생 재시작)
-  if (LR.village.picked) {
-    d.classList.add('active');
-    d.classList.remove('pop'); void d.offsetWidth; d.classList.add('pop');
-  } else {
-    d.classList.remove('active');
-  }
-}
+// 인물 상세는 상시 패널 대신 클릭 팝오버(showPopover)로만 표시 — renderDetail 제거됨
 
 // ─── 음향 감지 스코프 (소음 → 실시간 파형) ───
 function scopeColor(noise) {
@@ -1275,7 +1245,6 @@ function ensureDom() {
       <aside class="vh-left">
         <div class="vh-left-h">생존자 명단</div>
         <div class="vh-roster" id="vhRoster"></div>
-        <div class="vh-detail" id="vhDetail"></div>
       </aside>
 
       <main class="vh-center">
