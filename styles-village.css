@@ -729,27 +729,84 @@
   font-family: 'Noto Sans KR', sans-serif;
 }
 
-/* 건물(구역) 정보창 — .vh-pop 카드 재활용 + 전용 본문 */
-.vh-zinfo { width: 190px; }
-.vh-zinfo-h {
-  padding: 0.42rem 1.4rem 0.34rem 0.55rem; color: #ffcf86; font-size: 0.86rem;
-  text-shadow: 1px 1px 0 #000; border-bottom: 1px solid #2a2c1e;
+/* 건물(구역) 정보창 — 중앙 큰 카드 + 뒤쪽 블러 백드롭
+   (블러는 카드 '뒤' 레이어에만 → 카드 내용·건물은 선명, 배경 풍경만 은은히) */
+.vh-zback {
+  position: absolute; inset: 0; z-index: 43;
+  background: rgba(8, 8, 5, .30);
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  opacity: 0; pointer-events: none; transition: opacity .2s ease;
 }
-.vh-zinfo-desc {
-  padding: 0.4rem 0.55rem 0.05rem; font-size: 0.7rem; color: #b9b48f; line-height: 1.5;
+.vh-zback.open { opacity: 1; pointer-events: auto; }
+
+#villageScreen .vh-zinfo {
+  left: 50%; top: 50%; right: auto; bottom: auto;
+  width: min(360px, calc(100% - 32px)); max-height: calc(100% - 48px);
+  overflow-y: auto; z-index: 46;
+  transform: translate(-50%, -50%) scale(.96);
+}
+#villageScreen .vh-zinfo.open { transform: translate(-50%, -50%) scale(1); }
+.vh-zinfo::after { display: none; }   /* 중앙 카드 → 말풍선 꼬리 제거 */
+
+.vz-head {
+  display: flex; align-items: center; gap: 6px; padding: 11px 14px 7px;
+  font-family: 'Galmuri14', 'Galmuri11', monospace;
+}
+.vz-icon { color: var(--c-warn); }
+.vz-title { font-size: 1.08rem; color: #ffcf86; letter-spacing: .5px; text-shadow: 1px 1px 0 #000; }
+.vz-desc {
+  padding: 0 14px 9px; font-size: .78rem; color: #9a9a6a; line-height: 1.5;
+  font-family: 'Noto Sans KR', sans-serif; border-bottom: 1px solid #2a2c1e;
+}
+.vz-body { padding: 11px 14px; display: flex; flex-direction: column; gap: 8px; }
+.vz-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.vz-stat {
+  display: flex; flex-direction: column; gap: 1px; padding: 6px 9px;
+  background: rgba(10, 11, 7, .5); border: 1px solid #2a2c1e; border-radius: 2px;
+}
+.vz-k { font-size: .7rem; color: #8e8f5e; font-family: 'Noto Sans KR', sans-serif; }
+.vz-v { font-size: 1.05rem; color: #e8e2c4; font-weight: 600; text-shadow: 1px 1px 0 #000; line-height: 1.15; }
+.vz-sub { font-size: .62rem; color: #76764e; }
+.vz-gauge { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 9px; }
+.vz-glab { font-size: .74rem; color: #8e8f5e; font-family: 'Noto Sans KR', sans-serif; }
+.vz-gbar { height: 7px; background: #0a0b06; border: 1px solid #14130d; border-radius: 1px; overflow: hidden; }
+.vz-gbar i { display: block; height: 100%; }
+.vz-gval { font-size: .88rem; color: #e8e2c4; font-weight: 600; min-width: 34px; text-align: right; text-shadow: 1px 1px 0 #000; }
+.vz-note {
+  font-size: .74rem; color: #a7a874; line-height: 1.5; padding-top: 1px;
   font-family: 'Noto Sans KR', sans-serif;
 }
-.vh-zinfo-rows { padding: 0.35rem 0.55rem 0.25rem; display: flex; flex-direction: column; gap: 4px; }
-.vh-zinfo-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.76rem; }
-.vh-zinfo-row > span { color: #8e8f5e; font-family: 'Noto Sans KR', sans-serif; }
-.vh-zinfo-row > b { color: #e8e2c4; font-size: 0.86rem; text-shadow: 1px 1px 0 #000; }
-.vh-zinfo-lead {
-  border-top: 1px solid #2a2c1e; padding: 0.32rem 0.55rem; font-size: 0.68rem; color: #a98f5a;
+.vz-note b { font-weight: 600; }
+.vz-people-h {
+  display: flex; justify-content: space-between; font-size: .64rem; color: #76764e;
+  letter-spacing: .5px; padding: 2px 3px 0; text-transform: uppercase;
+}
+.vz-people { display: flex; flex-direction: column; gap: 3px; }
+.vz-person {
+  display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px;
+  padding: 3px 7px; border-left: 3px solid var(--cc); border-radius: 1px;
+  background: linear-gradient(180deg, rgba(42, 44, 32, .5), rgba(22, 24, 16, .5));
+}
+.vz-person.dead { opacity: .4; }
+.vz-pname { font-size: .82rem; color: #e8e2c4; }
+.vz-pname em { font-style: normal; font-size: .66rem; color: #8e8f5e; margin-left: 5px; }
+.vz-pbars { display: flex; flex-direction: column; gap: 2px; width: 72px; }
+.vz-pbar { height: 4px; background: #0a0b06; border-radius: 1px; overflow: hidden; }
+.vz-pbar i { display: block; height: 100%; }
+.vz-pnum { font-size: .82rem; font-weight: 600; min-width: 22px; text-align: right; }
+.vz-empty {
+  font-size: .78rem; color: #8e8f5e; font-style: italic; padding: 6px 2px;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.vz-lead {
+  padding: 8px 14px; border-top: 1px solid #2a2c1e; font-size: .72rem; color: #a98f5a;
   font-family: 'Noto Sans KR', sans-serif;
 }
 
 /* 클릭 가능한 구역(망루·보강문) */
 .vh-hot-act { cursor: pointer; }
+/* 호버 라벨을 종이 그레인(z10) 위로 올려 선명하게(흐릿함 제거) */
+.vh-hot, .vh-phot { z-index: 12; }
 
 /* ═══════════════════════════════════════════════════════
    망루 · 외부 정찰 카드
