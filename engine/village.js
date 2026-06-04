@@ -991,11 +991,11 @@ function sceneCompound(s) {
     const cx = p.box[0] + p.box[2] / 2, ty = p.box[1];
     return `<div class="vh-pips" data-pchar="${p.char}" style="left:${cx}%;top:${ty}%">${items.join('')}</div>`;
   }).join('');
-  // 게이트(y56~71) 바로 바깥에 정지해 있는 좀비 1~2마리 — 분위기용 (움직임 없음)
+  // 게이트(y56~71) 바로 바깥 좀비 1~2마리 — 발끝 고정, 상체만 좌우로 기우뚱
   const OZ = 'assets/images/outside/zombie01.png';
   const gateZombies = `
     <img class="vh-gzombie" src="${OZ}" alt="" style="left:43%; top:68%; height:9.8%" onerror="this.remove()">
-    <img class="vh-gzombie" src="${OZ}" alt="" style="left:53%; top:70%; height:8.4%; transform:scaleX(-1)" onerror="this.remove()">`;
+    <img class="vh-gzombie flip" src="${OZ}" alt="" style="left:53%; top:70%; height:8.4%; animation-duration:3.8s; animation-delay:-1.3s" onerror="this.remove()">`;
   return `<div class="vh-stagebox">
     <img class="vh-layer vh-px vh-px-sky"    src="${A}bg_sky.png"    alt="" onerror="this.remove()">
     <img class="vh-layer vh-px vh-px-ground" src="${A}bg_ground.png" alt="" onerror="this.remove()">
