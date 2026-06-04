@@ -1174,8 +1174,9 @@ function moColor(m) {
   return '#c25656';
 }
 // 상태 아이콘 (한눈 인지용)
-const HPIC = '<svg viewBox="0 0 12 12"><path d="M6 10.4C2.2 7.7 1 6 1 4.1A2.3 2.3 0 0 1 6 2.6 2.3 2.3 0 0 1 11 4.1C11 6 9.8 7.7 6 10.4z" fill="currentColor"/></svg>';
-const MOIC = '<svg viewBox="0 0 12 12"><path d="M6 .8l1.5 3.4 3.7.3-2.8 2.5.9 3.6L6 8.9 2.7 10.6l.9-3.6L.8 4.5l3.7-.3z" fill="currentColor"/></svg>';
+// 손그림 상태 아이콘 — 채움 대신 거친 스트로크 + #vhSketch 연필 흔들림(CSS)
+const HPIC = '<svg viewBox="0 0 12 12" class="vh-ic-sketch"><path d="M6 10.3C2.4 7.9 1.1 6.1 1.1 4.3 1.1 3 2.1 2.1 3.3 2.1c1 0 1.9.6 2.7 1.8C6.7 2.7 7.6 2.1 8.6 2.1c1.3 0 2.3.9 2.3 2.2 0 1.8-1.3 3.6-4.9 6z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+const MOIC = '<svg viewBox="0 0 12 12" class="vh-ic-sketch"><path d="M6 1.2l1.5 3.1 3.4.4-2.6 2.2.8 3.3L6 8.4 2.9 10.2l.8-3.3L1.1 4.7l3.4-.4z" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round" stroke-linecap="round"/></svg>';
 function shade(hex, mul) {
   const n = parseInt(hex.slice(1), 16);
   let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
@@ -1232,6 +1233,12 @@ function ensureDom() {
   const el = document.createElement('div');
   el.id = 'villageScreen';
   el.innerHTML = `
+    <svg class="vh-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs>
+      <filter id="vhSketch" x="-35%" y="-35%" width="170%" height="170%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" seed="7" result="n"/>
+        <feDisplacementMap in="SourceGraphic" in2="n" scale="1.3" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+    </defs></svg>
     <header class="vh-top">
       <div class="vh-top-day">
         <span id="vhDay">Day 1</span>
@@ -1261,6 +1268,7 @@ function ensureDom() {
             <div class="vh-fx-fog"></div>
             <canvas class="vh-fx-rain" id="vhRain"></canvas>
           </div>
+          <div class="vh-paper"></div>
           <div class="vh-pop" id="vhPop"></div>
           <div class="vh-outside" id="vhOutside"></div>
           <div class="vh-decision" id="vhDecision"></div>

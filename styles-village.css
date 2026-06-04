@@ -891,6 +891,31 @@
 }
 @keyframes vhGzSway { from { margin-left: -1.1%; } to { margin-left: 1.1%; } }
 
+/* ═══ This War of Mine 풍 — 종이/스케치 질감 + 손그림 아이콘 ═══ */
+.vh-defs { position: absolute; width: 0; height: 0; overflow: hidden; pointer-events: none; }
+
+/* 씬 위 종이 그레인 + 비네트 (UI·팝오버 아래, z=10) */
+.vh-paper { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
+.vh-paper::before {   /* 종이 결 노이즈 */
+  content: ''; position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='130' height='130'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 130px 130px; opacity: .085; mix-blend-mode: overlay;
+}
+.vh-paper::after {    /* 비네트 + 미세한 목탄 음영 */
+  content: ''; position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 125% 115% at 50% 42%, transparent 50%, rgba(8,7,4,.5) 100%),
+    linear-gradient(rgba(34,28,18,.05), rgba(16,13,8,.08));
+  mix-blend-mode: multiply;
+}
+
+/* 손그림 흔들림 — 상태/자원 아이콘 라인에 연필 떨림 */
+.vh-ic-sketch,
+#villageScreen .vh-stat-ic svg, #villageScreen .vh-pop-ic svg, #villageScreen .vh-pip svg,
+#villageScreen .vh-resrow-ic svg, #villageScreen .vh-pill-ic svg {
+  filter: url(#vhSketch);
+}
+
 /* ═══════════════════════════════════════════════════════
    패럴렉스 — 하늘 고정, 전경(지형·블록·인물) 이동
    스테이지박스가 전체를 (--px*-7px)로 옮기고,
