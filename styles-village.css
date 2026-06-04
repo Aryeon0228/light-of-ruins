@@ -788,9 +788,11 @@
 .vh-fx { position: absolute; overflow: hidden; pointer-events: none; z-index: 8; }
 .vh-fx > * { position: absolute; inset: 0; pointer-events: none; }
 
-/* 포인터 패럴렉스 — 레이어별 다른 이동량(깊이감). 스테이지는 살짝 확대해 가장자리 빈틈 가림 */
+/* 포인터 패럴렉스 — 하늘은 고정, 전경(지형·블록·인물)이 함께 이동(깊이감).
+   무대 전체를 옮기고, sky만 역방향으로 상쇄해 하늘을 제자리에 고정한다. */
 .vh-stagebox {
-  transform: scale(1.03);   /* 오버스캔만 유지(가장자리 빈틈 가림) — 전경은 고정, 패럴렉스는 sky만 */
+  transform: scale(1.03) translate(calc(var(--px,0) * -7px), calc(var(--py,0) * -4px));
+  transition: transform .25s ease-out;
 }
 .vh-fx-fog     { transform: translate(calc(var(--px,0) *  9px), calc(var(--py,0) *  3px)); transition: transform .25s ease-out; }
 
@@ -880,14 +882,23 @@
 }
 @keyframes vhOzPace { from { margin-left: -4%; } to { margin-left: 4%; } }
 
+/* 마당 화면 — 문 바깥 배회 좀비 (전경, 인물/블록 위) */
+.vh-gzombie {
+  position: absolute; width: auto; z-index: 7; transform-origin: 50% 100%;
+  pointer-events: none; opacity: .9;
+  filter: drop-shadow(0 3px 4px rgba(0,0,0,.65)) brightness(.82) saturate(.85);
+  animation: vhGzSway var(--gz,10s) ease-in-out infinite alternate;
+}
+@keyframes vhGzSway { from { margin-left: -1.1%; } to { margin-left: 1.1%; } }
+
 /* ═══════════════════════════════════════════════════════
-   패럴렉스 배경 5레이어 (하늘→담장→마당→건물→정문)
-   스테이지박스 자체가 mid 기준(--px*-7px)으로 이동 →
-   하늘/담장은 추가 +translate로 덜 움직이고, 정문은 -translate로 더 움직임
+   패럴렉스 — 하늘 고정, 전경(지형·블록·인물) 이동
+   스테이지박스가 전체를 (--px*-7px)로 옮기고,
+   sky는 +7px로 정확히 상쇄해 하늘만 제자리에 고정한다.
    ═══════════════════════════════════════════════════════ */
 .vh-px { z-index: 0; }
 .vh-px-front { z-index: 6; }   /* 정문 = 인물(z5) 앞 */
-/* sky만 패럴렉스로 이동 — ground·block·인물은 완전 고정 */
+/* sky = 스테이지 이동 상쇄 → 하늘 고정. ground·block·인물은 스테이지와 함께 이동 */
 .vh-px-sky    { transform: translate(calc(var(--px,0) *  7px), calc(var(--py,0) *  4px)); transition: transform .25s ease-out; }
 .vh-px-ground { transform: none; }
 .vh-px-front  { transform: none; }

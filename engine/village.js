@@ -906,6 +906,11 @@ function sceneCompound(s) {
     const cx = p.box[0] + p.box[2] / 2, ty = p.box[1];
     return `<div class="vh-pips" data-pchar="${p.char}" style="left:${cx}%;top:${ty}%">${items.join('')}</div>`;
   }).join('');
+  // 문 바깥 배회하는 좀비 1~2마리 (게이트 y56~71 아래 전경 포장지대) — 분위기용
+  const OZ = 'assets/images/outside/zombie01.png';
+  const gateZombies = `
+    <img class="vh-gzombie" src="${OZ}" alt="" style="left:40%; top:76%; height:14%; --gz:9s" onerror="this.remove()">
+    <img class="vh-gzombie" src="${OZ}" alt="" style="left:54%; top:80%; height:12%; --gz:12s; animation-delay:-4s; transform:scaleX(-1)" onerror="this.remove()">`;
   return `<div class="vh-stagebox">
     <img class="vh-layer vh-px vh-px-sky"    src="${A}bg_sky.png"    alt="" onerror="this.remove()">
     <img class="vh-layer vh-px vh-px-ground" src="${A}bg_ground.png" alt="" onerror="this.remove()">
@@ -914,6 +919,7 @@ function sceneCompound(s) {
     ${people}
     ${pips}
     <img class="vh-layer vh-px vh-px-front" src="${A}bg_block.png" alt="" onerror="this.remove()">
+    ${gateZombies}
     ${hots}
     ${phots}
   </div>`;
