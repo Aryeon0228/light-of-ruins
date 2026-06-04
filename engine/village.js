@@ -991,11 +991,11 @@ function sceneCompound(s) {
     const cx = p.box[0] + p.box[2] / 2, ty = p.box[1];
     return `<div class="vh-pips" data-pchar="${p.char}" style="left:${cx}%;top:${ty}%">${items.join('')}</div>`;
   }).join('');
-  // 문 바깥 배회하는 좀비 1~2마리 (게이트 y56~71 아래 전경 포장지대) — 분위기용
+  // 게이트(y56~71) 바로 바깥에 정지해 있는 좀비 1~2마리 — 분위기용 (움직임 없음)
   const OZ = 'assets/images/outside/zombie01.png';
   const gateZombies = `
-    <img class="vh-gzombie" src="${OZ}" alt="" style="left:40%; top:76%; height:14%; --gz:9s" onerror="this.remove()">
-    <img class="vh-gzombie" src="${OZ}" alt="" style="left:54%; top:80%; height:12%; --gz:12s; animation-delay:-4s; transform:scaleX(-1)" onerror="this.remove()">`;
+    <img class="vh-gzombie" src="${OZ}" alt="" style="left:43%; top:68%; height:9.8%" onerror="this.remove()">
+    <img class="vh-gzombie" src="${OZ}" alt="" style="left:53%; top:70%; height:8.4%; transform:scaleX(-1)" onerror="this.remove()">`;
   return `<div class="vh-stagebox">
     <img class="vh-layer vh-px vh-px-sky"    src="${A}bg_sky.png"    alt="" onerror="this.remove()">
     <img class="vh-layer vh-px vh-px-ground" src="${A}bg_ground.png" alt="" onerror="this.remove()">

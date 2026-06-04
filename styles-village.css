@@ -886,14 +886,12 @@
 }
 @keyframes vhOzPace { from { margin-left: -4%; } to { margin-left: 4%; } }
 
-/* 마당 화면 — 문 바깥 배회 좀비 (전경, 인물/블록 위) */
+/* 마당 화면 — 게이트 바깥 정지 좀비 (전경, 인물/블록 위) */
 .vh-gzombie {
   position: absolute; width: auto; z-index: 7; transform-origin: 50% 100%;
   pointer-events: none; opacity: .9;
   filter: drop-shadow(0 3px 4px rgba(0,0,0,.65)) brightness(.82) saturate(.85);
-  animation: vhGzSway var(--gz,10s) ease-in-out infinite alternate;
 }
-@keyframes vhGzSway { from { margin-left: -1.1%; } to { margin-left: 1.1%; } }
 
 /* ═══ This War of Mine 풍 — 종이/스케치 질감 + 손그림 아이콘 ═══ */
 .vh-defs { position: absolute; width: 0; height: 0; overflow: hidden; pointer-events: none; }
