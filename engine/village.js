@@ -1441,8 +1441,6 @@ function ensureDom() {
       <div class="vh-res" id="vhResources"></div>
       <div class="vh-cam">
         <button class="vh-cam-btn vh-info-toggle" id="vhPanelToggle" title="생존자 명단 · 시스템 정보 펼치기">정보</button>
-        <button class="vh-cam-btn" data-mode="section">측면</button>
-        <button class="vh-cam-btn active" data-mode="compound">마당</button>
         <button class="vh-cam-x" id="vhClose">닫기 ✕</button>
       </div>
     </header>
@@ -1493,7 +1491,7 @@ function ensureDom() {
   `;
   document.body.appendChild(el);
 
-  el.querySelectorAll('.vh-cam-btn').forEach(b => {
+  el.querySelectorAll('.vh-cam-btn[data-mode]').forEach(b => {
     b.addEventListener('click', () => LR.village.setMode(b.dataset.mode));
   });
   document.getElementById('vhClose').addEventListener('click', () => LR.village.close());
