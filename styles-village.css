@@ -453,13 +453,38 @@
   padding: 4px 8px; border-radius: 2px; border: 1px solid #14130d;
 }
 
-/* 액션바 = 하단 중앙 플로팅 */
+/* 액션바 = 하단 중앙 플로팅 (패널 노출 여부와 무관하게 화면 중앙 고정) */
 #villageScreen .vh-actbar {
-  position: absolute; bottom: 12px; left: 218px; right: 230px; z-index: 12;
+  position: absolute; bottom: 12px; left: 50%; right: auto; z-index: 14;
+  transform: translateX(-50%);
+  width: max-content; max-width: calc(100% - 32px);
   backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
   background: linear-gradient(180deg, rgba(42, 44, 32, .86), rgba(24, 26, 18, .9));
 }
 #villageScreen .vh-hint { color: #9a9a6a; }
+
+/* ═══════════════════════════════════════════════════════
+   감상 우선(immersive) — 평소엔 풍경만, '정보' 토글로 패널 노출
+   좌/우 패널·경고배너는 기본 숨김 → panels-open일 때만 슬라이드 인
+   ═══════════════════════════════════════════════════════ */
+#villageScreen .vh-left,
+#villageScreen .vh-right {
+  transition: transform .3s cubic-bezier(.2, .8, .2, 1), opacity .22s ease;
+}
+#villageScreen:not(.panels-open) .vh-left {
+  transform: translateX(calc(-100% - 18px)); opacity: 0; pointer-events: none;
+}
+#villageScreen:not(.panels-open) .vh-right {
+  transform: translateX(calc(100% + 18px)); opacity: 0; pointer-events: none;
+}
+#villageScreen:not(.panels-open) .vh-alert { display: none; }
+/* 장황한 안내 힌트는 숨김 — 화면을 깔끔하게 */
+#villageScreen .vh-hint { display: none; }
+/* '정보' 토글 버튼 — 펼침 상태 표시 */
+#villageScreen .vh-info-toggle.active {
+  background: linear-gradient(180deg, #4a4d36, #2c2e20);
+  color: #ffcf86; border-color: #d4a14f;
+}
 
 /* ═══════ 음향 감지 스코프 (소음 실시간 파형) ═══════ */
 #villageScreen #vhSystems { display: flex; flex-direction: column; gap: 8px; }
@@ -704,27 +729,84 @@
   font-family: 'Noto Sans KR', sans-serif;
 }
 
-/* 건물(구역) 정보창 — .vh-pop 카드 재활용 + 전용 본문 */
-.vh-zinfo { width: 190px; }
-.vh-zinfo-h {
-  padding: 0.42rem 1.4rem 0.34rem 0.55rem; color: #ffcf86; font-size: 0.86rem;
-  text-shadow: 1px 1px 0 #000; border-bottom: 1px solid #2a2c1e;
+/* 건물(구역) 정보창 — 중앙 큰 카드 + 뒤쪽 블러 백드롭
+   (블러는 카드 '뒤' 레이어에만 → 카드 내용·건물은 선명, 배경 풍경만 은은히) */
+.vh-zback {
+  position: absolute; inset: 0; z-index: 43;
+  background: rgba(8, 8, 5, .30);
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  opacity: 0; pointer-events: none; transition: opacity .2s ease;
 }
-.vh-zinfo-desc {
-  padding: 0.4rem 0.55rem 0.05rem; font-size: 0.7rem; color: #b9b48f; line-height: 1.5;
+.vh-zback.open { opacity: 1; pointer-events: auto; }
+
+#villageScreen .vh-zinfo {
+  left: 50%; top: 50%; right: auto; bottom: auto;
+  width: min(360px, calc(100% - 32px)); max-height: calc(100% - 48px);
+  overflow-y: auto; z-index: 46;
+  transform: translate(-50%, -50%) scale(.96);
+}
+#villageScreen .vh-zinfo.open { transform: translate(-50%, -50%) scale(1); }
+.vh-zinfo::after { display: none; }   /* 중앙 카드 → 말풍선 꼬리 제거 */
+
+.vz-head {
+  display: flex; align-items: center; gap: 6px; padding: 11px 14px 7px;
+  font-family: 'Galmuri14', 'Galmuri11', monospace;
+}
+.vz-icon { color: var(--c-warn); }
+.vz-title { font-size: 1.08rem; color: #ffcf86; letter-spacing: .5px; text-shadow: 1px 1px 0 #000; }
+.vz-desc {
+  padding: 0 14px 9px; font-size: .78rem; color: #9a9a6a; line-height: 1.5;
+  font-family: 'Noto Sans KR', sans-serif; border-bottom: 1px solid #2a2c1e;
+}
+.vz-body { padding: 11px 14px; display: flex; flex-direction: column; gap: 8px; }
+.vz-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.vz-stat {
+  display: flex; flex-direction: column; gap: 1px; padding: 6px 9px;
+  background: rgba(10, 11, 7, .5); border: 1px solid #2a2c1e; border-radius: 2px;
+}
+.vz-k { font-size: .7rem; color: #8e8f5e; font-family: 'Noto Sans KR', sans-serif; }
+.vz-v { font-size: 1.05rem; color: #e8e2c4; font-weight: 600; text-shadow: 1px 1px 0 #000; line-height: 1.15; }
+.vz-sub { font-size: .62rem; color: #76764e; }
+.vz-gauge { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 9px; }
+.vz-glab { font-size: .74rem; color: #8e8f5e; font-family: 'Noto Sans KR', sans-serif; }
+.vz-gbar { height: 7px; background: #0a0b06; border: 1px solid #14130d; border-radius: 1px; overflow: hidden; }
+.vz-gbar i { display: block; height: 100%; }
+.vz-gval { font-size: .88rem; color: #e8e2c4; font-weight: 600; min-width: 34px; text-align: right; text-shadow: 1px 1px 0 #000; }
+.vz-note {
+  font-size: .74rem; color: #a7a874; line-height: 1.5; padding-top: 1px;
   font-family: 'Noto Sans KR', sans-serif;
 }
-.vh-zinfo-rows { padding: 0.35rem 0.55rem 0.25rem; display: flex; flex-direction: column; gap: 4px; }
-.vh-zinfo-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.76rem; }
-.vh-zinfo-row > span { color: #8e8f5e; font-family: 'Noto Sans KR', sans-serif; }
-.vh-zinfo-row > b { color: #e8e2c4; font-size: 0.86rem; text-shadow: 1px 1px 0 #000; }
-.vh-zinfo-lead {
-  border-top: 1px solid #2a2c1e; padding: 0.32rem 0.55rem; font-size: 0.68rem; color: #a98f5a;
+.vz-note b { font-weight: 600; }
+.vz-people-h {
+  display: flex; justify-content: space-between; font-size: .64rem; color: #76764e;
+  letter-spacing: .5px; padding: 2px 3px 0; text-transform: uppercase;
+}
+.vz-people { display: flex; flex-direction: column; gap: 3px; }
+.vz-person {
+  display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px;
+  padding: 3px 7px; border-left: 3px solid var(--cc); border-radius: 1px;
+  background: linear-gradient(180deg, rgba(42, 44, 32, .5), rgba(22, 24, 16, .5));
+}
+.vz-person.dead { opacity: .4; }
+.vz-pname { font-size: .82rem; color: #e8e2c4; }
+.vz-pname em { font-style: normal; font-size: .66rem; color: #8e8f5e; margin-left: 5px; }
+.vz-pbars { display: flex; flex-direction: column; gap: 2px; width: 72px; }
+.vz-pbar { height: 4px; background: #0a0b06; border-radius: 1px; overflow: hidden; }
+.vz-pbar i { display: block; height: 100%; }
+.vz-pnum { font-size: .82rem; font-weight: 600; min-width: 22px; text-align: right; }
+.vz-empty {
+  font-size: .78rem; color: #8e8f5e; font-style: italic; padding: 6px 2px;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.vz-lead {
+  padding: 8px 14px; border-top: 1px solid #2a2c1e; font-size: .72rem; color: #a98f5a;
   font-family: 'Noto Sans KR', sans-serif;
 }
 
 /* 클릭 가능한 구역(망루·보강문) */
 .vh-hot-act { cursor: pointer; }
+/* 호버 라벨을 종이 그레인(z10) 위로 올려 선명하게(흐릿함 제거) */
+.vh-hot, .vh-phot { z-index: 12; }
 
 /* ═══════════════════════════════════════════════════════
    망루 · 외부 정찰 카드
@@ -792,13 +874,15 @@
 .vh-fx { position: absolute; overflow: hidden; pointer-events: none; z-index: 8; }
 .vh-fx > * { position: absolute; inset: 0; pointer-events: none; }
 
-/* 포인터 패럴렉스 — 하늘은 고정, 전경(지형·블록·인물)이 함께 이동(깊이감).
-   무대 전체를 옮기고, sky만 역방향으로 상쇄해 하늘을 제자리에 고정한다. */
+/* 포인터 패럴렉스 — 살짝 줌인(1.12)한 카메라가 커서를 따라 부드럽게 패닝.
+   커서 우측 → 화면 좌측으로 스윽(전경 이동), 하늘은 상쇄해 제자리 고정.
+   패닝 폭은 px가 아니라 박스 너비 %로 잡아 컨테이너 크기와 무관하게
+   가장자리에서 빈 배경이 새지 않도록 한다(줌 1.12 → 한쪽 여유 6%, 패닝 4.5%). */
 .vh-stagebox {
-  transform: scale(1.03) translate(calc(var(--px,0) * -7px), calc(var(--py,0) * -4px));
-  transition: transform .25s ease-out;
+  transform: translate(calc(var(--px,0) * -4.5%), calc(var(--py,0) * -3.5%)) scale(1.12);
+  transition: transform .3s ease-out;
 }
-.vh-fx-fog     { transform: translate(calc(var(--px,0) *  9px), calc(var(--py,0) *  3px)); transition: transform .25s ease-out; }
+.vh-fx-fog     { transform: translate(calc(var(--px,0) * 20px), calc(var(--py,0) * 8px)); transition: transform .3s ease-out; }
 
 /* 비 (캔버스) */
 .vh-fx-rain { width: 100%; height: 100%; display: block; opacity: .85; }
@@ -930,13 +1014,13 @@
 
 /* ═══════════════════════════════════════════════════════
    패럴렉스 — 하늘 고정, 전경(지형·블록·인물) 이동
-   스테이지박스가 전체를 (--px*-7px)로 옮기고,
-   sky는 +7px로 정확히 상쇄해 하늘만 제자리에 고정한다.
+   스테이지박스가 전체를 (--px * -4.5%)로 옮기고,
+   sky는 +4%로 상쇄(부모 scale 1.12에 곱해져 ≈4.48%)해 하늘만 제자리에 고정한다.
    ═══════════════════════════════════════════════════════ */
 .vh-px { z-index: 0; }
 .vh-px-front { z-index: 6; }   /* 정문 = 인물(z5) 앞 */
 /* sky = 스테이지 이동 상쇄 → 하늘 고정. ground·block·인물은 스테이지와 함께 이동 */
-.vh-px-sky    { transform: translate(calc(var(--px,0) *  7px), calc(var(--py,0) *  4px)); transition: transform .25s ease-out; }
+.vh-px-sky    { transform: translate(calc(var(--px,0) * 4%), calc(var(--py,0) * 3%)); transition: transform .3s ease-out; }
 .vh-px-ground { transform: none; }
 .vh-px-front  { transform: none; }
 

@@ -198,88 +198,187 @@ LR.village.closePopover = function() {
   if (pop) pop.classList.remove('open');
 };
 
-// ─── 건물(구역) 정보창 — 구역 클릭 시 그 위에 카드로 표시 ───
-const ZONE_RES_COLOR = { '식량': '#e0b24a', '물': '#5ab0e0', '연료': '#e0823a', '의약품': '#e05a5a', '생존자': '#74c074' };
-function zoneInfoData(z, s) {
+// ─── 건물(구역) 정보창 — 구역 클릭 시 중앙에 큰 카드로 그 구역 상황 표시 ───
+function vzStat(label, value, color, sub) {
+  return `<div class="vz-stat">
+    <span class="vz-k">${label}</span>
+    <span class="vz-v"${color ? ` style="color:${color}"` : ''}>${value}</span>
+    ${sub ? `<span class="vz-sub">${sub}</span>` : ''}
+  </div>`;
+}
+function vzGauge(label, value, pct, color) {
+  const w = Math.round(Math.max(0, Math.min(1, pct)) * 100);
+  return `<div class="vz-gauge">
+    <span class="vz-glab">${label}</span>
+    <span class="vz-gbar"><i style="width:${w}%;background:${color}"></i></span>
+    <span class="vz-gval">${value}</span>
+  </div>`;
+}
+function vzPerson(c, def) {
+  const hpc = hpColor(c.health), moc = moColor(c.morale);
+  return `<div class="vz-person${c.alive ? '' : ' dead'}" style="--cc:${def ? def.color : '#888'}">
+    <span class="vz-pname">${c.name}<em>${c.role}</em></span>
+    <span class="vz-pbars">
+      <span class="vz-pbar"><i style="width:${c.alive ? c.health : 0}%;background:${hpc}"></i></span>
+      <span class="vz-pbar"><i style="width:${c.alive ? c.morale : 0}%;background:${moc}"></i></span>
+    </span>
+    <span class="vz-pnum" style="color:${c.alive ? hpc : '#777'}">${c.alive ? c.health : '—'}</span>
+  </div>`;
+}
+
+// 구역별 상황 카드 데이터 — 실제 state(신선/말린/절임 식량·계절 부패속도 등) 기반
+function zonePanel(z, s) {
   const alive = LR.aliveChars(s);
   const n = alive.length;
+  const seasonDef = LR.SEASONS[s.season];
+  const decay = seasonDef.foodDecay;                 // 1.0 보통 / 2.0 빨리 상함(장마·폭염)
+  const decayLab = decay >= 2 ? '빠름' : '느림';
+  const decayVerb = decay >= 2 ? '빨리 상한다' : '천천히 상한다';
+  const decayCol = decay >= 2 ? '#e07070' : '#74c074';
+  const totalFood = s.food + s.driedFood + s.pickledFood;
+  const days = n ? Math.floor(totalFood / n) : 99;
+  const foodT = LR.foodTier(totalFood);
   const avgMo = n ? Math.round(alive.reduce((a, c) => a + c.morale, 0) / n) : 0;
-  const hurt = alive.filter(c => c.health < 60).length;
-  const phaseLabel = { announce: '예고', develop: '발전', reach: '도달', resolve_pre: '해소 전야', resolve: '해소' }[s.beacon && s.beacon.phase] || (s.beacon && s.beacon.phase) || '—';
-  const bday = s.beacon ? LR.beaconDayInWeek(s) : 0;
   const C = id => s.characters[id];
+  const D = id => LR.CHARACTER_DEFS[id];
   const lead = id => { const c = C(id); return c && c.alive ? `${c.name} · ${c.role}` : null; };
-  const M = {
-    kitchen:   { title: '요리시설',     desc: '솥에 국을 끓여 식량을 조리한다.',
-                 rows: [['식량', s.food], ['하루 소비', '−' + n]], lead: lead('jeonghun') },
-    field:     { title: '밭',           desc: '남은 땅에 작물을 길러 식량을 보탠다.',
-                 rows: [['식량', s.food], ['물', s.water]], lead: lead('eunseo') },
-    barracks:  { title: '숙소',         desc: '생존자들이 몸을 누이고 쉬는 곳.',
-                 rows: [['생존자', n + '/10'], ['평균 사기', avgMo]], lead: null },
-    infirmary: { title: '의무실',       desc: '다친 사람과 환자를 돌본다.',
-                 rows: [['의약품', s.medicine], ['부상·환자', hurt + '명']], lead: lead('sujin') },
-    workshop:  { title: '작업장 · 통신', desc: '통신 비컨을 손보고 신호를 키운다.',
-                 rows: [['비컨', 'D' + bday + ' · ' + phaseLabel], ['연료', s.fuel]], lead: lead('jonghyeok') },
-    storage:   { title: '정문 · 울타리', desc: '물자를 보관하고 울타리를 보강한다.',
-                 rows: [['식량', s.food], ['물', s.water], ['연료', s.fuel]], lead: lead('dongho') },
-    water:     { title: '물 · 빗물받이', desc: '빗물을 받아 식수를 모은다.',
-                 rows: [['물', s.water], ['하루 소비', '−' + n]], lead: null },
+  const ZL = ZONES.reduce((m, zn) => (m[zn.z] = zn.label, m), {});
+  const hurtIds = LR.CHARACTER_ORDER.filter(id => { const c = C(id); return c.alive && c.health < 60; });
+
+  switch (z) {
+    case 'kitchen': return {
+      title: '요리시설', desc: '솥에 국을 끓여 하루치 식사를 짓는다.', lead: lead('jeonghun'),
+      html:
+        vzGauge('비축 식량', totalFood, totalFood / 100, '#e0b24a') +
+        `<div class="vz-grid2">` +
+          vzStat('신선', s.food, '#e0b24a', '부패 ' + decayLab) +
+          vzStat('말린', s.driedFood, '#cdb98a', '장기보관') +
+          vzStat('절임', s.pickledFood, '#bcae7a', '장기보관') +
+          vzStat('하루 소비', '−' + n, '#e8e2c4', n + '명') +
+        `</div>` +
+        vzStat('버틸 수 있는 일수', days + '일', days <= 2 ? '#e07070' : days <= 5 ? '#d4a14f' : '#74c074') +
+        `<div class="vz-note">비축 상태 · <b style="color:${foodT.tier === 'famine' ? '#e07070' : foodT.tier === 'crisis' ? '#d4a14f' : '#cdd0a0'}">${foodT.label}</b> · ${seasonDef.name}엔 신선 식량이 <b style="color:${decayCol}">${decayVerb}</b>.</div>`
+    };
+    case 'field': {
+      const growing = s.water >= 30 && decay < 2;
+      const note = s.water < 20 ? '물이 부족해 작물이 더디 자란다.'
+        : decay >= 2 ? '더위·습기로 잎이 쉬 무른다. 거두면 바로 말리는 게 낫다.'
+        : '흙은 아직 우리 편이다. 잎채소가 자라는 중.';
+      return {
+        title: '밭', desc: '담벼락 밑 텃밭에 잎채소를 길러 식량을 보탠다.', lead: lead('eunseo'),
+        html:
+          vzGauge('관개용수', s.water, s.water / 100, '#5ab0e0') +
+          `<div class="vz-grid2">` +
+            vzStat('계절', seasonDef.name, '#cdd0a0') +
+            vzStat('생육 상태', growing ? '양호' : '더딤', growing ? '#74c074' : '#d4a14f') +
+            vzStat('비축 식량', totalFood, '#e0b24a') +
+            vzStat('부패 속도', decayLab, decayCol) +
+          `</div>` +
+          `<div class="vz-note">${note}</div>`
+      };
+    }
+    case 'barracks': {
+      const people = LR.CHARACTER_ORDER.map(id => vzPerson(C(id), D(id))).join('');
+      return {
+        title: '숙소', desc: '생존자들이 몸을 누이고 쉬는 곳. 모두의 상태를 한눈에 살핀다.', lead: null,
+        html:
+          `<div class="vz-grid2">` +
+            vzStat('생존자', n + '/10', '#74c074') +
+            vzStat('평균 사기', avgMo, moColor(avgMo)) +
+          `</div>` +
+          `<div class="vz-people-h"><span>이름</span><span>체력 · 사기</span></div>` +
+          `<div class="vz-people">${people}</div>`
+      };
+    }
+    case 'infirmary': {
+      const list = hurtIds.length
+        ? hurtIds.map(id => vzPerson(C(id), D(id))).join('')
+        : `<div class="vz-empty">지금은 치료가 필요한 사람이 없다.</div>`;
+      return {
+        title: '의무실', desc: '다친 사람과 환자를 돌본다.', lead: lead('sujin'),
+        html:
+          `<div class="vz-grid2">` +
+            vzStat('의약품', s.medicine, s.medicine === 0 ? '#e07070' : s.medicine <= 1 ? '#d4a14f' : '#e8e2c4') +
+            vzStat('부상·환자', hurtIds.length + '명', hurtIds.length ? '#d4a14f' : '#74c074') +
+          `</div>` +
+          `<div class="vz-people">${list}</div>`
+      };
+    }
+    case 'workshop': {
+      const beaconDef = LR.BEACON_TYPES[s.beacon.type];
+      const phaseLabel = { announce: '예고', develop: '발전', reach: '도달', resolve_pre: '해소 전야', resolve: '해소' }[s.beacon.phase] || s.beacon.phase;
+      const score = Math.min(100, LR.beaconScore(s));
+      return {
+        title: '작업장 · 통신', desc: '통신 비컨을 손보고 구조 신호를 키운다.', lead: lead('jonghyeok'),
+        html:
+          vzGauge('신호 강도', score, score / 100, 'var(--c-beacon)') +
+          `<div class="vz-grid2">` +
+            vzStat('신호', beaconDef.name, '#cdd0a0') +
+            vzStat('단계', 'D' + LR.beaconDayInWeek(s) + ' · ' + phaseLabel, '#e8e2c4') +
+            vzStat('연료', s.fuel, s.fuel < 6 ? '#e07070' : s.fuel < 12 ? '#d4a14f' : '#e0823a') +
+            vzStat('투입 식량', s.beacon.investedFood, '#e0b24a') +
+          `</div>`
+      };
+    }
+    case 'storage': return {
+      title: '정문 · 울타리', desc: '물자를 보관하고 울타리를 보강한다.', lead: lead('dongho'),
+      html:
+        vzGauge('식량', totalFood, totalFood / 100, '#e0b24a') +
+        vzGauge('물', s.water, s.water / 100, '#5ab0e0') +
+        vzGauge('연료', s.fuel, s.fuel / 100, '#e0823a') +
+        vzStat('의약품', s.medicine, '#e05a5a')
+    };
+    case 'water': return {
+      title: '물 · 빗물받이', desc: '빗물을 받아 식수를 모은다.', lead: null,
+      html:
+        vzGauge('식수', s.water, s.water / 100, '#5ab0e0') +
+        `<div class="vz-grid2">` +
+          vzStat('하루 소비', '−' + n, '#e8e2c4', n + '명') +
+          vzStat('계절', seasonDef.name, s.season === 'rainy' ? '#5ab0e0' : '#cdd0a0', s.season === 'rainy' ? '보충 ↑' : '') +
+        `</div>` +
+        `<div class="vz-note">${s.season === 'rainy' ? '장맛비로 빗물받이가 넉넉히 찬다.' : s.water < 20 ? '물이 빠르게 줄고 있다. 아껴야 한다.' : '당장은 버틸 만하다.'}</div>`
+    };
+  }
+  // 그 외 구역(비어 있어도 칸은 뜬다)
+  return {
+    title: ZL[z] || '구역', desc: '특별히 보고된 정황은 없다.', lead: null,
+    html: `<div class="vz-empty">표시할 상세 정보가 없다.</div>`
   };
-  return M[z];
 }
 
 LR.village.showZoneInfo = function(z) {
   const el = document.getElementById('vhZinfo');
+  const back = document.getElementById('vhZback');
   const s = LR.village.state;
   if (!el || !s) return;
-  const d = zoneInfoData(z, s);
-  if (!d) { el.classList.remove('open'); return; }   // 망루·보강문 등은 다른 패널
-  LR.village.closePopover();                          // 인물 팝오버와 동시 표시 X
-  const out = document.getElementById('vhOutside');   // 외부 정찰 패널도 닫기
+  if (z === 'watchtower' || z === 'gate') return;     // 망루·보강문은 외부 정찰 패널
+  const d = zonePanel(z, s);
+  LR.village.closePopover();                           // 인물 팝오버와 동시 표시 X
+  const out = document.getElementById('vhOutside');    // 외부 정찰 패널도 닫기
   if (out) out.classList.remove('open');
   LR.village._zinfoZone = z;
-  const rows = d.rows.map(([k, v]) => {
-    const col = ZONE_RES_COLOR[k] || '';
-    return `<div class="vh-zinfo-row"><span>${k}</span><b${col ? ` style="color:${col}"` : ''}>${v}</b></div>`;
-  }).join('');
   el.innerHTML = `
     <button class="vh-pop-x" id="vhZinfoX">✕</button>
-    <div class="vh-zinfo-h">⌖ ${d.title}</div>
-    <div class="vh-zinfo-desc">${d.desc}</div>
-    <div class="vh-zinfo-rows">${rows}</div>
-    ${d.lead ? `<div class="vh-zinfo-lead">담당 · ${d.lead}</div>` : ''}`;
+    <div class="vz-head"><span class="vz-icon">⌖</span><span class="vz-title">${d.title}</span></div>
+    <div class="vz-desc">${d.desc}</div>
+    <div class="vz-body">${d.html}</div>
+    ${d.lead ? `<div class="vz-lead">담당 · ${d.lead}</div>` : ''}`;
   el.classList.add('open');
+  if (back) back.classList.add('open');
   const x = document.getElementById('vhZinfoX');
   if (x) x.addEventListener('click', (e) => { e.stopPropagation(); LR.village.closeZoneInfo(); });
-  LR.village.positionZinfo();
 };
 
 LR.village.positionZinfo = function() {
-  const el = document.getElementById('vhZinfo');
-  const stage = document.querySelector('.vh-stage');
-  const host = document.getElementById('vhScene');
-  if (!el || !stage || !host || !el.classList.contains('open')) return;
-  const hot = host.querySelector('.vh-hot[data-zone="' + LR.village._zinfoZone + '"]');
-  if (!hot) { el.classList.remove('open'); return; }
-  const sr = stage.getBoundingClientRect(), hr = hot.getBoundingClientRect();
-  const cx = hr.left + hr.width / 2 - sr.left;
-  const headTop = hr.top - sr.top;
-  const pw = el.offsetWidth, ph = el.offsetHeight;
-  // 좌우 플로팅 HUD(좌 ~210, 우 ~224)를 피해 카드를 가둠
-  const lim = sr.width > 760 ? { l: 210, r: 224 } : { l: 6, r: 6 };
-  let left = Math.max(lim.l, Math.min(sr.width - pw - lim.r, cx - pw / 2));
-  let top = headTop - ph - 12, below = false;
-  if (top < 4) { top = (hr.bottom - sr.top) + 12; below = true; }
-  el.style.left = Math.round(left) + 'px';
-  el.style.top = Math.round(top) + 'px';
-  el.classList.toggle('below', below);
-  el.style.setProperty('--arrow', Math.round(cx - left) + 'px');
+  // 큰 카드는 화면 중앙 고정(CSS) — 별도 위치 계산 불필요
 };
 
 LR.village.closeZoneInfo = function() {
   LR.village._zinfoZone = null;
   const el = document.getElementById('vhZinfo');
   if (el) el.classList.remove('open');
+  const back = document.getElementById('vhZback');
+  if (back) back.classList.remove('open');
 };
 
 // ─── 망루 · 외부 정찰 (방어탑 클릭) ───
@@ -493,7 +592,18 @@ function renderTopbar(s) {
   document.getElementById('vhSeason').textContent = seasonName;
   document.getElementById('vhClock').textContent = dayPhase(s).label;
   const resEl = document.getElementById('vhResources');
-  if (resEl) resEl.innerHTML = '';   // 자원 현황은 우측 패널(renderSystems)로 이동
+  if (resEl) {
+    // 상단엔 한눈에 위급도를 읽는 핵심 3개만(식량·생존자·위협). 나머지는 '정보' 토글 패널에서.
+    const alive = LR.aliveChars(s).length;
+    const foodT = LR.foodTier(s.food);
+    const foodCls = foodT.tier === 'famine' ? 'danger' : foodT.tier === 'crisis' ? 'warn' : '';
+    const peopleCls = alive < 10 ? 'warn' : '';
+    const threatCls = raid.p >= 0.6 ? 'danger' : raid.p >= 0.25 ? 'warn' : 'dim';
+    resEl.innerHTML =
+      pill('food',   '식량',   s.food,        foodCls,   s.food / 100) +
+      pill('people', '생존자', alive + '/10', peopleCls, alive / 10) +
+      pill('noise',  '위협',   raid.scale,    threatCls);
+  }
 
   // 위협 배너
   const banner = document.getElementById('vhAlert');
@@ -1330,8 +1440,7 @@ function ensureDom() {
       </div>
       <div class="vh-res" id="vhResources"></div>
       <div class="vh-cam">
-        <button class="vh-cam-btn" data-mode="section">측면</button>
-        <button class="vh-cam-btn active" data-mode="compound">마당</button>
+        <button class="vh-cam-btn vh-info-toggle" id="vhPanelToggle" title="생존자 명단 · 시스템 정보 펼치기">정보</button>
         <button class="vh-cam-x" id="vhClose">닫기 ✕</button>
       </div>
     </header>
@@ -1354,6 +1463,7 @@ function ensureDom() {
           </div>
           <div class="vh-paper"></div>
           <div class="vh-pop" id="vhPop"></div>
+          <div class="vh-zback" id="vhZback"></div>
           <div class="vh-pop vh-zinfo" id="vhZinfo"></div>
           <div class="vh-outside" id="vhOutside"></div>
           <div class="vh-decision" id="vhDecision"></div>
@@ -1381,10 +1491,21 @@ function ensureDom() {
   `;
   document.body.appendChild(el);
 
-  el.querySelectorAll('.vh-cam-btn').forEach(b => {
+  el.querySelectorAll('.vh-cam-btn[data-mode]').forEach(b => {
     b.addEventListener('click', () => LR.village.setMode(b.dataset.mode));
   });
   document.getElementById('vhClose').addEventListener('click', () => LR.village.close());
+
+  // 건물 정보창 백드롭 클릭 → 닫기
+  const zback = document.getElementById('vhZback');
+  if (zback) zback.addEventListener('click', () => LR.village.closeZoneInfo());
+
+  // 정보 토글 — 평소엔 풍경만, 누르면 좌(명단)·우(시스템) 패널 슬라이드 노출
+  const pt = document.getElementById('vhPanelToggle');
+  if (pt) pt.addEventListener('click', () => {
+    const open = document.getElementById('villageScreen').classList.toggle('panels-open');
+    pt.classList.toggle('active', open);
+  });
 
   // 액션바 — 오늘의 결정 토글 / 텍스트 상세 / 기록
   const ad = document.getElementById('vhActDecide');
