@@ -816,6 +816,25 @@ function updateScopeReadout(s) {
   if (dot) { dot.style.background = col; dot.style.boxShadow = '0 0 6px ' + col; }
 }
 
+// 소음 동심원(음파) — 스코프 파형 스파이크와 같은 순간 발생시켜 직관적으로 연동
+LR.village.emitWave = function(noise, strength) {
+  const host = document.getElementById('vhWaves');
+  if (!host || host.childElementCount > 6) return;       // 동시 개수 제한
+  const intensity = Math.min(1, (noise || 0) / 100);
+  const el = document.createElement('span');
+  el.className = 'vh-noisewave';
+  const x = 46 + Math.random() * 16;                      // 마당 가운데(불·사람) 근처
+  const y = 50 + Math.random() * 12;
+  const scale = 4 + intensity * 5 + (strength || 0) * 2;  // 소음 클수록 크게 퍼짐
+  el.style.left = x.toFixed(1) + '%';
+  el.style.top = y.toFixed(1) + '%';
+  el.style.setProperty('--nwscale', scale.toFixed(1));
+  el.style.setProperty('--nwdur', (1.1 + Math.random() * 0.5).toFixed(2) + 's');
+  el.style.setProperty('--nwcol', scopeColor(noise));
+  el.addEventListener('animationend', () => el.remove());
+  host.appendChild(el);
+};
+
 LR.village.startScope = function() {
   const canvas = document.getElementById('vhScopeCanvas');
   if (!canvas) return;
@@ -839,7 +858,11 @@ LR.village.startScope = function() {
     const intensity = Math.min(1, noise / 100);
     t += 0.12 + intensity * 0.6;     // 소음 클수록 빠르게
     let v = Math.sin(t) * 0.22 + (Math.random() - 0.5) * 0.55;
-    if (Math.random() < 0.015 + intensity * 0.13) v += (Math.random() < 0.5 ? -1 : 1) * (0.4 + Math.random() * 0.6); // 돌발 스파이크
+    if (Math.random() < 0.015 + intensity * 0.13) {       // 돌발 소음 → 파형 스파이크 + 동심원 동시
+      const spike = 0.4 + Math.random() * 0.6;
+      v += (Math.random() < 0.5 ? -1 : 1) * spike;
+      LR.village.emitWave(noise, spike);
+    }
     v *= (0.08 + intensity * 0.9);   // 소음 클수록 진폭 ↑
     v = Math.max(-1, Math.min(1, v));
     samples.push(v); if (samples.length > canvas.width) samples.shift();
@@ -1011,14 +1034,18 @@ function fitStage() {
   box.style.width = Math.round(w) + 'px';
   box.style.height = Math.round(h) + 'px';
 
-  // 패닝 폭 = '실제로 잘린 양(오버행)' = (scale로 커진 박스 − 컨테이너)/2.
-  //  커서를 끝까지 가져가면 잘린 가장자리가 딱 드러나고, 그 이상은 안 나가 빈 배경이 안 샌다.
+  // 패닝 폭 = '실제로 잘린 양(오버행)'의 일부만(damp) — 멀미 안 나게 살짝씩만 움직임.
+  //  평소엔 시선을 약간 아래로(biasY) 둬서 정문·땅이 보이고, 위로 올리면 하늘이 드러난다.
   const S = 1.12;                 // ※ styles-village.css .vh-stagebox scale(1.12)와 일치
-  const margin = 0.92;            // 가장자리에서 살짝 안쪽까지만
-  const panX = Math.max(0, (S * w - cw) / 2) * margin;
-  const panY = Math.max(0, (S * h - ch) / 2) * margin;
+  const damp = 0.4;               // 움직임 세기(0~1) — 작을수록 차분함
+  const ohX = Math.max(0, (S * w - cw) / 2);
+  const ohY = Math.max(0, (S * h - ch) / 2);
+  const panX = ohX * damp;
+  const panY = ohY * damp;
+  const biasY = ohY * 0.42;       // 평소 살짝 아래(정문·땅) 보이게
   box.style.setProperty('--panx', panX.toFixed(1) + 'px');
   box.style.setProperty('--pany', panY.toFixed(1) + 'px');
+  box.style.setProperty('--biasy', biasY.toFixed(1) + 'px');
   box.style.setProperty('--skx', (panX / S).toFixed(1) + 'px');   // 하늘 상쇄(부모 scale 보정)
   box.style.setProperty('--sky', (panY / S).toFixed(1) + 'px');
 
@@ -1501,9 +1528,18 @@ function ensureDom() {
           <div class="vh-fx" id="vhFx">
               <div class="vh-fx-embers" id="vhEmbers"></div>
             <div class="vh-fx-fog"></div>
+            <div class="vh-fx-waves" id="vhWaves"></div>
             <canvas class="vh-fx-rain" id="vhRain"></canvas>
           </div>
           <div class="vh-paper"></div>
+          <section class="vh-card vh-scope-card vh-scope-float">
+            <h4>음향 감지 · ACOUSTIC</h4>
+            <canvas id="vhScopeCanvas" class="vh-scope"></canvas>
+            <div class="vh-scope-read">
+              <span class="vh-scope-dot" id="vhScopeDot"></span>
+              소음 <b id="vhScopeVal">0</b> · <span id="vhScopeState">—</span>
+            </div>
+          </section>
           <div class="vh-pop" id="vhPop"></div>
           <div class="vh-zback" id="vhZback"></div>
           <div class="vh-pop vh-zinfo" id="vhZinfo"></div>
@@ -1520,14 +1556,6 @@ function ensureDom() {
       </main>
 
       <aside class="vh-right">
-        <section class="vh-card vh-scope-card">
-          <h4>음향 감지 · ACOUSTIC</h4>
-          <canvas id="vhScopeCanvas" class="vh-scope"></canvas>
-          <div class="vh-scope-read">
-            <span class="vh-scope-dot" id="vhScopeDot"></span>
-            소음 <b id="vhScopeVal">0</b> · <span id="vhScopeState">—</span>
-          </div>
-        </section>
         <div id="vhSystems"></div>
       </aside>
     </div>
