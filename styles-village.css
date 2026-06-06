@@ -503,6 +503,27 @@
 .vh-scope-read b { font-size: 0.95rem; text-shadow: 1px 1px 0 #000; }
 .vh-scope-dot { width: 9px; height: 9px; border-radius: 50%; background: #5fae8a; flex-shrink: 0; }
 
+/* 음향 스코프 — 항상 보이는 우상단 플로팅(정보 토글과 무관) */
+.vh-scope-float {
+  position: absolute; right: 12px; top: 58px; z-index: 16;
+  width: 196px; padding: 7px 9px 8px;
+}
+.vh-scope-float h4 { margin: 0 0 4px; }
+
+/* 소음 동심원(음파) — 파형 스파이크와 같은 순간 퍼짐 */
+.vh-fx-waves { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.vh-noisewave {
+  position: absolute; width: 24px; height: 24px; margin: -12px 0 0 -12px;
+  border: 2px solid var(--nwcol, #b8c8a0); border-radius: 50%;
+  opacity: 0; transform: scale(.3); mix-blend-mode: screen;
+  animation: vhNoiseWave var(--nwdur, 1.3s) ease-out forwards;
+}
+@keyframes vhNoiseWave {
+  0%   { opacity: 0;   transform: scale(.3); }
+  18%  { opacity: .5;  }
+  100% { opacity: 0;   transform: scale(var(--nwscale, 5)); }
+}
+
 /* 호버 시 그 인물 경고 핀 숨김 → 이름 라벨이 안 가려짐 */
 .vh-pips { transition: opacity .15s ease; }
 .vh-pips-hidden { opacity: 0; }
@@ -927,7 +948,7 @@
    → 화면 비율과 무관하게 잘린 가장자리 끝까지 드러나고 빈 배경은 안 샌다.
    주의: 아래 scale(1.12)는 village.js fitStage의 S=1.12와 반드시 일치. */
 .vh-stagebox {
-  transform: translate(calc(-1 * var(--px,0) * var(--panx, 0px)), calc(-1 * var(--py,0) * var(--pany, 0px))) scale(1.12);
+  transform: translate(calc(-1 * var(--px,0) * var(--panx, 0px)), calc(-1 * var(--biasy, 0px) - var(--py,0) * var(--pany, 0px))) scale(1.12);
   transition: transform .3s ease-out;
 }
 .vh-fx-fog     { transform: translate(calc(var(--px,0) * 20px), calc(var(--py,0) * 8px)); transition: transform .3s ease-out; }
