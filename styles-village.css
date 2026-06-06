@@ -922,11 +922,12 @@
 .vh-fx > * { position: absolute; inset: 0; pointer-events: none; }
 
 /* 포인터 패럴렉스 — 살짝 줌인(1.12)한 카메라가 커서를 따라 부드럽게 패닝.
-   커서 우측 → 화면 좌측으로 스윽(전경 이동), 하늘은 상쇄해 제자리 고정.
-   패닝 폭은 px가 아니라 박스 너비 %로 잡아 컨테이너 크기와 무관하게
-   가장자리에서 빈 배경이 새지 않도록 한다(줌 1.12 → 한쪽 여유 6%, 패닝 4.5%). */
+   커서 우측 → 화면 좌측으로, 아래 → 위로 스윽(전경 이동), 하늘은 상쇄해 제자리 고정.
+   패닝 폭(--panx/--pany)은 fitStage가 '실제로 잘린 양(오버행)'을 px로 계산해 넣어준다.
+   → 화면 비율과 무관하게 잘린 가장자리 끝까지 드러나고 빈 배경은 안 샌다.
+   주의: 아래 scale(1.12)는 village.js fitStage의 S=1.12와 반드시 일치. */
 .vh-stagebox {
-  transform: translate(calc(var(--px,0) * -4.5%), calc(var(--py,0) * -3.5%)) scale(1.12);
+  transform: translate(calc(-1 * var(--px,0) * var(--panx, 0px)), calc(-1 * var(--py,0) * var(--pany, 0px))) scale(1.12);
   transition: transform .3s ease-out;
 }
 .vh-fx-fog     { transform: translate(calc(var(--px,0) * 20px), calc(var(--py,0) * 8px)); transition: transform .3s ease-out; }
@@ -1067,7 +1068,7 @@
 .vh-px { z-index: 0; }
 .vh-px-front { z-index: 6; }   /* 정문 = 인물(z5) 앞 */
 /* sky = 스테이지 이동 상쇄 → 하늘 고정. ground·block·인물은 스테이지와 함께 이동 */
-.vh-px-sky    { transform: translate(calc(var(--px,0) * 4%), calc(var(--py,0) * 3%)); transition: transform .3s ease-out; }
+.vh-px-sky    { transform: translate(calc(var(--px,0) * var(--skx, 0px)), calc(var(--py,0) * var(--sky, 0px))); transition: transform .3s ease-out; }
 .vh-px-ground { transform: none; }
 .vh-px-front  { transform: none; }
 

@@ -1011,6 +1011,17 @@ function fitStage() {
   box.style.width = Math.round(w) + 'px';
   box.style.height = Math.round(h) + 'px';
 
+  // 패닝 폭 = '실제로 잘린 양(오버행)' = (scale로 커진 박스 − 컨테이너)/2.
+  //  커서를 끝까지 가져가면 잘린 가장자리가 딱 드러나고, 그 이상은 안 나가 빈 배경이 안 샌다.
+  const S = 1.12;                 // ※ styles-village.css .vh-stagebox scale(1.12)와 일치
+  const margin = 0.92;            // 가장자리에서 살짝 안쪽까지만
+  const panX = Math.max(0, (S * w - cw) / 2) * margin;
+  const panY = Math.max(0, (S * h - ch) / 2) * margin;
+  box.style.setProperty('--panx', panX.toFixed(1) + 'px');
+  box.style.setProperty('--pany', panY.toFixed(1) + 'px');
+  box.style.setProperty('--skx', (panX / S).toFixed(1) + 'px');   // 하늘 상쇄(부모 scale 보정)
+  box.style.setProperty('--sky', (panY / S).toFixed(1) + 'px');
+
   // FX 레이어(비·안개·좀비·불씨)를 스테이지박스(이미지 영역)에 픽셀 정렬
   const fx = document.getElementById('vhFx');
   const stage = document.querySelector('.vh-stage');
