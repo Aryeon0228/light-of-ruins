@@ -172,6 +172,34 @@ LR.village.fillPopover = function() {
   LR.village.positionPopover();
 };
 
+// ─── 인물 상세 카드 (좌하단) — 찢어진 노트 + 폴라로이드 (아트는 사용자 제작) ───
+//  여기선 폴라로이드 사진(포트레이트 PNG)과 글만 채운다. 틀/배경 아트는 CSS .vh-dossier에 얹음.
+LR.village.fillDossier = function() {
+  const el = document.getElementById('vhDossier');
+  if (!el) return;
+  const s = LR.village.state;
+  const id = LR.village.popChar;
+  if (!s || !id || LR.village.mode !== 'compound') { el.classList.remove('open'); return; }
+  const c = s.characters[id], def = LR.CHARACTER_DEFS[id];
+  if (!c || !def) { el.classList.remove('open'); return; }
+  const ht = LR.healthTier(c.health), mt = LR.moraleTier(c.morale);
+  el.innerHTML = `
+    <button class="vh-dossier-x" id="vhDossierX">✕</button>
+    <div class="vh-dossier-photo">
+      <img class="vh-dossier-port" src="assets/images/portraits/${id}.png" alt="" onerror="this.style.display='none'">
+    </div>
+    <div class="vh-dossier-text">
+      <div class="vh-dossier-name">${c.name}<em>${c.role} · ${def.age}세</em></div>
+      <div class="vh-dossier-act">${activityOf(c)}</div>
+      <div class="vh-dossier-line"><span>체력</span><b style="color:${hpColor(c.health)}">${c.alive ? c.health : '—'}</b><i>${c.alive ? ht.label : '사망'}</i></div>
+      <div class="vh-dossier-line"><span>사기</span><b style="color:${moColor(c.morale)}">${c.alive ? c.morale : '—'}</b><i>${c.alive ? mt.label : ''}</i></div>
+      <div class="vh-dossier-foot">전례 감수성 · 부정 ×${def.negSens} / 긍정 ×${def.posSens}</div>
+    </div>`;
+  el.classList.add('open');
+  const x = document.getElementById('vhDossierX');
+  if (x) x.addEventListener('click', (e) => { e.stopPropagation(); LR.village.closePopover(); });
+};
+
 LR.village.positionPopover = function() {
   const pop = document.getElementById('vhPop');
   const stage = document.querySelector('.vh-stage');
@@ -196,6 +224,8 @@ LR.village.closePopover = function() {
   LR.village.popChar = null;
   const pop = document.getElementById('vhPop');
   if (pop) pop.classList.remove('open');
+  const dos = document.getElementById('vhDossier');
+  if (dos) dos.classList.remove('open');
 };
 
 // ─── 건물(구역) 정보창 — 구역 클릭 시 중앙에 큰 카드로 그 구역 상황 표시 ───
@@ -581,7 +611,7 @@ LR.village.render = function() {
   updateScopeReadout(s);
   LR.village.renderScene();
   LR.village.renderDecision();
-  LR.village.fillPopover();
+  LR.village.fillDossier();
 };
 
 function renderTopbar(s) {
@@ -1105,7 +1135,7 @@ function sceneCompound(s) {
   // 게이트(y56~71) 바로 바깥 좀비 1~2마리 — 발끝 고정, 상체만 좌우로 기우뚱
   const OZ = 'assets/images/outside/zombie01.png';
   const gateZombies = `
-    <img class="vh-gzombie" src="${OZ}" alt="" style="left:43%; top:68%; height:9.8%" onerror="this.remove()">
+    <img class="vh-gzombie" src="${OZ}" alt="" style="left:27%; top:69%; height:9.8%" onerror="this.remove()">
     <img class="vh-gzombie flip" src="${OZ}" alt="" style="left:53%; top:70%; height:8.4%; animation-duration:3.8s; animation-delay:-1.3s" onerror="this.remove()">`;
   return `<div class="vh-stagebox">
     <img class="vh-layer vh-px vh-px-sky"    src="${A}bg_sky.png"    alt="" onerror="this.remove()">
@@ -1467,6 +1497,7 @@ function ensureDom() {
           <div class="vh-zback" id="vhZback"></div>
           <div class="vh-pop vh-zinfo" id="vhZinfo"></div>
           <div class="vh-outside" id="vhOutside"></div>
+          <div class="vh-dossier" id="vhDossier"></div>
           <div class="vh-decision" id="vhDecision"></div>
         </div>
         <div class="vh-actbar">
