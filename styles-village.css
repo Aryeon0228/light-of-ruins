@@ -809,6 +809,53 @@
 .vh-hot, .vh-phot { z-index: 12; }
 
 /* ═══════════════════════════════════════════════════════
+   인물 상세 카드 (좌하단) — 찢어진 노트 + 폴라로이드
+   ▸ 배경 아트(.png)는 사용자가 제작. 들어오면 .vh-dossier의 background를
+     한 줄로 교체:  background: url("assets/images/ui/dossier.png") center/contain no-repeat;
+   ▸ 추천 캔버스: 360×280px (레티나용 2배 export = 720×560)
+   ▸ 폴라로이드 사진창: 150×150 정사각, 좌상단 (26,30) 위치 — 포트레이트(1254² PNG)가 여기 박힘
+   ▸ 글 영역: 오른쪽 (196,40)~. 아트의 빈 노트 면이 이 자리에 오게 디자인
+   ═══════════════════════════════════════════════════════ */
+.vh-dossier {
+  position: absolute; left: 16px; bottom: 16px; z-index: 30;
+  width: 360px; height: 280px;
+  background: linear-gradient(180deg, #efe7d2, #ddd2b4);   /* 임시 양피지 — 아트로 교체 */
+  border: 1px solid #00000040; border-radius: 2px;
+  box-shadow: 0 10px 28px #000a, inset 0 0 0 1px #ffffff30;
+  font-family: 'Noto Sans KR', sans-serif;
+  opacity: 0; transform: translateY(10px) rotate(-1.2deg); pointer-events: none;
+  transition: opacity .18s ease, transform .2s cubic-bezier(.2, .8, .2, 1);
+}
+.vh-dossier.open { opacity: 1; transform: translateY(0) rotate(-1.2deg); pointer-events: auto; }
+
+/* 폴라로이드 사진창 (정사각) — 포트레이트 PNG */
+.vh-dossier-photo {
+  position: absolute; left: 26px; top: 30px; width: 150px; height: 150px;
+  background: #111; overflow: hidden; box-shadow: 0 3px 8px #0007;  /* 흰 폴라로이드테는 사용자 아트로 */
+}
+.vh-dossier-port { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* 글 영역 (오른쪽) */
+.vh-dossier-text {
+  position: absolute; left: 196px; top: 40px; right: 18px;
+  display: flex; flex-direction: column; gap: 5px; color: #2a241a;
+}
+.vh-dossier-name { font-size: 1.02rem; font-weight: 700; color: #1c170f; line-height: 1.2; }
+.vh-dossier-name em { display: block; margin-top: 2px; font-style: normal; font-weight: 400; font-size: .72rem; color: #6a5f48; }
+.vh-dossier-act { font-size: .76rem; font-style: italic; color: #5a503c; }
+.vh-dossier-line { display: flex; align-items: baseline; gap: 6px; font-size: .8rem; }
+.vh-dossier-line span { min-width: 30px; color: #6a5f48; }
+.vh-dossier-line b { font-weight: 700; }
+.vh-dossier-line i { font-style: normal; font-size: .72rem; color: #6a5f48; }
+.vh-dossier-foot { margin-top: 4px; font-size: .68rem; line-height: 1.4; color: #6a5f48; }
+
+.vh-dossier-x {
+  position: absolute; top: 4px; right: 6px; z-index: 2; padding: 4px;
+  background: none; border: 0; cursor: pointer; font-size: .9rem; color: #6a5f48;
+}
+.vh-dossier-x:hover { color: #b04030; }
+
+/* ═══════════════════════════════════════════════════════
    망루 · 외부 정찰 카드
    ═══════════════════════════════════════════════════════ */
 .vh-outside {
