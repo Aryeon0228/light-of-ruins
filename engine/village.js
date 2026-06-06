@@ -968,15 +968,16 @@ LR.village.renderScene = function() {
   }
 };
 
-// 이미지 무대를 컨테이너에 4:3(2896×2172)로 맞춤 — 핫스팟 % 정렬 보장
+// 이미지 무대를 컨테이너에 가득 채움(cover) — 핀치줌처럼 넘치는 가장자리는 잘라냄
 function fitStage() {
   const host = document.getElementById('vhScene');
   if (!host) return;
   const box = host.querySelector('.vh-stagebox');
   if (!box) return;
   const cw = host.clientWidth, ch = host.clientHeight, ar = 3577 / 2419;
+  // cover: 너비를 채우되 높이가 모자라면 높이 기준으로 채움(가로 넘침은 좌우로 잘림)
   let w = cw, h = cw / ar;
-  if (h > ch) { h = ch; w = ch * ar; }
+  if (h < ch) { h = ch; w = ch * ar; }
   box.style.width = Math.round(w) + 'px';
   box.style.height = Math.round(h) + 'px';
 
