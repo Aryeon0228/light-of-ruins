@@ -411,6 +411,44 @@ LR.village.closeZoneInfo = function() {
   if (back) back.classList.remove('open');
 };
 
+// ─── 지난 기록 창 (모달) ───
+LR.village.showLog = function() {
+  const win = document.getElementById('vhLogWin');
+  const back = document.getElementById('vhLogBack');
+  const s = LR.village.state;
+  if (!win || !s) return;
+  const log = (s.log || []).slice(-14).reverse();
+  const rows = log.length
+    ? log.map(l => `<tr>
+        <td>D${l.day}</td>
+        <td>${l.food}</td>
+        <td>${l.avgMorale}</td>
+        <td>${l.noise}${l.raided ? ' 🩸' : ''}</td>
+        <td>${LR.SPIRAL_LABELS ? (LR.SPIRAL_LABELS[l.spiral] || '—') : '—'}</td>
+        <td>${l.survivors}/10</td>
+      </tr>`).join('')
+    : `<tr><td colspan="6" class="vz-empty">아직 기록이 없다.</td></tr>`;
+  win.innerHTML = `
+    <button class="vh-pop-x" id="vhLogX">✕</button>
+    <div class="vz-head"><span class="vz-icon">📓</span><span class="vz-title">지난 기록</span></div>
+    <div class="vz-body">
+      <table class="vh-logtable">
+        <thead><tr><th>일자</th><th>식량</th><th>사기</th><th>소음</th><th>나선</th><th>생존</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  win.classList.add('open');
+  if (back) back.classList.add('open');
+  const x = document.getElementById('vhLogX');
+  if (x) x.addEventListener('click', () => LR.village.closeLog());
+};
+LR.village.closeLog = function() {
+  const win = document.getElementById('vhLogWin');
+  if (win) win.classList.remove('open');
+  const back = document.getElementById('vhLogBack');
+  if (back) back.classList.remove('open');
+};
+
 // ─── 망루 · 외부 정찰 (방어탑 클릭) ───
 LR.village.showOutside = function() {
   const el = document.getElementById('vhOutside');
@@ -1135,15 +1173,17 @@ function sceneCompound(s) {
   const sel = LR.village.selected;
   // 모닥불 빛무리 — 패럴렉스 배경(px3_main)에 모닥불이 baked-in이라 glow만 얹음
   const fire = `<div class="vh-layer vh-firelight"></div>`;
-  const people = PEOPLE_FILES.map(p => {
+  const people = PEOPLE_FILES.map((p, i) => {
     const c = s.characters[p.char];
     const dead = (!c || !c.alive) ? 'display:none;' : '';
     const isSel = LR.village.picked && p.char === sel;
+    // 인물마다 숨쉬기 주기/위상 살짝 다르게(동시에 안 움직이게)
+    const idle = `--idle-delay:${(-i * 0.7).toFixed(1)}s;--idle-dur:${(3.6 + (i % 4) * 0.5).toFixed(1)}s;`;
     if (p.inplace) {
       // 풀캔버스 제자리 — 무대에 그대로 포갬. dx/dy(%)는 인물만 미세 이동(나머지는 투명).
       const origin = (p.ox != null) ? `transform-origin:${p.ox}% ${p.oy}%;` : '';
       const off = (p.dx || p.dy) ? `transform:translate(${p.dx || 0}%,${p.dy || 0}%);` : '';
-      return `<img class="vh-layer vh-actorfull${isSel ? ' sel' : ''}" data-char="${p.char}" src="${A}${p.file}.png" alt="" style="${origin}${off}${dead}" onerror="this.style.display='none'">`;
+      return `<img class="vh-layer vh-actorfull${isSel ? ' sel' : ''}" data-char="${p.char}" src="${A}${p.file}.png" alt="" style="${origin}${off}${idle}${dead}" onerror="this.style.display='none'">`;
     }
     const size = (p.h != null) ? `height:${p.h}%` : `width:${p.w}%`;
     return `<img class="vh-actor${isSel ? ' sel' : ''}" data-char="${p.char}" src="${A}${p.file}.png" alt="" style="left:${p.cx}%;top:${p.cy}%;${size};${dead}" onerror="this.style.display='none'">`;
@@ -1545,6 +1585,8 @@ function ensureDom() {
           <div class="vh-pop vh-zinfo" id="vhZinfo"></div>
           <div class="vh-outside" id="vhOutside"></div>
           <div class="vh-dossier" id="vhDossier"></div>
+          <div class="vh-zback" id="vhLogBack"></div>
+          <div class="vh-pop vh-zinfo vh-logwin" id="vhLogWin"></div>
           <div class="vh-decision" id="vhDecision"></div>
         </div>
         <div class="vh-actbar">
@@ -1588,12 +1630,11 @@ function ensureDom() {
     LR.village.close();
   });
   const al = document.getElementById('vhActLog');
-  if (al) al.addEventListener('click', () => {
-    const s = LR.village.state;
-    if (!s || !s.log || !s.log.length) { LR.render.toast('아직 기록이 없습니다', ''); return; }
-    const last = s.log[s.log.length - 1];
-    LR.render.toast(`D${last.day} 기록 — 식량 ${last.food} · 사기 ${last.avgMorale} · 생존 ${last.survivors}${last.raided ? ' · 습격🩸' : ''}`, '');
-  });
+  if (al) al.addEventListener('click', () => LR.village.showLog());
+
+  // 기록 창 백드롭 클릭 → 닫기
+  const lback = document.getElementById('vhLogBack');
+  if (lback) lback.addEventListener('click', () => LR.village.closeLog());
 }
 
 document.addEventListener('DOMContentLoaded', () => {
