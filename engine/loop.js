@@ -183,6 +183,18 @@ LR.engine.applyChoice = function(choiceId) {
 LR.engine.endOfDay = function() {
   const state = LR.state;
 
+  // ─── 일일 자원 생산 (인프라: 밭·빗물받이) — 계절·물 의존 ───
+  //  생산이 소비를 일부 상쇄해 '늘 결핍'을 완화. 물받이는 계절별 수집 − 식수 소비.
+  const aliveN = LR.aliveChars(state).length;
+  const farmBySeason = { spring_late: 5, rainy: 4, summer_heat: 3, autumn: 6, winter: 1 };
+  const rainBySeason = { spring_late: 7, rainy: 16, summer_heat: 4, autumn: 8, winter: 5 };
+  const farmYield = Math.round((farmBySeason[state.season] ?? 3) * (state.water >= 25 ? 1 : 0.5));
+  state.food = Math.min(100, state.food + farmYield);
+  const waterIn = rainBySeason[state.season] ?? 6;
+  const waterOut = Math.ceil(aliveN * 0.5);
+  state.water = Math.max(0, Math.min(100, state.water + waterIn - waterOut));
+  state.dailyProduce = { farm: farmYield, water: waterIn - waterOut };  // UI 표시용
+
   // 일일 식량 소비 (인원수 기반) — 신선식량이 부족하면 비축식 사용
   const aliveCount = LR.aliveChars(state).length;
   let need = aliveCount;

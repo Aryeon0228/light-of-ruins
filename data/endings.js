@@ -163,14 +163,14 @@ LR.checkEnding = function(state) {
 
   if (state.day < 30) return null;
 
-  // 30일 생존 분기
+  // 30일 생존 분기 (도덕 좌표가 또렷이 갈리도록 임계 2)
   const pos = state.counters.posPrecedents;
   const neg = state.counters.negPrecedents;
-  const safezoneEligible = state.beacon.completedSuccessCount.comm >= 3;
+  const safezoneEligible = state.beacon.completedSuccessCount.comm >= 2;
 
   if (safezoneEligible) return LR.ENDINGS.safezone;
-  if (pos >= 3 && neg === 0) return LR.ENDINGS.lightVillage;
-  if (neg >= 3 && pos === 0) return LR.ENDINGS.forgottenVillage;
-  if (pos >= 3 && neg >= 3) return LR.ENDINGS.shakingVillage;
+  if (pos >= 2 && neg === 0) return LR.ENDINGS.lightVillage;
+  if (neg >= 2 && pos === 0) return LR.ENDINGS.forgottenVillage;
+  if (pos >= 2 && neg >= 2) return LR.ENDINGS.shakingVillage;
   return LR.ENDINGS.weightedSurvival;
 };

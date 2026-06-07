@@ -56,8 +56,9 @@ function validChoices(node, state) {
 const pick = {
   random: (cs) => cs[Math.floor(Math.random() * cs.length)],
   safe:   (cs) => cs.find(c => c.risk !== 'danger' && !(c.intentionalNoise > 8)) || cs[0],
-  loud:   (cs) => cs.slice().sort((a, b) => (b.intentionalNoise || 0) - (a.intentionalNoise || 0))[0],
-  first:  (cs) => cs[0],
+  // 도덕 축을 직접 미는 전략: 마을 이로운(긍정 전례) vs 이기적/방치(부정 전례)
+  kind:   (cs) => cs.find(c => c.precedentCandidate && c.precedentCandidate.villageBenefit) || cs.find(c => c.risk !== 'danger') || cs[0],
+  harsh:  (cs) => cs.find(c => c.precedentCandidate && c.precedentCandidate.villageBenefit === false) || cs[cs.length - 1],
 };
 
 function playOne(strategy) {
@@ -76,7 +77,7 @@ function playOne(strategy) {
     ending: s.ending ? s.ending.id : (deadEnd ? '(DEAD-END)' : '(NO-END@' + s.day + ')'),
     day: s.day, survivors: alive.length,
     avgMorale: Math.round(LR.avgMorale(s)),
-    food: s.food, pos: s.counters.posPrecedents, neg: s.counters.negPrecedents,
+    food: s.food, water: s.water, pos: s.counters.posPrecedents, neg: s.counters.negPrecedents,
     commSucc: s.beacon.completedSuccessCount.comm,
     deadEnd,
   };
@@ -84,13 +85,13 @@ function playOne(strategy) {
 
 // ── 실행 ──
 const N = parseInt(process.argv[2], 10) || 200;
-const strategies = ['random', 'safe', 'loud', 'first'];
+const strategies = ['random', 'safe', 'kind', 'harsh'];
 const errors = [];
 console.log(`\n=== 플레이테스트: 전략 4종 × ${N}게임 ===\n`);
 
 for (const strat of strategies) {
   const endings = {}, deadEnds = [];
-  let survSum = 0, survivedCycle = 0, daySum = 0, foodZero = 0, posSum = 0, negSum = 0, commSum = 0;
+  let survSum = 0, survivedCycle = 0, daySum = 0, foodZero = 0, waterZero = 0, posSum = 0, negSum = 0, commSum = 0;
   for (let i = 0; i < N; i++) {
     let r;
     try { r = playOne(strat); }
@@ -100,10 +101,11 @@ for (const strat of strategies) {
     posSum += r.pos; negSum += r.neg; commSum += r.commSucc;
     if (r.day >= 30) survivedCycle++;
     if (r.food === 0) foodZero++;
+    if (r.water === 0) waterZero++;
     if (r.deadEnd) deadEnds.push(r.deadEnd);
   }
-  console.log(`■ [${strat}]  평균 생존자 ${(survSum / N).toFixed(1)}/10 · 30일 완주 ${survivedCycle}/${N} · 평균 종료일 ${(daySum / N).toFixed(1)} · 식량0 종료 ${foodZero}`);
-  console.log(`   전례 누적: 긍정 ${(posSum / N).toFixed(2)} · 부정 ${(negSum / N).toFixed(2)} (엔딩 분기 임계 3) · 비컨(통신) 성공 ${(commSum / N).toFixed(2)} (안전지대 임계 3)`);
+  console.log(`■ [${strat}]  평균 생존자 ${(survSum / N).toFixed(1)}/10 · 30일 완주 ${survivedCycle}/${N} · 식량0 종료 ${foodZero} · 물0 종료 ${waterZero}`);
+  console.log(`   전례 누적: 긍정 ${(posSum / N).toFixed(2)} · 부정 ${(negSum / N).toFixed(2)} (엔딩 분기 임계 2) · 비컨(통신) 성공 ${(commSum / N).toFixed(2)} (안전지대 임계 2)`);
   const dist = Object.entries(endings).sort((a, b) => b[1] - a[1])
     .map(([k, v]) => `${k} ${(v / N * 100).toFixed(0)}%`).join(' · ');
   console.log(`   엔딩: ${dist}`);
