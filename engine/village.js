@@ -1215,9 +1215,12 @@ function sceneCompound(s) {
   const gateZombies = `
     <img class="vh-gzombie" src="${OZ}" alt="" style="left:27%; top:69%; height:9.8%" onerror="this.remove()">
     <img class="vh-gzombie flip" src="${OZ}" alt="" style="left:53%; top:70%; height:8.4%; animation-duration:3.8s; animation-delay:-1.3s" onerror="this.remove()">`;
+  // 식수 회수통(빗물받이) — 키친(구역 box 42~57%, y43~) 뒤쪽에 배치. 인물·정문보다 뒤 레이어.
+  const waterTank = `<img class="vh-prop vh-water" src="${A}water.png" alt="" style="left:45%;top:33%;width:9%" onerror="this.remove()">`;
   return `<div class="vh-stagebox">
     <img class="vh-layer vh-px vh-px-sky"    src="${A}bg_sky.png"    alt="" onerror="this.remove()">
     <img class="vh-layer vh-px vh-px-ground" src="${A}bg_ground.png" alt="" onerror="this.remove()">
+    ${waterTank}
     ${fire}
     ${people}
     ${pips}
