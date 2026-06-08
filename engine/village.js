@@ -992,6 +992,11 @@ LR.village.bindParallax = function() {
   let raf = 0, tx = 0, ty = 0;
   function apply() { raf = 0; screen.style.setProperty('--px', tx.toFixed(3)); screen.style.setProperty('--py', ty.toFixed(3)); }
   stage.addEventListener('pointermove', (e) => {
+    // 일시정지(창 열림) 중엔 패럴렉스 입력 무시 → 하늘·안개가 커서 따라 어긋나 깜빡이지 않게
+    if (screen.classList.contains('paused')) {
+      if (tx !== 0 || ty !== 0) { tx = 0; ty = 0; if (!raf) raf = requestAnimationFrame(apply); }
+      return;
+    }
     const r = stage.getBoundingClientRect();
     tx = ((e.clientX - r.left) / r.width - 0.5) * 2;
     ty = ((e.clientY - r.top) / r.height - 0.5) * 2;
@@ -1649,6 +1654,7 @@ LR.village._syncPause = function() {
   const isOpen = id => { const e = document.getElementById(id); return e && e.classList.contains('open'); };
   const anyOpen = isOpen('vhDecision') || isOpen('vhZinfo') || isOpen('vhLogWin') || isOpen('vhOutside');
   scr.classList.toggle('paused', anyOpen);
+  if (anyOpen) { scr.style.setProperty('--px', '0'); scr.style.setProperty('--py', '0'); }  // 패럴렉스 중앙 고정
   const dim = document.getElementById('vhDim');
   if (dim) dim.classList.toggle('open', anyOpen);
 };
