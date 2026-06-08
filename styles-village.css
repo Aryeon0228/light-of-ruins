@@ -566,26 +566,23 @@
 .vh-decision {
   position: absolute; left: 0; right: 0; bottom: 0;
   max-height: 72%; display: flex; flex-direction: column;
-  z-index: 30;
-  margin: 0; border-radius: 6px 6px 0 0;
-  border: 2px solid #14130d; border-bottom: none;
-  background:
-    radial-gradient(circle 2.5px at 8px 8px, #74774f, #74774f00 70%),
-    radial-gradient(circle 2.5px at calc(100% - 8px) 8px, #74774f, #74774f00 70%),
-    linear-gradient(180deg, #2b2d20f2, #181a12f7);
-  box-shadow: inset 0 1px 0 #5a5e43, 0 -6px 24px #000a;
-  backdrop-filter: blur(2px);
+  z-index: 30; margin: 0; padding-top: 76px;
+  border: none; border-radius: 0; box-shadow: none;
+  /* 박스 대신: 아래로 갈수록 까매지는 그라데이션 + 블러. 위쪽 56px는 마스크로 부드럽게 페이드 → 풍경에 스며듦 */
+  background: linear-gradient(to top, rgba(6, 6, 4, .97) 0%, rgba(8, 8, 5, .86) 100%);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  -webkit-mask-image: linear-gradient(to top, #000 calc(100% - 56px), transparent);
+  mask-image: linear-gradient(to top, #000 calc(100% - 56px), transparent);
   transform: translateY(102%); opacity: 0; pointer-events: none;
   transition: transform .26s cubic-bezier(.2,.8,.2,1), opacity .2s;
 }
 .vh-decision.open { transform: translateY(0); opacity: 1; pointer-events: auto; }
 
-/* 헤더 = 스텐실 일자칩 + 제목 */
+/* 헤더 = 그라데이션 위에 떠 있는 일자칩 + 제목(바 배경 제거) */
 .vd-head {
   display: flex; align-items: center; gap: 0.6rem;
-  padding: 0.5rem 0.7rem; border-bottom: 2px solid #14130d;
-  background: linear-gradient(180deg, #3a3520, #241f12);
-  box-shadow: inset 0 1px 0 #6a5e30;
+  padding: 0.35rem 0.9rem 0.35rem; border-bottom: none;
+  background: none; box-shadow: none;
 }
 .vd-day {
   font-family: 'Galmuri14','Galmuri11',monospace; font-size: 0.78rem;
