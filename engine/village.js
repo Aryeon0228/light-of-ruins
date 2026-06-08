@@ -378,7 +378,6 @@ function zonePanel(z, s) {
 
 LR.village.showZoneInfo = function(z) {
   const el = document.getElementById('vhZinfo');
-  const back = document.getElementById('vhZback');
   const s = LR.village.state;
   if (!el || !s) return;
   if (z === 'watchtower' || z === 'gate') return;     // 망루·보강문은 외부 정찰 패널
@@ -394,7 +393,6 @@ LR.village.showZoneInfo = function(z) {
     <div class="vz-body">${d.html}</div>
     ${d.lead ? `<div class="vz-lead">담당 · ${d.lead}</div>` : ''}`;
   el.classList.add('open');
-  if (back) back.classList.add('open');
   const x = document.getElementById('vhZinfoX');
   if (x) x.addEventListener('click', (e) => { e.stopPropagation(); LR.village.closeZoneInfo(); });
 };
@@ -407,14 +405,11 @@ LR.village.closeZoneInfo = function() {
   LR.village._zinfoZone = null;
   const el = document.getElementById('vhZinfo');
   if (el) el.classList.remove('open');
-  const back = document.getElementById('vhZback');
-  if (back) back.classList.remove('open');
 };
 
 // ─── 지난 기록 창 (모달) ───
 LR.village.showLog = function() {
   const win = document.getElementById('vhLogWin');
-  const back = document.getElementById('vhLogBack');
   const s = LR.village.state;
   if (!win || !s) return;
   const log = (s.log || []).slice(-14).reverse();
@@ -438,15 +433,12 @@ LR.village.showLog = function() {
       </table>
     </div>`;
   win.classList.add('open');
-  if (back) back.classList.add('open');
   const x = document.getElementById('vhLogX');
   if (x) x.addEventListener('click', () => LR.village.closeLog());
 };
 LR.village.closeLog = function() {
   const win = document.getElementById('vhLogWin');
   if (win) win.classList.remove('open');
-  const back = document.getElementById('vhLogBack');
-  if (back) back.classList.remove('open');
 };
 
 // ─── 망루 · 외부 정찰 (방어탑 클릭) ───
@@ -650,6 +642,7 @@ LR.village.render = function() {
   LR.village.renderScene();
   LR.village.renderDecision();
   LR.village.fillDossier();
+  if (LR.village._syncPause) LR.village._syncPause();
 };
 
 function renderTopbar(s) {
@@ -1075,11 +1068,11 @@ function fitStage() {
   // 패닝 폭 = '실제로 잘린 양(오버행)'의 일부만(damp) — 멀미 안 나게 살짝씩만 움직임.
   //  평소엔 시선을 약간 아래로(biasY) 둬서 정문·땅이 보이고, 위로 올리면 하늘이 드러난다.
   const S = 1.12;                 // ※ styles-village.css .vh-stagebox scale(1.12)와 일치
-  const damp = 0.4;               // 움직임 세기(0~1) — 작을수록 차분함
+  const dampX = 0.22, dampY = 0.12;  // 움직임 세기 — 멀미 방지로 아주 살짝만(세로는 더 작게)
   const ohX = Math.max(0, (S * w - cw) / 2);
   const ohY = Math.max(0, (S * h - ch) / 2);
-  const panX = ohX * damp;
-  const panY = ohY * damp;
+  const panX = ohX * dampX;
+  const panY = ohY * dampY;
   const biasY = ohY * 0.42;       // 평소 살짝 아래(정문·땅) 보이게
   box.style.setProperty('--panx', panX.toFixed(1) + 'px');
   box.style.setProperty('--pany', panY.toFixed(1) + 'px');
@@ -1576,6 +1569,7 @@ function ensureDom() {
             <canvas class="vh-fx-rain" id="vhRain"></canvas>
           </div>
           <div class="vh-paper"></div>
+          <div class="vh-dim" id="vhDim"></div>
           <section class="vh-card vh-scope-card vh-scope-float">
             <h4>음향 감지 · ACOUSTIC</h4>
             <canvas id="vhScopeCanvas" class="vh-scope"></canvas>
@@ -1585,11 +1579,9 @@ function ensureDom() {
             </div>
           </section>
           <div class="vh-pop" id="vhPop"></div>
-          <div class="vh-zback" id="vhZback"></div>
           <div class="vh-pop vh-zinfo" id="vhZinfo"></div>
           <div class="vh-outside" id="vhOutside"></div>
           <div class="vh-dossier" id="vhDossier"></div>
-          <div class="vh-zback" id="vhLogBack"></div>
           <div class="vh-pop vh-zinfo vh-logwin" id="vhLogWin"></div>
           <div class="vh-decision" id="vhDecision"></div>
         </div>
@@ -1613,9 +1605,20 @@ function ensureDom() {
   });
   document.getElementById('vhClose').addEventListener('click', () => LR.village.close());
 
-  // 건물 정보창 백드롭 클릭 → 닫기
-  const zback = document.getElementById('vhZback');
-  if (zback) zback.addEventListener('click', () => LR.village.closeZoneInfo());
+  // 통합 딤(일시정지) — 창이 열리면 씬을 반투명 검은색으로 가리고 패럴렉스 정지.
+  //  딤 클릭 → 정보 창(건물·기록·망루) 닫기. (오늘의 결정은 진행 필요 → 닫지 않음)
+  const dim = document.getElementById('vhDim');
+  if (dim) dim.addEventListener('click', () => {
+    LR.village.closeZoneInfo();
+    LR.village.closeLog();
+    const out = document.getElementById('vhOutside');
+    if (out) out.classList.remove('open');
+    LR.village._syncPause();
+  });
+  // 창 열림/닫힘을 감지해 일시정지(딤) 상태 동기화
+  const watchIds = ['vhDecision', 'vhZinfo', 'vhLogWin', 'vhOutside'];
+  const mo = new MutationObserver(() => LR.village._syncPause());
+  watchIds.forEach(id => { const t = document.getElementById(id); if (t) mo.observe(t, { attributes: true, attributeFilter: ['class'] }); });
 
   // 정보 토글 — 평소엔 풍경만, 누르면 좌(명단)·우(시스템) 패널 슬라이드 노출
   const pt = document.getElementById('vhPanelToggle');
@@ -1635,11 +1638,21 @@ function ensureDom() {
   });
   const al = document.getElementById('vhActLog');
   if (al) al.addEventListener('click', () => LR.village.showLog());
-
-  // 기록 창 백드롭 클릭 → 닫기
-  const lback = document.getElementById('vhLogBack');
-  if (lback) lback.addEventListener('click', () => LR.village.closeLog());
 }
+
+// 일시정지/딤 동기화
+//  · 패럴렉스 정지(paused): 어떤 창이든(결정 포함) 열리면 — 멀미 방지
+//  · 검은 딤: 중앙 정보 창(건물·기록·망루)에만 — 결정 창은 인물 클릭/하이라이트 유지 위해 딤 없음
+LR.village._syncPause = function() {
+  const scr = document.getElementById('villageScreen');
+  if (!scr) return;
+  const isOpen = id => { const e = document.getElementById(id); return e && e.classList.contains('open'); };
+  const modalOpen = isOpen('vhZinfo') || isOpen('vhLogWin') || isOpen('vhOutside');
+  const anyOpen = modalOpen || isOpen('vhDecision');
+  scr.classList.toggle('paused', anyOpen);
+  const dim = document.getElementById('vhDim');
+  if (dim) dim.classList.toggle('open', modalOpen);
+};
 
 document.addEventListener('DOMContentLoaded', () => {
   // 타이틀 진입 버튼

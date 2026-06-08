@@ -769,15 +769,18 @@
   font-family: 'Noto Sans KR', sans-serif;
 }
 
-/* 건물(구역) 정보창 — 중앙 큰 카드 + 뒤쪽 블러 백드롭
-   (블러는 카드 '뒤' 레이어에만 → 카드 내용·건물은 선명, 배경 풍경만 은은히) */
-.vh-zback {
-  position: absolute; inset: 0; z-index: 43;
-  background: rgba(8, 8, 5, .30);
-  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
-  opacity: 0; pointer-events: none; transition: opacity .2s ease;
+/* 통합 딤(일시정지) — 창이 열리면 씬을 반투명 검은색으로 가림.
+   z13 = 씬·핫스팟(12) 위 / HUD(액션바14·스코프16·상단40)·창(30~46) 아래. */
+.vh-dim {
+  position: absolute; inset: 0; z-index: 13;
+  background: rgba(0, 0, 0, .5);
+  opacity: 0; pointer-events: none; transition: opacity .22s ease;
 }
-.vh-zback.open { opacity: 1; pointer-events: auto; }
+.vh-dim.open { opacity: 1; pointer-events: auto; }
+/* 창이 떠 있는 동안 패럴렉스 정지(멀미 방지) — 시선 바이어스만 유지 */
+#villageScreen.paused .vh-stagebox {
+  transform: translate(0, calc(-1 * var(--biasy, 0px))) scale(1.12);
+}
 
 #villageScreen .vh-zinfo {
   left: 50%; top: 50%; right: auto; bottom: auto;
