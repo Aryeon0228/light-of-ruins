@@ -660,6 +660,40 @@
 .vd-choice.danger .vd-clet { color: #e07070; background: #1d1110; }
 .vd-choice.danger { border-color: #5a2020; }
 
+/* 결정창 = 비주얼노벨 러너 (대사 한 비트씩, 클릭하면 다음) */
+.vd-runner {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding: 14px 16px 12px; cursor: pointer; min-height: 76px;
+}
+.vd-portrait {
+  width: 92px; height: 92px; flex-shrink: 0;
+  border: 2px solid #14130d; border-radius: 3px; overflow: hidden;
+  background: #1a1c13; box-shadow: inset 0 1px 0 #5a5e4355, 0 3px 8px #0007;
+}
+.vd-port { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vd-textbox { flex: 1; min-width: 0; }
+.vd-textbox .vd-spk {
+  display: block; margin-bottom: 5px; font-size: 0.95rem; font-weight: 700; color: #ffcf86;
+  font-family: 'Galmuri11', monospace; letter-spacing: 0.02em;
+}
+.vd-textbox .vd-spk.dim { color: #9a9a6a; font-weight: 500; }
+.vd-line { margin: 0; font-size: 0.94rem; line-height: 1.62; color: #e8e2c4; font-family: 'Noto Sans KR', sans-serif; }
+.vd-runner.narration .vd-line { font-style: italic; color: #cdd0a0; }
+.vd-runner.note .vd-line { font-size: 0.84rem; color: #a7a874; }
+.vd-runner.banner-danger .vd-line { color: #e08a8a; }
+.vd-runner.banner-beacon .vd-line { color: #b9a8e0; }
+.vd-runfoot { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+.vd-progress { font-size: 0.66rem; color: #6a6a48; letter-spacing: 0.05em; }
+.vd-next { font-size: 0.74rem; color: #d4a14f; animation: vdBlink 1.25s ease-in-out infinite; }
+@keyframes vdBlink { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
+.vd-runner:hover .vd-next { color: #ffcf86; }
+.vd-replay {
+  margin: 4px 16px 12px; padding: 4px 10px; align-self: flex-start;
+  background: none; border: 1px solid #3a3c2c; border-radius: 3px;
+  color: #9a9a6a; font-size: 0.72rem; cursor: pointer;
+}
+.vd-replay:hover { color: #e8e2c4; border-color: #5a5e43; }
+
 /* 결정 관련 인물 — 씬에서 앰버 글로우 */
 #villageScreen .vh-actorfull.vd-hl {
   filter: drop-shadow(0 0 9px #ffcf86) drop-shadow(0 0 3px #ffcf86) brightness(1.06);
