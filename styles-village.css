@@ -776,13 +776,18 @@
    z13 = 씬·핫스팟(12) 위 / HUD(액션바14·스코프16·상단40)·창(30~46) 아래. */
 .vh-dim {
   position: absolute; inset: 0; z-index: 13;
-  background: rgba(0, 0, 0, .5);
+  background: rgba(0, 0, 0, .55);
   opacity: 0; pointer-events: none; transition: opacity .22s ease;
 }
 .vh-dim.open { opacity: 1; pointer-events: auto; }
-/* 창이 떠 있는 동안 패럴렉스 정지(멀미 방지) — 시선 바이어스만 유지 */
+/* 창이 떠 있는 동안 = 시간 정지: 패럴렉스 멈춤 + 씬의 모든 움직임(숨쉬기·모닥불·
+   좀비 흔들림·동심원 등) 정지 → 멈춘 한 장면 위에 창이 뜨는 느낌 */
 #villageScreen.paused .vh-stagebox {
   transform: translate(0, calc(-1 * var(--biasy, 0px))) scale(1.12);
+}
+#villageScreen.paused .vh-stagebox *,
+#villageScreen.paused .vh-fx * {
+  animation-play-state: paused !important;
 }
 
 #villageScreen .vh-zinfo {
