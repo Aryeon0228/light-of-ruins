@@ -522,17 +522,24 @@ function decisionActors(node, state) {
 }
 
 // 결정 노드 → 대화 비트 배열(배너·내레이션·대사·시스템노트). 노드당 1회 구성(배너 소비).
+// 화자 이름 → 포트레이트 id. 캐릭터면 그 id, 라디오/무전/신호류면 비컨 포트레이트(bc).
+function speakerPortrait(name) {
+  const id = nameToId(name);
+  if (id) return id;
+  if (/라디오|무전|신호|수신기|스피커|비컨/.test(name || '')) return 'bc';
+  return null;
+}
 function buildDecisionBeats(node, s) {
   const beats = [];
   if (s.raidLastNightSummary) beats.push({ kind: 'banner-danger', text: '🩸 ' + s.raidLastNightSummary });
   if (s.pendingBeaconResolution) {
     const r = s.pendingBeaconResolution;
-    beats.push({ kind: 'banner-beacon', text: `📡 ${LR.BEACON_TYPES[r.type].name} ${r.label} — ${r.text}` });
+    beats.push({ kind: 'banner-beacon', pid: 'bc', text: `📡 ${LR.BEACON_TYPES[r.type].name} ${r.label} — ${r.text}` });
     s.pendingBeaconResolution = null;
   }
   (node.body || []).forEach(part => {
     if (part.kind === 'narration') beats.push({ kind: 'narration', text: part.text });
-    else if (part.kind === 'dialog') beats.push({ kind: 'dialog', speaker: part.speaker, text: part.text, pid: nameToId(part.speaker) });
+    else if (part.kind === 'dialog') beats.push({ kind: 'dialog', speaker: part.speaker, text: part.text, pid: speakerPortrait(part.speaker) });
     else if (part.kind === 'systemNote') beats.push({ kind: 'note', text: part.text });
   });
   return beats;
@@ -704,14 +711,17 @@ function renderTopbar(s) {
   document.getElementById('vhClock').textContent = dayPhase(s).label;
   const resEl = document.getElementById('vhResources');
   if (resEl) {
-    // 상단엔 한눈에 위급도를 읽는 핵심 3개만(식량·생존자·위협). 나머지는 '정보' 토글 패널에서.
+    // 상단엔 한눈에 위급도를 읽는 핵심(식량·사기·생존자·위협). 위급(danger)이면 빨갛게 깜빡임.
     const alive = LR.aliveChars(s).length;
     const foodT = LR.foodTier(s.food);
     const foodCls = foodT.tier === 'famine' ? 'danger' : foodT.tier === 'crisis' ? 'warn' : '';
+    const avgMo = Math.round(LR.avgMorale(s));
+    const moraleCls = avgMo < 30 ? 'danger' : avgMo < 50 ? 'warn' : '';
     const peopleCls = alive < 10 ? 'warn' : '';
     const threatCls = raid.p >= 0.6 ? 'danger' : raid.p >= 0.25 ? 'warn' : 'dim';
     resEl.innerHTML =
       pill('food',   '식량',   s.food,        foodCls,   s.food / 100) +
+      pill('morale', '사기',   avgMo,         moraleCls, avgMo / 100) +
       pill('people', '생존자', alive + '/10', peopleCls, alive / 10) +
       pill('noise',  '위협',   raid.scale,    threatCls);
   }
@@ -1557,7 +1567,8 @@ const RES = {
   fuel:   { color: '#e0823a', icon: '<svg viewBox="0 0 16 16"><rect x="3.3" y="5" width="8" height="9" rx="1" fill="currentColor"/><path d="M11.3 7l2.2 1.1v3.8L11.3 13z" fill="currentColor"/><rect x="5.4" y="2.4" width="4" height="2.6" rx="1" fill="currentColor"/></svg>' },
   med:    { color: '#e05a5a', icon: '<svg viewBox="0 0 16 16"><rect x="2.4" y="4.4" width="11.2" height="8.2" rx="1.6" fill="currentColor"/><rect x="7" y="6" width="2" height="5" fill="#15140d"/><rect x="5.5" y="7.5" width="5" height="2" fill="#15140d"/></svg>' },
   noise:  { color: '#b08ae0', icon: '<svg viewBox="0 0 16 16"><path d="M2.5 6h2.5l3-2.3v8.6L5 10H2.5z" fill="currentColor"/><path d="M9.6 5a4 4 0 0 1 0 6M11.6 3a7 7 0 0 1 0 10" stroke="currentColor" stroke-width="1.4" fill="none"/></svg>' },
-  people: { color: '#74c074', icon: '<svg viewBox="0 0 16 16"><circle cx="8" cy="4.8" r="2.9" fill="currentColor"/><path d="M2.7 13.6c0-3.3 2.6-4.9 5.3-4.9s5.3 1.6 5.3 4.9z" fill="currentColor"/></svg>' }
+  people: { color: '#74c074', icon: '<svg viewBox="0 0 16 16"><circle cx="8" cy="4.8" r="2.9" fill="currentColor"/><path d="M2.7 13.6c0-3.3 2.6-4.9 5.3-4.9s5.3 1.6 5.3 4.9z" fill="currentColor"/></svg>' },
+  morale: { color: '#e0a64a', icon: '<svg viewBox="0 0 16 16"><path d="M8 1.6l1.9 4 4.3.5-3.2 2.9 1 4.3L8 11l-4 2.2 1-4.3L1.8 6.1l4.3-.5z" fill="currentColor"/></svg>' }
 };
 
 // ═══════════════════════════════════════════════════════
