@@ -1545,6 +1545,14 @@ function ensureDom() {
         <span class="vh-sub"><b id="vhSeason">봄 후반</b> · <i id="vhClock">아침</i></span>
       </div>
       <div class="vh-res" id="vhResources"></div>
+      <div class="vh-top-acoustic" title="음향 감지 — 소음 실시간 파형">
+        <span class="vh-ta-lab">음향<i>ACOUSTIC</i></span>
+        <canvas id="vhScopeCanvas" class="vh-scope vh-scope-top"></canvas>
+        <span class="vh-scope-read">
+          <span class="vh-scope-dot" id="vhScopeDot"></span>
+          소음 <b id="vhScopeVal">0</b> · <span id="vhScopeState">—</span>
+        </span>
+      </div>
       <div class="vh-cam">
         <button class="vh-cam-btn vh-info-toggle" id="vhPanelToggle" title="생존자 명단 · 시스템 정보 펼치기">정보</button>
         <button class="vh-cam-x" id="vhClose">닫기 ✕</button>
@@ -1570,14 +1578,6 @@ function ensureDom() {
           </div>
           <div class="vh-paper"></div>
           <div class="vh-dim" id="vhDim"></div>
-          <section class="vh-card vh-scope-card vh-scope-float">
-            <h4>음향 감지 · ACOUSTIC</h4>
-            <canvas id="vhScopeCanvas" class="vh-scope"></canvas>
-            <div class="vh-scope-read">
-              <span class="vh-scope-dot" id="vhScopeDot"></span>
-              소음 <b id="vhScopeVal">0</b> · <span id="vhScopeState">—</span>
-            </div>
-          </section>
           <div class="vh-pop" id="vhPop"></div>
           <div class="vh-pop vh-zinfo" id="vhZinfo"></div>
           <div class="vh-outside" id="vhOutside"></div>
