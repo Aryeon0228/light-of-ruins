@@ -521,6 +521,23 @@ function decisionActors(node, state) {
   return [...set];
 }
 
+// 결정 노드 → 대화 비트 배열(배너·내레이션·대사·시스템노트). 노드당 1회 구성(배너 소비).
+function buildDecisionBeats(node, s) {
+  const beats = [];
+  if (s.raidLastNightSummary) beats.push({ kind: 'banner-danger', text: '🩸 ' + s.raidLastNightSummary });
+  if (s.pendingBeaconResolution) {
+    const r = s.pendingBeaconResolution;
+    beats.push({ kind: 'banner-beacon', text: `📡 ${LR.BEACON_TYPES[r.type].name} ${r.label} — ${r.text}` });
+    s.pendingBeaconResolution = null;
+  }
+  (node.body || []).forEach(part => {
+    if (part.kind === 'narration') beats.push({ kind: 'narration', text: part.text });
+    else if (part.kind === 'dialog') beats.push({ kind: 'dialog', speaker: part.speaker, text: part.text, pid: nameToId(part.speaker) });
+    else if (part.kind === 'systemNote') beats.push({ kind: 'note', text: part.text });
+  });
+  return beats;
+}
+
 LR.village.renderDecision = function() {
   const s = LR.village.state;
   const dec = document.getElementById('vhDecision');
@@ -529,67 +546,100 @@ LR.village.renderDecision = function() {
   if (LR.village.isDemo || !node || !s.awaitingChoice) {
     dec.classList.remove('open');
     LR.village.highlightChars = [];
+    LR.village._decNodeId = null;
     return;
   }
-
-  // 본문 조각
-  const bodyHtml = (node.body || []).map(part => {
-    if (part.kind === 'narration') return `<p class="vd-narr">${part.text}</p>`;
-    if (part.kind === 'dialog')   return `<p class="vd-dlg"><span class="vd-spk">${part.speaker}</span>${part.text}</p>`;
-    if (part.kind === 'systemNote') return `<p class="vd-note">※ ${part.text}</p>`;
-    return '';
-  }).join('');
-
-  // 어젯밤 습격 / 비컨 해소 결과 (텍스트 화면 대신 여기서 소비)
-  let banners = '';
-  if (s.raidLastNightSummary) banners += `<p class="vd-banner danger">🩸 ${s.raidLastNightSummary}</p>`;
-  if (s.pendingBeaconResolution) {
-    const r = s.pendingBeaconResolution;
-    banners += `<p class="vd-banner beacon">📡 <b>${LR.BEACON_TYPES[r.type].name} ${r.label}</b> — ${r.text}</p>`;
-    s.pendingBeaconResolution = null;
+  // 노드가 바뀌면 대화 비트 새로 구성(처음부터)
+  if (LR.village._decNodeId !== node.id) {
+    LR.village._decNodeId = node.id;
+    LR.village._decBeats = buildDecisionBeats(node, s);
+    LR.village._decIdx = 0;
   }
-
-  // 선택지 (render.js와 동일한 필터 규칙)
-  const choicesHtml = (node.choices || []).map(choice => {
-    if (choice.requireSpiral && s.spiral.state !== choice.requireSpiral) return '';
-    if (choice.enabled === false) return '';
-    const risk = choice.risk === 'danger' ? ' danger' : choice.risk === 'warn' ? ' warn' : '';
-    const sub = choice.body ? `<span class="vd-csub">${choice.body}</span>` : '';
-    return `<button class="vd-choice${risk}" data-cid="${choice.id}">
-      <span class="vd-clet">${choice.id}</span>
-      <span class="vd-cbody"><b>${choice.label}</b>${sub}</span>
-    </button>`;
-  }).join('');
-
-  dec.innerHTML = `
-    <div class="vd-head">
-      <span class="vd-day">DAY ${s.day}</span>
-      <h3 class="vd-title">${node.title || '오늘의 결정'}</h3>
-      <button class="vd-min" id="vdMin" title="접기">▾</button>
-    </div>
-    <div class="vd-scroll">
-      ${banners}
-      <div class="vd-body">${bodyHtml}</div>
-      ${node.keyLine ? `<p class="vd-key">${node.keyLine}</p>` : ''}
-    </div>
-    <div class="vd-choices">${choicesHtml}</div>
-  `;
+  LR.village._renderDecisionView();
   dec.classList.toggle('open', !LR.village.decisionCollapsed);   // 접힘 상태 유지
-
-  dec.querySelectorAll('.vd-choice').forEach(b => {
-    b.addEventListener('click', () => {
-      if (LR.village._busy) return;
-      LR.village._busy = true;
-      LR.engine.applyChoice(b.dataset.cid);
-      // endOfDay → (350ms) → beginDay → syncFromGame 가 다음 결정을 그림
-    });
-  });
-  const minb = document.getElementById('vdMin');
-  if (minb) minb.addEventListener('click', () => LR.village.toggleDecision(false));
 
   // 관련 인물 하이라이트
   LR.village.highlightChars = decisionActors(node, s);
   applyDecisionHighlights();
+};
+
+// 현재 비트(대사 한 줄) 또는 선택지를 결정창에 렌더 + 핸들러 연결
+LR.village._renderDecisionView = function() {
+  const dec = document.getElementById('vhDecision');
+  const s = LR.village.state;
+  const node = s && s.pendingChoice;
+  if (!dec || !node) return;
+  const beats = LR.village._decBeats || [];
+  const idx = LR.village._decIdx || 0;
+  const atChoices = idx >= beats.length;
+
+  const head = `<div class="vd-head">
+    <span class="vd-day">DAY ${s.day}</span>
+    <h3 class="vd-title">${node.title || '오늘의 결정'}</h3>
+    <button class="vd-min" id="vdMin" title="접기">▾</button>
+  </div>`;
+
+  if (!atChoices) {
+    const b = beats[idx];
+    const isLast = idx === beats.length - 1;
+    const portrait = b.pid
+      ? `<img class="vd-port" src="assets/images/portraits/${b.pid}.png" alt="" onerror="this.parentNode.style.display='none'">`
+      : '';
+    const spkLabel = b.kind === 'dialog' ? b.speaker
+      : b.kind === 'note' ? '기록'
+      : b.kind === 'banner-danger' ? '간밤'
+      : b.kind === 'banner-beacon' ? '신호'
+      : '상황';
+    const spkCls = b.kind === 'dialog' ? '' : ' dim';
+    dec.innerHTML = head + `
+      <div class="vd-runner ${b.kind}" id="vdRunner">
+        ${b.pid ? `<div class="vd-portrait">${portrait}</div>` : ''}
+        <div class="vd-textbox">
+          <span class="vd-spk${spkCls}">${spkLabel}</span>
+          <p class="vd-line">${b.text}</p>
+          <div class="vd-runfoot">
+            <span class="vd-progress">${idx + 1} / ${beats.length}</span>
+            <span class="vd-next">${isLast ? '▸ 선택지' : '▸ 계속 (클릭)'}</span>
+          </div>
+        </div>
+      </div>`;
+    const runner = document.getElementById('vdRunner');
+    if (runner) runner.addEventListener('click', () => LR.village._advanceDecision());
+  } else {
+    const choicesHtml = (node.choices || []).map(choice => {
+      if (choice.requireSpiral && s.spiral.state !== choice.requireSpiral) return '';
+      if (choice.enabled === false) return '';
+      const risk = choice.risk === 'danger' ? ' danger' : choice.risk === 'warn' ? ' warn' : '';
+      const sub = choice.body ? `<span class="vd-csub">${choice.body}</span>` : '';
+      return `<button class="vd-choice${risk}" data-cid="${choice.id}">
+        <span class="vd-clet">${choice.id}</span>
+        <span class="vd-cbody"><b>${choice.label}</b>${sub}</span>
+      </button>`;
+    }).join('');
+    const replay = beats.length ? `<button class="vd-replay" id="vdReplay">↻ 대화 다시</button>` : '';
+    dec.innerHTML = head + `
+      ${node.keyLine ? `<p class="vd-key">${node.keyLine}</p>` : ''}
+      <div class="vd-choices">${choicesHtml}</div>
+      ${replay}`;
+    dec.querySelectorAll('.vd-choice').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (LR.village._busy) return;
+        LR.village._busy = true;
+        LR.engine.applyChoice(btn.dataset.cid);
+      });
+    });
+    const rep = document.getElementById('vdReplay');
+    if (rep) rep.addEventListener('click', () => { LR.village._decIdx = 0; LR.village._renderDecisionView(); });
+  }
+
+  const minb = document.getElementById('vdMin');
+  if (minb) minb.addEventListener('click', () => LR.village.toggleDecision(false));
+};
+
+LR.village._advanceDecision = function() {
+  const beats = LR.village._decBeats || [];
+  LR.village._decIdx = Math.min((LR.village._decIdx || 0) + 1, beats.length);
+  LR.village._renderDecisionView();
 };
 
 function applyDecisionHighlights() {
