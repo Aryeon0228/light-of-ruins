@@ -171,15 +171,15 @@ LR.engine.applyChoice = function(choiceId) {
   // 11. 일일 마감 → (컷씬) → 다음 날
   state.awaitingChoice = false;
 
-  // 11a. 모든 선택에 컷씬: 선택지 전용 cutscene > Small Win 컷씬(보상 톤) > 자동 생성(담백)
+  // 11a. 모든 선택에 컷씬: 선택지 전용 cutscene > Small Win 컷씬(보상 톤+이름) > 자동 생성(담백)
   const cutsceneSW = fired.find(sw => LR.SMALL_WIN_DEFS[sw.id] && LR.SMALL_WIN_DEFS[sw.id].cutscene);
   const swCut = cutsceneSW ? LR.SMALL_WIN_DEFS[cutsceneSW.id].cutscene : null;
-  let cut, tone;
-  if (choice.cutscene) { cut = choice.cutscene; tone = choice.cutscene.tone || 'special'; }
-  else if (swCut) { cut = swCut; tone = 'reward'; }     // 스몰윈 = "잘 골랐다" 보상 프레임
+  let cut, tone, badgeText;
+  if (choice.cutscene) { cut = choice.cutscene; tone = choice.cutscene.tone || 'special'; badgeText = choice.cutscene.badge; }
+  else if (swCut) { cut = swCut; tone = 'reward'; badgeText = LR.SMALL_WIN_DEFS[cutsceneSW.id].name; }  // 스몰윈 이름
   else { cut = LR.buildChoiceCutscene(node, choice, state); tone = 'plain'; }
   if (LR.cutscene && LR.cutscene.play) {
-    LR.cutscene.play(cut, () => LR.engine.endOfDay(), tone);
+    LR.cutscene.play(cut, () => LR.engine.endOfDay(), tone, badgeText);
   } else {
     LR.engine.endOfDay();
   }

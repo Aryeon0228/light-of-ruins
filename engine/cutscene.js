@@ -14,7 +14,7 @@ LR.cutscene._activeFrames = null;
 LR.cutscene._activeIdx = 0;
 LR.cutscene._onComplete = null;
 
-LR.cutscene.play = function(cutsceneDef, onComplete, tone) {
+LR.cutscene.play = function(cutsceneDef, onComplete, tone, badgeText) {
   if (!cutsceneDef || !cutsceneDef.frames || cutsceneDef.frames.length === 0) {
     if (onComplete) onComplete();
     return;
@@ -29,7 +29,15 @@ LR.cutscene.play = function(cutsceneDef, onComplete, tone) {
   overlay.classList.remove('tone-plain', 'tone-reward', 'tone-special');
   overlay.classList.add('tone-' + t);
   const badge = document.getElementById('cutsceneBadge');
-  if (badge) badge.textContent = (t === 'reward') ? '✦ 작은 승리 · SMALL WIN' : (cutsceneDef.badge || '');
+  if (badge) {
+    const name = badgeText || cutsceneDef.badge || '';
+    if (t === 'reward') {
+      badge.innerHTML = '<span class="cb-kicker">✦ 작은 승리 · SMALL WIN</span>' +
+        (name ? '<span class="cb-name">' + name + '</span>' : '');
+    } else {
+      badge.textContent = name;
+    }
+  }
   overlay.classList.add('active');
   LR.cutscene._renderFrame();
 };
