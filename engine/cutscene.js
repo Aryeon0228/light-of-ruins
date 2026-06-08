@@ -14,7 +14,7 @@ LR.cutscene._activeFrames = null;
 LR.cutscene._activeIdx = 0;
 LR.cutscene._onComplete = null;
 
-LR.cutscene.play = function(cutsceneDef, onComplete) {
+LR.cutscene.play = function(cutsceneDef, onComplete, tone) {
   if (!cutsceneDef || !cutsceneDef.frames || cutsceneDef.frames.length === 0) {
     if (onComplete) onComplete();
     return;
@@ -24,6 +24,12 @@ LR.cutscene.play = function(cutsceneDef, onComplete) {
   LR.cutscene._onComplete = onComplete;
 
   const overlay = document.getElementById('cutsceneOverlay');
+  // 톤별 연출(plain=담백 / reward=스몰윈 금색 보상 / special=전용 아트)
+  const t = tone || cutsceneDef.tone || 'plain';
+  overlay.classList.remove('tone-plain', 'tone-reward', 'tone-special');
+  overlay.classList.add('tone-' + t);
+  const badge = document.getElementById('cutsceneBadge');
+  if (badge) badge.textContent = (t === 'reward') ? '✦ 작은 승리 · SMALL WIN' : (cutsceneDef.badge || '');
   overlay.classList.add('active');
   LR.cutscene._renderFrame();
 };
