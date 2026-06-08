@@ -1706,18 +1706,19 @@ function ensureDom() {
   if (al) al.addEventListener('click', () => LR.village.showLog());
 }
 
-// 일시정지/딤 동기화 — 어떤 창이든(결정·건물·기록·망루) 열리면:
-//  · 패럴렉스 정지 + 씬 애니메이션 정지(시간이 멈춘 듯)
-//  · 검은 딤으로 씬을 가림 → 창이 "멈춘 화면 위에" 뜨는 느낌
+// 일시정지/딤 동기화
+//  · 패럴렉스+씬 애니메이션 정지(paused): 어떤 창이든(결정 포함) 열리면 — 시간 멈춤
+//  · 전체 검은 딤: 중앙 정보 창(건물·기록·망루)에만. 결정창은 자체 하단 그라데이션이 대신
 LR.village._syncPause = function() {
   const scr = document.getElementById('villageScreen');
   if (!scr) return;
   const isOpen = id => { const e = document.getElementById(id); return e && e.classList.contains('open'); };
-  const anyOpen = isOpen('vhDecision') || isOpen('vhZinfo') || isOpen('vhLogWin') || isOpen('vhOutside');
+  const modalOpen = isOpen('vhZinfo') || isOpen('vhLogWin') || isOpen('vhOutside');
+  const anyOpen = modalOpen || isOpen('vhDecision');
   scr.classList.toggle('paused', anyOpen);
   if (anyOpen) { scr.style.setProperty('--px', '0'); scr.style.setProperty('--py', '0'); }  // 패럴렉스 중앙 고정
   const dim = document.getElementById('vhDim');
-  if (dim) dim.classList.toggle('open', anyOpen);
+  if (dim) dim.classList.toggle('open', modalOpen);
 };
 
 document.addEventListener('DOMContentLoaded', () => {
