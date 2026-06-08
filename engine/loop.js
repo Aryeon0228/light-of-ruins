@@ -168,16 +168,33 @@ LR.engine.applyChoice = function(choiceId) {
     LR.render.toast(`${sw.id} — ${sw.name}`, 'smallwin');
   }
 
-  // 11. 일일 마감 → 다음 날
+  // 11. 일일 마감 → (컷씬) → 다음 날
   state.awaitingChoice = false;
 
-  // 11a. SW 컷씬이 있으면 컷씬 끝난 뒤 endOfDay
+  // 11a. 모든 선택에 컷씬: 선택지 전용 cutscene > Small Win 컷씬 > 자동 생성(선택 결과 서술)
   const cutsceneSW = fired.find(sw => LR.SMALL_WIN_DEFS[sw.id] && LR.SMALL_WIN_DEFS[sw.id].cutscene);
-  if (cutsceneSW) {
-    LR.cutscene.play(LR.SMALL_WIN_DEFS[cutsceneSW.id].cutscene, () => LR.engine.endOfDay());
+  const swCut = cutsceneSW ? LR.SMALL_WIN_DEFS[cutsceneSW.id].cutscene : null;
+  const cut = choice.cutscene || swCut || LR.buildChoiceCutscene(node, choice, state);
+  if (LR.cutscene && LR.cutscene.play) {
+    LR.cutscene.play(cut, () => LR.engine.endOfDay());
   } else {
     LR.engine.endOfDay();
   }
+};
+
+// 선택 결과를 마을 일러스트 위에 보여주는 자동 컷씬(전용 아트가 없을 때).
+//  선택지의 label(무엇을 택했나) + body(그래서 무슨 일이 벌어지나)를 시네마틱 캡션으로.
+LR.villageCutsceneBg = function(season) {
+  const map = { spring_late: 'bg_village_spring', autumn: 'bg_village_fall', winter: 'bg_village_winter' };
+  return 'assets/images/village/' + (map[season] || 'bg_village') + '.png';
+};
+LR.buildChoiceCutscene = function(node, choice, state) {
+  const bg = LR.villageCutsceneBg(state.season);
+  const frames = [];
+  if (choice.label) frames.push({ image: bg, text: '— ' + choice.label.replace(/\s*\(추천\)\s*$/, '') });
+  if (choice.body && choice.body !== choice.label) frames.push({ image: bg, text: choice.body });
+  if (!frames.length) frames.push({ image: bg, text: '결정을 내렸다. 하루가 저문다.' });
+  return { id: 'choice_' + (node && node.id ? node.id : 'x') + '_' + choice.id, frames };
 };
 
 LR.engine.endOfDay = function() {
