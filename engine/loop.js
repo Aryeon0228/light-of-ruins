@@ -162,24 +162,32 @@ LR.engine.applyChoice = function(choiceId) {
     };
   }
 
-  // 10. Small Win 시도
+  // 10. Small Win 시도 — 발동 시 카드 영구 수집 + 첫 발동 카드 기억
   const fired = LR.trySmallWins(state);
+  let cardSW = null, cardIsNew = false;
   for (const sw of fired) {
     LR.render.toast(`${sw.id} — ${sw.name}`, 'smallwin');
+    const isNew = (LR.collection && LR.collection.add) ? LR.collection.add(sw.id) : false;
+    if (!cardSW) { cardSW = sw; cardIsNew = isNew; }
   }
 
   // 11. 일일 마감 → (컷씬) → 다음 날
   state.awaitingChoice = false;
 
-  // 11a. 모든 선택에 컷씬: 선택지 전용 cutscene > Small Win 컷씬(보상 톤+이름) > 자동 생성(담백)
-  const cutsceneSW = fired.find(sw => LR.SMALL_WIN_DEFS[sw.id] && LR.SMALL_WIN_DEFS[sw.id].cutscene);
-  const swCut = cutsceneSW ? LR.SMALL_WIN_DEFS[cutsceneSW.id].cutscene : null;
-  let cut, tone, badgeText;
-  if (choice.cutscene) { cut = choice.cutscene; tone = choice.cutscene.tone || 'special'; badgeText = choice.cutscene.badge; }
-  else if (swCut) { cut = swCut; tone = 'reward'; badgeText = LR.SMALL_WIN_DEFS[cutsceneSW.id].name; }  // 스몰윈 이름
-  else { cut = LR.buildChoiceCutscene(node, choice, state); tone = (choice.risk === 'danger') ? 'bad' : 'plain'; }  // 위험 선택 = 붉은 경고
+  // 11a. 컷씬 한 장면: 스몰윈 카드(보상) > 선택지 전용 > 자동 생성(위험=붉은 / 담백)
+  let cut, tone, badgeText, isNew = false;
+  if (cardSW) {
+    const def = LR.SMALL_WIN_DEFS[cardSW.id];
+    cut = def.cutscene || LR.buildSmallWinCutscene(def);   // 전용 아트 없으면 인물 포트레이트 카드
+    tone = 'reward'; badgeText = def.name; isNew = cardIsNew;
+  } else if (choice.cutscene) {
+    cut = choice.cutscene; tone = choice.cutscene.tone || 'special'; badgeText = choice.cutscene.badge;
+  } else {
+    cut = LR.buildChoiceCutscene(node, choice, state);
+    tone = (choice.risk === 'danger') ? 'bad' : 'plain';
+  }
   if (LR.cutscene && LR.cutscene.play) {
-    LR.cutscene.play(cut, () => LR.engine.endOfDay(), tone, badgeText);
+    LR.cutscene.play(cut, () => LR.engine.endOfDay(), tone, badgeText, isNew);
   } else {
     LR.engine.endOfDay();
   }
@@ -190,6 +198,11 @@ LR.engine.applyChoice = function(choiceId) {
 LR.villageCutsceneBg = function(season) {
   const map = { spring_late: 'bg_village_spring', autumn: 'bg_village_fall', winter: 'bg_village_winter' };
   return 'assets/images/village/' + (map[season] || 'bg_village') + '.png';
+};
+// 스몰윈 카드 컷씬(전용 아트가 없을 때) — 인물 포트레이트를 카드 아트로, 스몰윈 텍스트를 캡션으로.
+LR.buildSmallWinCutscene = function(def) {
+  const img = def.cardImage || ('assets/images/portraits/' + (def.actor || 'bc') + '.png');
+  return { id: 'swcard_' + def.id, frames: [{ image: img, text: def.text }] };
 };
 LR.buildChoiceCutscene = function(node, choice, state) {
   const bg = LR.villageCutsceneBg(state.season);

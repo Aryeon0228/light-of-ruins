@@ -22,6 +22,7 @@
     <button id="btnNewGame">새 게임 — Day 1부터</button>
     <button id="btnContinue">이어하기</button>
     <button id="btnVillage">플레이 화면 — 마을 전경</button>
+    <button id="btnCollection">수집 카드 — 작은 승리</button>
     <button id="btnAbout">기획에 대하여</button>
   </div>
   <div class="credits">
@@ -119,6 +120,19 @@
   </div>
 </div>
 
+<!-- 작은 승리 수집 갤러리 -->
+<div id="collectionOverlay">
+  <div class="collection-panel">
+    <div class="collection-head">
+      <h2>작은 승리 · 수집 카드</h2>
+      <span id="collectionCount" class="collection-count">0 / 0</span>
+      <button id="collectionClose" class="collection-close">✕</button>
+    </div>
+    <div id="collectionGrid" class="collection-grid"></div>
+    <div class="collection-foot">마을에서 작은 승리가 일어날 때마다 카드가 모입니다. (수집 기록은 판이 끝나도 유지)</div>
+  </div>
+</div>
+
 <!-- 컷씬 모달 -->
 <div id="cutsceneOverlay">
   <div class="cutscene-stage">
@@ -156,6 +170,7 @@
 <script src="engine/village.js"></script>
 <script src="engine/loop.js"></script>
 <script src="engine/save.js"></script>
+<script src="engine/collection.js"></script>
 <script src="engine/main.js"></script>
 
 </body>
