@@ -782,3 +782,63 @@ button {
 }
 #cutsceneOverlay.tone-bad .cutscene-text { color: #f0d8d8; }
 #cutsceneOverlay.tone-bad .cutscene-image::after { box-shadow: inset 0 0 95px 20px rgba(40,8,8,.5); }
+
+/* ── NEW 카드 획득 강조(컷씬 뱃지) ── */
+#cutsceneOverlay .cb-kicker.cb-new { animation: cutNewBlink 0.6s ease-in-out 4; }
+@keyframes cutNewBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+/* ══════ 작은 승리 수집 갤러리 ══════ */
+#collectionOverlay {
+  position: fixed; inset: 0; z-index: 350; display: none;
+  background: rgba(8, 9, 12, .94);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  align-items: center; justify-content: center; padding: 2rem;
+}
+#collectionOverlay.active { display: flex; }
+.collection-panel {
+  width: 100%; max-width: 940px; max-height: 86vh; display: flex; flex-direction: column;
+  background: linear-gradient(180deg, #1a1d24, #111319);
+  border: 1px solid var(--c-border); border-radius: 12px; padding: 1.2rem 1.4rem;
+  box-shadow: 0 24px 70px #000b;
+}
+.collection-head { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+.collection-head h2 {
+  margin: 0; color: #ffcf86; font-size: 1.2rem; letter-spacing: 0.02em;
+  font-family: 'Galmuri14', 'Galmuri11', monospace;
+}
+.collection-count {
+  color: var(--c-text-dim); font-family: 'Galmuri11', monospace; font-size: 0.95rem;
+  padding: 2px 10px; border: 1px solid var(--c-border); border-radius: 14px;
+}
+.collection-close {
+  margin-left: auto; background: none; border: 1px solid var(--c-border);
+  color: var(--c-text-dim); width: 34px; height: 30px; border-radius: 6px; cursor: pointer;
+}
+.collection-close:hover { color: var(--c-danger); border-color: var(--c-danger); }
+.collection-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(152px, 1fr));
+  gap: 12px; overflow-y: auto; padding: 2px;
+}
+.coll-card {
+  background: linear-gradient(180deg, #20232b, #161922);
+  border: 1px solid #2a2d36; border-radius: 8px; padding: 8px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.coll-card.locked { opacity: 0.5; }
+.coll-art {
+  aspect-ratio: 1 / 1; border-radius: 5px; overflow: hidden; background: #0d0f14;
+  display: flex; align-items: center; justify-content: center; color: #3a3f4a; font-size: 2.6rem;
+  border: 1px solid #20232b;
+}
+.coll-art img { width: 100%; height: 100%; object-fit: cover; }
+.coll-name { font-size: 0.9rem; font-weight: 700; color: #ffcf86; }
+.coll-card.locked .coll-name { color: #5a5f6a; }
+.coll-desc {
+  font-size: 0.72rem; line-height: 1.5; color: var(--c-text-dim);
+  font-family: 'Noto Sans KR', sans-serif;
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
+}
+.collection-foot {
+  margin-top: 1rem; padding-top: 0.8rem; border-top: 1px solid var(--c-border);
+  font-size: 0.74rem; color: var(--c-text-faint); font-family: 'Noto Sans KR', sans-serif;
+}
