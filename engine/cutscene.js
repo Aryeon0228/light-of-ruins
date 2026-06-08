@@ -34,6 +34,9 @@ LR.cutscene.play = function(cutsceneDef, onComplete, tone, badgeText) {
     if (t === 'reward') {
       badge.innerHTML = '<span class="cb-kicker">✦ 작은 승리 · SMALL WIN</span>' +
         (name ? '<span class="cb-name">' + name + '</span>' : '');
+    } else if (t === 'bad') {
+      badge.innerHTML = '<span class="cb-kicker">⚠ 무거운 선택</span>' +
+        (name ? '<span class="cb-name">' + name + '</span>' : '');
     } else {
       badge.textContent = name;
     }

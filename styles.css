@@ -754,3 +754,31 @@ button {
 }
 #cutsceneOverlay.tone-reward .cutscene-text { color: #f3e6c8; }
 #cutsceneOverlay.tone-reward .cutscene-image::after { box-shadow: inset 0 0 95px 20px rgba(40,28,8,.5); }
+
+/* 공용 뱃지 2단(킥커+이름) */
+#cutsceneOverlay .cb-kicker { font-size: 0.62rem; letter-spacing: 0.14em; opacity: 0.82; }
+#cutsceneOverlay .cb-name { font-size: 1rem; font-weight: 700; letter-spacing: 0.01em; }
+
+/* ── 나쁜/무거운 선택(bad) — 붉은 경고 프레임 ── */
+#cutsceneOverlay.tone-bad {
+  background: radial-gradient(ellipse at 50% 28%, #2a1010 0%, rgba(8,5,4,.95) 68%);
+}
+#cutsceneOverlay.tone-bad .cutscene-badge {
+  display: inline-flex; flex-direction: column; align-items: center; gap: 2px;
+  margin-bottom: 1rem; padding: 7px 22px; border-radius: 16px;
+  font-family: 'Galmuri11', monospace;
+  color: #2a0c0c; background: linear-gradient(180deg, #f0a0a0, #c25656);
+  border: 1px solid #ffc8c8; box-shadow: 0 2px 14px rgba(200,70,70,.5);
+  animation: cutBadgePop 0.5s cubic-bezier(.2,1.5,.4,1) both;
+}
+#cutsceneOverlay.tone-bad .cutscene-image {
+  border: 2px solid #c25656;
+  box-shadow: 0 18px 54px #000c, inset 0 0 70px #0007, 0 0 38px rgba(200,70,70,.3);
+  animation: cutRedGlow 2.2s ease-in-out infinite;
+}
+@keyframes cutRedGlow {
+  0%, 100% { box-shadow: 0 18px 54px #000c, inset 0 0 70px #0007, 0 0 24px rgba(200,70,70,.24); }
+  50%      { box-shadow: 0 18px 54px #000c, inset 0 0 70px #0007, 0 0 52px rgba(200,70,70,.46); }
+}
+#cutsceneOverlay.tone-bad .cutscene-text { color: #f0d8d8; }
+#cutsceneOverlay.tone-bad .cutscene-image::after { box-shadow: inset 0 0 95px 20px rgba(40,8,8,.5); }

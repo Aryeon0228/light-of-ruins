@@ -177,7 +177,7 @@ LR.engine.applyChoice = function(choiceId) {
   let cut, tone, badgeText;
   if (choice.cutscene) { cut = choice.cutscene; tone = choice.cutscene.tone || 'special'; badgeText = choice.cutscene.badge; }
   else if (swCut) { cut = swCut; tone = 'reward'; badgeText = LR.SMALL_WIN_DEFS[cutsceneSW.id].name; }  // 스몰윈 이름
-  else { cut = LR.buildChoiceCutscene(node, choice, state); tone = 'plain'; }
+  else { cut = LR.buildChoiceCutscene(node, choice, state); tone = (choice.risk === 'danger') ? 'bad' : 'plain'; }  // 위험 선택 = 붉은 경고
   if (LR.cutscene && LR.cutscene.play) {
     LR.cutscene.play(cut, () => LR.engine.endOfDay(), tone, badgeText);
   } else {
