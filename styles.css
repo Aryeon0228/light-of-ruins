@@ -733,12 +733,15 @@ button {
   background: radial-gradient(ellipse at 50% 28%, #2a200f 0%, rgba(8,7,4,.95) 68%);
 }
 #cutsceneOverlay.tone-reward .cutscene-badge {
-  display: inline-block; margin-bottom: 1rem; padding: 5px 18px; border-radius: 20px;
-  font-family: 'Galmuri11', monospace; font-size: 0.82rem; letter-spacing: 0.08em;
+  display: inline-flex; flex-direction: column; align-items: center; gap: 2px;
+  margin-bottom: 1rem; padding: 7px 22px; border-radius: 16px;
+  font-family: 'Galmuri11', monospace;
   color: #2a1e08; background: linear-gradient(180deg, #ffd97a, #e0a64a);
-  border: 1px solid #ffe9b0; box-shadow: 0 2px 12px rgba(224,166,74,.55);
+  border: 1px solid #ffe9b0; box-shadow: 0 2px 14px rgba(224,166,74,.55);
   animation: cutBadgePop 0.5s cubic-bezier(.2,1.5,.4,1) both;
 }
+#cutsceneOverlay.tone-reward .cb-kicker { font-size: 0.62rem; letter-spacing: 0.14em; opacity: 0.82; }
+#cutsceneOverlay.tone-reward .cb-name { font-size: 1rem; font-weight: 700; letter-spacing: 0.01em; text-shadow: 0 1px 0 #ffe9b099; }
 @keyframes cutBadgePop { 0% { opacity: 0; transform: scale(.6) translateY(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
 #cutsceneOverlay.tone-reward .cutscene-image {
   border: 2px solid #e0b85a;
