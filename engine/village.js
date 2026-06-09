@@ -61,10 +61,9 @@ const ZONES = [
   { z:'field',      label:'밭',          box:[17.0, 44.0, 30.0, 17.0], o:[32.0, 55.0] },
   { z:'barracks',   label:'숙소',        box:[63.0, 29.0, 22.0, 17.0], o:[74.0, 40.0] },
   { z:'workshop',   label:'작업장 · 통신', box:[77.0, 53.0, 19.0, 16.0], o:[86.0, 63.0] },
-  { z:'storage',    label:'정문 · 울타리', box:[24.0, 64.0, 16.0, 14.0], o:[32.0, 73.0] },
   { z:'infirmary',  label:'의무실',      box:[82.0, 39.0, 16.0, 18.0], o:[90.0, 51.0] },
   { z:'watchtower', label:'망루',        box:[49.0, 21.0, 15.0, 24.0], o:[57.0, 35.0] },
-  { z:'gate',       label:'보강문',      box:[37.0, 56.0, 24.0, 15.0], o:[49.0, 67.0] },
+  { z:'gate',       label:'정문',        box:[37.0, 56.0, 24.0, 15.0], o:[49.0, 67.0] },
   { z:'water',      label:'물 · 빗물받이', box:[2.0, 62.0, 13.0, 16.0], o:[8.0, 72.0] }
 ];
 // 인물 스프라이트 — 전원 풀캔버스(2896×2172) 제자리. 0,0에 그대로 겹침(작가가 맞춘 위치/크기 유지).
@@ -350,14 +349,6 @@ function zonePanel(z, s) {
           `</div>`
       };
     }
-    case 'storage': return {
-      title: '정문 · 울타리', desc: '물자를 보관하고 울타리를 보강한다.', lead: lead('dongho'),
-      html:
-        vzGauge('식량', totalFood, totalFood / 100, '#e0b24a') +
-        vzGauge('물', s.water, s.water / 100, '#5ab0e0') +
-        vzGauge('연료', s.fuel, s.fuel / 100, '#e0823a') +
-        vzStat('의약품', s.medicine, '#e05a5a')
-    };
     case 'water': return {
       title: '물 · 빗물받이', desc: '빗물을 받아 식수를 모은다.', lead: null,
       html:
@@ -380,7 +371,7 @@ LR.village.showZoneInfo = function(z) {
   const el = document.getElementById('vhZinfo');
   const s = LR.village.state;
   if (!el || !s) return;
-  if (z === 'watchtower' || z === 'gate') return;     // 망루·보강문은 외부 정찰 패널
+  if (z === 'watchtower' || z === 'gate') return;     // 망루·정문은 외부 정찰 패널
   const d = zonePanel(z, s);
   LR.village.closePopover();                           // 인물 팝오버와 동시 표시 X
   const out = document.getElementById('vhOutside');    // 외부 정찰 패널도 닫기
@@ -1086,7 +1077,7 @@ LR.village.renderScene = function() {
     g.addEventListener('click', () => LR.village.select(g.dataset.char));
   });
   if (LR.village.mode === 'compound') {
-    // 구역 호버 → 이름 라벨만 표시(빛무리 제거). 클릭 → 정보창(망루·보강문은 외부 정찰)
+    // 구역 호버 → 이름 라벨만 표시(빛무리 제거). 클릭 → 정보창(망루·정문은 외부 정찰)
     host.querySelectorAll('.vh-hot').forEach(h => {
       const z = h.dataset.zone;
       h.classList.add('vh-hot-act');
