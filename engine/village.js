@@ -473,7 +473,7 @@ LR.village.showOutside = function() {
     <button class="vh-pop-x" id="vhOutX">✕</button>
     <div class="vh-out-h">⌖ 망루 · 외부 정찰</div>
     <div class="vh-out-view ${ph.cls}">
-      <img class="vh-out-bg" src="${OUT}outside_normal01.png" alt="">
+      <img class="vh-out-bg" src="${OUT}outside_normal01.png" alt="" onerror="this.style.display='none'">
       <div class="vh-out-z">${zh}</div>
     </div>
     <div class="vh-out-grid">
