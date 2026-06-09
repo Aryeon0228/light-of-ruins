@@ -107,8 +107,8 @@ LR.render.rightPanel = function(state) {
   }
 
   // Small Win
-  document.getElementById('smallwinList').innerHTML = ['SW1','SW2','SW3','SW4','SW5'].map(id => {
-    const cd = state.smallWins[id];
+  document.getElementById('smallwinList').innerHTML = Object.keys(LR.SMALL_WIN_DEFS).map(id => {
+    const cd = state.smallWins[id] || { lastFired: 0, weekCount: 0 };
     const def = LR.SMALL_WIN_DEFS[id];
     const since = cd.lastFired === 0 ? '미발동' : `D${cd.lastFired} · 주 ${cd.weekCount}/2`;
     return `<div class="row"><span class="lbl">${id}</span><span class="val dim">${since}</span></div>`;

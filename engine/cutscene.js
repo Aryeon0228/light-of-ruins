@@ -56,6 +56,8 @@ LR.cutscene._renderFrame = function() {
   img.style.animation = 'none';
   img.offsetHeight;  // force reflow
   img.style.animation = '';
+  // 카드 그림이 아직 없으면(업로드 전) 포트레이트로 폴백
+  img.onerror = frame.fallback ? function() { img.onerror = null; img.src = frame.fallback; } : null;
   img.src = frame.image;
   img.alt = frame.text || '';
 

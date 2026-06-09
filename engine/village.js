@@ -837,7 +837,7 @@ function renderSystems(s) {
         </div>`;
       }).join('');
 
-  const swFired = ['SW1','SW2','SW3','SW4','SW5'].filter(id => s.smallWins[id].lastFired > 0).length;
+  const swFired = Object.keys(LR.SMALL_WIN_DEFS).filter(id => s.smallWins[id] && s.smallWins[id].lastFired > 0).length;
 
   document.getElementById('vhSystems').innerHTML = `
     ${resourceCardHtml(s)}
@@ -869,7 +869,7 @@ function renderSystems(s) {
 
     <section class="vh-card">
       <h4>Small Win · 긴장도</h4>
-      <div class="vh-line"><span>SW 발동</span><b>${swFired} / 5</b></div>
+      <div class="vh-line"><span>SW 발동</span><b>${swFired} / ${Object.keys(LR.SMALL_WIN_DEFS).length}</b></div>
       <div class="vh-line"><span>TI</span><b class="${s.TI > 75 ? 'bad' : s.TI > 50 ? 'warn' : ''}">${s.TI} · ${LR.tiState(s.TI)}</b></div>
     </section>
   `;
