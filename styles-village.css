@@ -185,6 +185,13 @@
 /* 식수 회수통 — 풀캔버스 레이어, 인물(z5)보다 뒤(키친 뒤쪽) */
 .vh-water { z-index: 2; }
 
+/* 건물 스프라이트 — 발끝(하단중앙) 기준 배치, 인물(z5)보다 뒤. 픽셀 크리스프 */
+.vh-bldg {
+  position: absolute; z-index: 2; transform: translate(-50%, -100%);
+  pointer-events: none; user-select: none;
+  image-rendering: pixelated; image-rendering: crisp-edges;
+}
+
 /* 모닥불 — 불꽃 PNG 불규칙 flicker */
 .vh-campfire { z-index: 2; animation: vhFlick 1.5s steps(1, end) infinite; }
 @keyframes vhFlick {
