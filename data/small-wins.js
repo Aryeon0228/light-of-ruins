@@ -132,5 +132,24 @@ LR.SMALL_WIN_DEFS = {
       LR.charById(state, 'eunseo').morale = Math.min(100, LR.charById(state, 'eunseo').morale + 3);
       return { noise: 0 };
     }
+  },
+
+  SW7: {
+    id: 'SW7',
+    name: '영수의 옛이야기',
+    actor: 'yeongsu',
+    cardImage: 'assets/images/cards/sw7_yeongsu_story.png',
+    text: '영수가 모닥불 가에서 폐허 이전의 세상 이야기를 풀어놓는다. 전등이 켜진 거리, 늦은 밤의 라디오, 흔하던 것들. 젊은 사람들이 하나둘 둘러앉는다. 잠시, 바깥의 추위도 그림자도 잊는다. 쓸모란 무엇인가.',
+    canFire: function(state) {
+      const y = LR.charById(state, 'yeongsu');
+      if (!y.alive || y.morale < 40) return false;   // 체력은 보지 않음 — 약해도 이야기는 남는다
+      return LR.avgMorale(state) >= 45;
+    },
+    apply: function(state) {
+      // 둘러앉은 사람들 +2, 영수 +1(쓸모를 되묻다), 소음 +1
+      for (const c of LR.aliveChars(state)) c.morale = Math.min(100, c.morale + 2);
+      LR.charById(state, 'yeongsu').morale = Math.min(100, LR.charById(state, 'yeongsu').morale + 1);
+      return { noise: 1 };
+    }
   }
 };
