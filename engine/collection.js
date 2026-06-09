@@ -38,8 +38,10 @@ LR.collection.renderGallery = function() {
         + '<div class="coll-name">???</div>'
         + '<div class="coll-desc">아직 보지 못한 작은 승리</div></div>';
     }
+    const portrait = 'assets/images/portraits/' + ((def && def.actor) || 'bc') + '.png';
+    const art = (def && def.cardImage) || portrait;
     return '<div class="coll-card">'
-      + '<div class="coll-art"><img src="' + LR.collection.cardArt(def) + '" alt="" onerror="this.style.display=\'none\'"></div>'
+      + '<div class="coll-art"><img src="' + art + '" alt="" onerror="this.onerror=null;this.src=\'' + portrait + '\'"></div>'
       + '<div class="coll-name">' + def.name + '</div>'
       + '<div class="coll-desc">' + def.text + '</div></div>';
   }).join('');

@@ -201,8 +201,9 @@ LR.villageCutsceneBg = function(season) {
 };
 // 스몰윈 카드 컷씬(전용 아트가 없을 때) — 인물 포트레이트를 카드 아트로, 스몰윈 텍스트를 캡션으로.
 LR.buildSmallWinCutscene = function(def) {
-  const img = def.cardImage || ('assets/images/portraits/' + (def.actor || 'bc') + '.png');
-  return { id: 'swcard_' + def.id, frames: [{ image: img, text: def.text }] };
+  const portrait = 'assets/images/portraits/' + (def.actor || 'bc') + '.png';
+  const img = def.cardImage || portrait;
+  return { id: 'swcard_' + def.id, frames: [{ image: img, fallback: portrait, text: def.text }] };
 };
 LR.buildChoiceCutscene = function(node, choice, state) {
   const bg = LR.villageCutsceneBg(state.season);

@@ -30,6 +30,7 @@ LR.SMALL_WIN_DEFS = {
     id: 'SW2',
     name: '하영의 아침 운동',
     actor: 'hayeong',
+    cardImage: 'assets/images/cards/sw2_hayeong.png',
     text: '하영이 마당 한쪽에서 가볍게 몸을 푼다. 누가 시킨 것도 아니다. 한 사람, 두 사람 옆에 와서 따라 한다.',
     canFire: function(state) {
       const h = LR.charById(state, 'hayeong');
@@ -109,6 +110,27 @@ LR.SMALL_WIN_DEFS = {
       for (const c of LR.aliveChars(state)) c.morale = Math.min(100, c.morale + 1);
       LR.charById(state, 'eunseo').morale = Math.min(100, LR.charById(state, 'eunseo').morale + 1);
       return { noise: 1 };
+    }
+  },
+
+  SW6: {
+    id: 'SW6',
+    name: '은서의 첫 수확',
+    actor: 'eunseo',
+    cardImage: 'assets/images/cards/sw6_eunseo_harvest.png',
+    text: '은서가 담벼락 밑 텃밭에서 첫 잎채소를 거둔다. 흙 묻은 손으로 한 줌을 들어 올리자, 누군가 "오…" 하고 작게 웃는다. 폐허에서도 무언가는 자란다.',
+    canFire: function(state) {
+      const e = LR.charById(state, 'eunseo');
+      if (!e.alive || e.morale < 50) return false;
+      if (state.season === 'winter') return false;          // 겨울엔 수확 없음
+      return state.day >= 4 && state.water >= 30;            // 며칠 키운 뒤 · 물이 받쳐줄 때
+    },
+    apply: function(state) {
+      // 첫 수확 — 식량 +6, 은서 +3, 전원 +2, 소음 0
+      state.food = Math.min(100, state.food + 6);
+      for (const c of LR.aliveChars(state)) c.morale = Math.min(100, c.morale + 2);
+      LR.charById(state, 'eunseo').morale = Math.min(100, LR.charById(state, 'eunseo').morale + 3);
+      return { noise: 0 };
     }
   }
 };

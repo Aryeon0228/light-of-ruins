@@ -89,7 +89,8 @@ LR.createInitialState = function() {
       SW2: { lastFired: 0, weekCount: 0 },
       SW3: { lastFired: 0, weekCount: 0 },
       SW4: { lastFired: 0, weekCount: 0 },
-      SW5: { lastFired: 0, weekCount: 0 }
+      SW5: { lastFired: 0, weekCount: 0 },
+      SW6: { lastFired: 0, weekCount: 0 }
     },
 
     // 일일 휘발 상태
