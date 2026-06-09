@@ -63,7 +63,7 @@ const ZONES = [
   { z:'workshop',   label:'작업장 · 통신', box:[77.0, 53.0, 19.0, 16.0], o:[86.0, 63.0] },
   { z:'infirmary',  label:'의무실',      box:[82.0, 39.0, 16.0, 18.0], o:[90.0, 51.0] },
   { z:'watchtower', label:'망루',        box:[49.0, 21.0, 15.0, 24.0], o:[57.0, 35.0] },
-  { z:'gate',       label:'정문',        box:[37.0, 56.0, 24.0, 15.0], o:[49.0, 67.0] },
+  { z:'gate',       label:'정문',        box:[46.4, 60.7, 8.4, 11.7], o:[50.6, 72.0] },
   { z:'water',      label:'물 · 빗물받이', box:[2.0, 62.0, 13.0, 16.0], o:[8.0, 72.0] }
 ];
 // 인물 스프라이트 — 전원 풀캔버스(2896×2172) 제자리. 0,0에 그대로 겹침(작가가 맞춘 위치/크기 유지).
@@ -1267,9 +1267,19 @@ function sceneCompound(s) {
   // 식수 회수통(빗물받이) — water.png는 배경/인물과 같은 풀캔버스(3577×2419)라
   //  제자리에 그려져 있음 → 풀캔버스 레이어로 그대로 덮음. z2 = 인물(z5)·정문보다 뒤(키친 뒤쪽).
   const waterTank = `<img class="vh-layer vh-water" src="${A}water.png" alt="" onerror="this.remove()">`;
+  // 건물 스프라이트 — 각 시설을 자리에 배치(잘라낸 스프라이트, 발끝 하단중앙 기준).
+  //  gate는 gate_idle_guide.png 측정값, 나머지는 ZONES 박스. 파일 없으면 자동 생략.
+  const BLD = 'assets/images/buildings/';
+  const BUILDING_POS = { gate: { cx: 50.6, by: 72.4, h: 11.7 } };   // gate_idle_guide.png 측정
+  const buildings = ZONES.map(zn => {
+    const p = BUILDING_POS[zn.z] || { cx: zn.box[0] + zn.box[2] / 2, by: zn.box[1] + zn.box[3], h: zn.box[3] };
+    return `<img class="vh-bldg" src="${BLD}${zn.z}_idle.png" alt="" style="left:${p.cx}%;top:${p.by}%;height:${p.h}%" onerror="this.remove()">`;
+  }).join('') +
+    `<img class="vh-bldg" src="${BLD}fire_idle.png" alt="" style="left:53%;top:60%;height:5%" onerror="this.remove()">`;
   return `<div class="vh-stagebox">
     <img class="vh-layer vh-px vh-px-sky"    src="${A}bg_sky.png"    alt="" onerror="this.remove()">
     <img class="vh-layer vh-px vh-px-ground" src="${A}bg_ground.png" alt="" onerror="this.remove()">
+    ${buildings}
     ${waterTank}
     ${fire}
     ${people}
