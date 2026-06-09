@@ -8,6 +8,7 @@ LR.SMALL_WIN_DEFS = {
     id: 'SW1',
     name: '민수의 그림',
     actor: 'minsu',
+    cardImage: 'assets/images/cards/sw1_minsu.png',
     text: '민수가 종이 위에 색연필로 무언가를 그린다. 한참 뒤 한 사람의 무릎 옆에 슬며시 놓고 간다. 그림 속에는 불빛이 켜진 작은 집이 있다.',
     canFire: function(state) {
       const minsu = LR.charById(state, 'minsu');
@@ -48,6 +49,7 @@ LR.SMALL_WIN_DEFS = {
     id: 'SW3',
     name: '정훈의 작은 간식',
     actor: 'jeonghun',
+    cardImage: 'assets/images/cards/sw3_jeonghun.png',
     text: '정훈이 비축해둔 건조 식재료를 살짝 꺼내 작은 간식을 만든다. 누구에게 권한 것도 아닌데 다들 한 입씩 받는다.',
     cutscene: {
       id: 'sw3_jeonghun_snack',
@@ -77,6 +79,7 @@ LR.SMALL_WIN_DEFS = {
     id: 'SW4',
     name: '종혁의 손녀 사진',
     actor: 'jonghyeok',
+    cardImage: 'assets/images/cards/sw4_jonghyeok.png',
     text: '종혁이 호주머니에서 손때 묻은 사진 한 장을 꺼낸다. 한참을 들여다보고 다시 접는다. 옆에 앉은 누군가가 그 자세를 바라본다.',
     canFire: function(state) {
       const j = LR.charById(state, 'jonghyeok');
@@ -98,6 +101,7 @@ LR.SMALL_WIN_DEFS = {
     id: 'SW5',
     name: '은서의 노래 흥얼거림',
     actor: 'eunseo',
+    cardImage: 'assets/images/cards/sw5_eunseo_song.png',
     text: '은서가 빨래를 개다가 무심코 옛 노래를 흥얼거린다. 빗소리에 반쯤 묻혀 들릴 듯 말 듯하다.',
     canFire: function(state) {
       const e = LR.charById(state, 'eunseo');
