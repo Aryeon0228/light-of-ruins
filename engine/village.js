@@ -72,16 +72,16 @@ const ZONES = [
 //  box=[l,t,w,h]% 형상 영역(호버 핫스팟), ox/oy=확대 기준점(형상 중심x·발끝y) — 인물 PNG 알파 bbox에서 산출
 // box/ox/oy는 각 인물 PNG(3577×2419)의 알파 bbox에서 산출 — 새 배경(bg_ground)에 맞춰 재배치됨
 const PEOPLE_FILES = [
-  { file:'jeonghun',       char:'jeonghun',  inplace:true, box:[48.6,41.4,3.2,8.6], ox:50.2, oy:50.0 },
-  { file:'eunseo',         char:'eunseo',    inplace:true, box:[38.1,43.7,4.1,5.7], ox:40.2, oy:49.4 },
-  { file:'sujin',          char:'sujin',     inplace:true, box:[68.3,50.9,2.5,8.6], ox:69.6, oy:59.5 },
-  { file:'yeongsu',        char:'yeongsu',   inplace:true, box:[90.8,42.1,5.1,5.4], ox:93.3, oy:47.5 },
-  { file:'miyeon',         char:'miyeon',    inplace:true, box:[52.9,49.2,2.8,7.3], ox:54.3, oy:56.6 },
-  { file:'dongho',         char:'dongho',    inplace:true, box:[74.9,50.7,4.1,9.3], ox:76.9, oy:60.0 },
-  { file:'jonghyeok',      char:'jonghyeok', inplace:true, box:[85.0,59.2,4.0,8.7], ox:87.0, oy:67.9 },
-  { file:'hayeong',        char:'hayeong',   inplace:true, box:[60.2,30.0,1.9,7.6], ox:61.1, oy:37.6 },
-  { file:'jaehyeok',       char:'jaehyeok',  inplace:true, box:[42.5,50.7,3.5,7.4], ox:44.3, oy:58.0 },
-  { file:'minsu',          char:'minsu',     inplace:true, box:[45.4,54.9,2.6,4.9], ox:46.7, oy:59.8 }
+  { file:'jeonghun',       char:'jeonghun',  inplace:true, box:[47.2,39.5,3.6,9.4], ox:49.0, oy:48.9 },
+  { file:'eunseo',         char:'eunseo',    inplace:true, box:[41.6,44.3,4.1,5.7], ox:43.6, oy:50.0 },
+  { file:'sujin',          char:'sujin',     inplace:true, box:[88.2,38.3,2.7,9.0], ox:89.5, oy:47.3 },
+  { file:'yeongsu',        char:'yeongsu',   inplace:true, box:[90.8,41.4,5.8,6.1], ox:93.7, oy:47.5 },
+  { file:'miyeon',         char:'miyeon',    inplace:true, box:[55.6,50.8,2.8,7.3], ox:57.0, oy:58.1 },
+  { file:'dongho',         char:'dongho',    inplace:true, box:[74.4,56.1,4.1,9.3], ox:76.4, oy:65.4 },
+  { file:'jonghyeok',      char:'jonghyeok', inplace:true, box:[84.3,60.4,3.7,8.1], ox:86.1, oy:68.5 },
+  { file:'hayeong',        char:'hayeong',   inplace:true, box:[59.0,29.9,2.0,8.1], ox:60.0, oy:38.0 },
+  { file:'jaehyeok',       char:'jaehyeok',  inplace:true, box:[45.0,50.7,3.2,6.8], ox:46.6, oy:57.5 },
+  { file:'minsu',          char:'minsu',     inplace:true, box:[67.6,32.9,2.3,4.2], ox:68.7, oy:37.2 }
 ];
 
 // ═══════════════════════════════════════════════════════
