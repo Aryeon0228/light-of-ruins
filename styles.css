@@ -248,9 +248,9 @@ button {
 /* 날짜/장면 인트로 배너 — 화면 중앙, 검은 아웃글로우 */
 #dayBanner {
   position: fixed; inset: 0; z-index: 300;
-  display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: flex-start; justify-content: center;
   pointer-events: none; opacity: 0; visibility: hidden;
-  padding: 0 6vw;
+  padding: 18vh 6vw 0;
 }
 #dayBanner.show { animation: dayBannerCycle 2.6s ease both; }
 #dayBannerText {
@@ -258,11 +258,11 @@ button {
   font-size: clamp(1.6rem, 4.2vw, 3rem); font-weight: 400;
   color: #ffcf86; text-align: center; line-height: 1.35;
   letter-spacing: 0.01em;
-  /* 검은 아웃글로우(외곽선 + 번짐) */
+  /* 검은 아웃글로우(외곽선 + 넓은 번짐) */
   text-shadow:
-    0 0 2px #000, 0 0 4px #000,
-    2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000, -2px -2px 0 #000,
-    0 0 18px rgba(0,0,0,.95), 0 0 36px rgba(0,0,0,.8);
+    0 0 3px #000, 0 0 6px #000,
+    3px 3px 0 #000, -3px 3px 0 #000, 3px -3px 0 #000, -3px -3px 0 #000,
+    0 0 30px rgba(0,0,0,1), 0 0 55px rgba(0,0,0,.95), 0 0 85px rgba(0,0,0,.8);
 }
 @keyframes dayBannerCycle {
   0%   { opacity: 0; visibility: visible; transform: scale(1.06); letter-spacing: 0.12em; }
