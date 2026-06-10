@@ -164,6 +164,7 @@ LR.generateTemplateChoices = function(state) {
   }
 
   // 탐색 옵션 — 체력 50+면 출동 가능 (관대). 행선지를 돌려 매번 같은 문장이 안 나오게.
+  //  부상은 확정 차감이 아니라 확률 롤(expedition) — 다치면 loop.js가 전용 컷씬으로 보여준다.
   const explorers = LR.aliveChars(state).filter(c => c.health >= 50 && c.morale >= 25);
   const lead = explorers[Math.floor(Math.random() * Math.max(1, explorers.length))] || explorers[0];
   const foodGain = 10 + Math.floor(Math.random() * 12);
@@ -172,11 +173,15 @@ LR.generateTemplateChoices = function(state) {
     '폐주유소 매점', '셔터 내린 마트 창고', '학교 급식실', '반쯤 무너진 시장 골목'
   ];
   const spot = spots[Math.floor(Math.random() * spots.length)];
+  const injuryChance = 0.35;
   choices.push({
     id: 'B', label: `탐색 — ${spot}`,
-    body: lead ? `탐색대 ${lead.name}, ${spot}으로. 식량 +${foodGain} 기대. 부상 위험.` : '출동 가능 인원 없음.',
+    body: lead ? `탐색대 ${lead.name}, ${spot}으로. 식량 +${foodGain} 기대 · 부상 위험 ${Math.round(injuryChance * 100)}%.` : '출동 가능 인원 없음.',
     deltas: { food: +foodGain },
-    perCharDeltas: lead ? { [lead.id]: { health: -3 - Math.floor(Math.random() * 8) } } : {},
+    expedition: lead ? {
+      leadId: lead.id, leadName: lead.name, spot: spot,
+      foodGain: foodGain, injuryChance: injuryChance, injuryMin: 6, injuryMax: 16
+    } : null,
     enabled: !!lead
   });
 

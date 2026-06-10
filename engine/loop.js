@@ -102,6 +102,24 @@ LR.engine.applyChoice = function(choiceId) {
     }
   }
 
+  // 2b. 탐색(외출) 부상 롤 — 확정 차감 대신 확률. 다치면 전용 컷씬으로 보여준다.
+  let expedWound = null;
+  if (choice.expedition) {
+    const ex = choice.expedition;
+    let lead = (ex.leadId && state.characters[ex.leadId] && state.characters[ex.leadId].alive)
+      ? state.characters[ex.leadId] : null;
+    if (!lead || lead.health < 35) {
+      lead = LR.aliveChars(state).find(c => c.health >= 50 && c.morale >= 25) || lead;
+    }
+    if (lead && Math.random() < (ex.injuryChance || 0.35)) {
+      const lo = ex.injuryMin || 6, hi = ex.injuryMax || 16;
+      const dmg = Math.floor(lo + Math.random() * (hi - lo + 1));
+      lead.health = Math.max(0, lead.health - dmg);
+      expedWound = { lead: lead, dmg: dmg, spot: ex.spot || '폐허' };
+      LR.render.toast(`탐색 부상 — ${lead.name} 체력 -${dmg}`, 'raid');
+    }
+  }
+
   // 3. 마을 전체 사기
   if (choice.moraleAll) {
     for (const c of LR.aliveChars(state)) {
@@ -181,30 +199,42 @@ LR.engine.applyChoice = function(choiceId) {
   // 11. 일일 마감 → (컷씬) → 다음 날
   state.awaitingChoice = false;
 
-  // 11a. 컷씬 한 장면: 스몰윈 카드(보상) > 선택지 전용 > 자동 생성(위험=붉은 / 담백)
-  let cut, tone, badgeText, isNew = false;
-  if (cardSW) {
-    const def = LR.SMALL_WIN_DEFS[cardSW.id];
-    cut = def.cutscene || LR.buildSmallWinCutscene(def);   // 전용 아트 없으면 인물 포트레이트 카드
-    tone = 'reward'; badgeText = def.name; isNew = cardIsNew;
-  } else if (choice.cutscene) {
-    cut = choice.cutscene; tone = choice.cutscene.tone || 'special'; badgeText = choice.cutscene.badge;
-  } else {
-    cut = LR.buildChoiceCutscene(node, choice, state);
-    tone = (choice.risk === 'danger') ? 'bad' : 'plain';
-  }
-  // 결과 변화량(식량·사기·물·연료·의약품·소음) — 컷씬에 크게 표시
+  // 11a. 컷씬 — 순차 체인: [스몰윈 카드(보상)] → [탐색 부상] → 없으면 선택지/자동 생성 1컷
+  //  탐색 부상은 큰 사건이므로 별도 컷씬으로 반드시 보여준다 (스몰윈과 같은 날이어도 둘 다)
   const _after = _resSnap(state);
   const resultDeltas = {
     food: _after.food - _before.food, morale: _after.morale - _before.morale,
     water: _after.water - _before.water, fuel: _after.fuel - _before.fuel,
     medicine: _after.medicine - _before.medicine, noise: _after.noise - _before.noise
   };
-  if (LR.cutscene && LR.cutscene.play) {
-    LR.cutscene.play(cut, () => LR.engine.endOfDay(), tone, badgeText, isNew, resultDeltas);
-  } else {
-    LR.engine.endOfDay();
+  const cuts = [];
+  if (cardSW) {
+    const def = LR.SMALL_WIN_DEFS[cardSW.id];
+    cuts.push({ cut: def.cutscene || LR.buildSmallWinCutscene(def),   // 전용 아트 없으면 인물 포트레이트 카드
+                tone: 'reward', badge: def.name, isNew: cardIsNew, deltas: resultDeltas });
   }
+  if (expedWound) {
+    cuts.push({ cut: LR.buildExpeditionWoundCutscene(state, expedWound),
+                tone: 'bad', badge: '탐색 부상', isNew: false, deltas: { health: -expedWound.dmg } });
+  }
+  if (!cuts.length) {
+    if (choice.cutscene) {
+      cuts.push({ cut: choice.cutscene, tone: choice.cutscene.tone || 'special',
+                  badge: choice.cutscene.badge, isNew: false, deltas: resultDeltas });
+    } else {
+      cuts.push({ cut: LR.buildChoiceCutscene(node, choice, state),
+                  tone: (choice.risk === 'danger') ? 'bad' : 'plain', badge: undefined, isNew: false, deltas: resultDeltas });
+    }
+  } else if (!cardSW && expedWound) {
+    // 부상 컷씬만 있을 때는 결과 변화량(식량 수확 포함)도 함께 보여준다
+    cuts[0].deltas = Object.assign({ health: -expedWound.dmg }, resultDeltas);
+  }
+  const playChain = function(list) {
+    if (!list.length || !LR.cutscene || !LR.cutscene.play) { LR.engine.endOfDay(); return; }
+    const head = list[0];
+    LR.cutscene.play(head.cut, () => playChain(list.slice(1)), head.tone, head.badge, head.isNew, head.deltas);
+  };
+  playChain(cuts);
 };
 
 // 선택 결과를 마을 일러스트 위에 보여주는 자동 컷씬(전용 아트가 없을 때).
@@ -244,10 +274,10 @@ LR.RAID_OPENERS = {
   ]
 };
 LR.RAID_WOUND_LINES = [
-  (n) => `${n}이(가) 앞에 나섰다가 다쳤다. 깊지는 않지만, 가볍지도 않다.`,
-  (n) => `${n}이(가) 무너지는 판자를 몸으로 받았다. 어깨에서 피가 배어 나온다.`,
-  (n) => `${n}이(가) 손을 물릴 뻔했다. 물리진 않았다 — 대신 팔이 찢어졌다.`,
-  (n) => `밀려나던 ${n}이(가) 잔해에 깔렸다. 끌어내는 데 두 사람이 붙었다.`
+  (n) => `${LR.nameGa(n)} 앞에 나섰다가 다쳤다. 깊지는 않지만, 가볍지도 않다.`,
+  (n) => `${LR.nameGa(n)} 무너지는 판자를 몸으로 받았다. 어깨에서 피가 배어 나온다.`,
+  (n) => `${LR.nameGa(n)} 손을 물릴 뻔했다. 물리진 않았다 — 대신 팔이 찢어졌다.`,
+  (n) => `밀려나던 ${LR.nameGa(n)} 잔해에 깔렸다. 끌어내는 데 두 사람이 붙었다.`
 ];
 LR.buildRaidCutscene = function(state, victims, scale) {
   const bg = LR.villageCutsceneBg(state.season);
@@ -262,6 +292,35 @@ LR.buildRaidCutscene = function(state, victims, scale) {
     frames.push({ image: port, fallback: bg, text: line(v.name) });
   }
   return { id: 'raid_' + state.day, frames };
+};
+// 탐색(외출) 부상 컷씬 — 장소를 문장에 엮어 매번 다른 장면으로.
+//  1프레임: 전용 일러스트 슬롯(assets/images/cutscenes/explore_wound.png) → 마을 배경 폴백
+LR.EXPED_OPENERS = [
+  (spot) => `${spot}. 통로는 조용했다 — 너무 조용했다.`,
+  (spot) => `${spot} 안쪽, 쓰러진 진열대 사이에서 낮은 신음 소리가 들렸다.`,
+  (spot) => `${spot}의 어둠 속, 발밑에서 유리 조각이 바스러졌다. 그 소리에 무언가가 고개를 들었다.`,
+  (spot) => `${spot}에서 가방을 반쯤 채웠을 때였다. 등 뒤의 공기가 달라졌다.`
+];
+LR.EXPED_WOUND_LINES = [
+  (n) => `${LR.nameGa(n)} 좀비의 손을 피하다 무너지는 선반에 깔렸다. 팔이 찢어졌다.`,
+  (n) => `${LR.nameGa(n)} 물러서다 깨진 유리 위로 넘어졌다. 소리를 삼키며 일어섰다.`,
+  (n) => `좀비를 밀쳐내고 빠져나왔다. ${n}의 옷자락이 찢겨 있고, 그 아래 상처가 깊다.`,
+  (n) => `좁은 통로에서 몸싸움이 있었다. ${LR.nameGa(n)} 어깨를 부딪히고도 가방을 놓지 않았다.`
+];
+LR.buildExpeditionWoundCutscene = function(state, wound) {
+  const bg = LR.villageCutsceneBg(state.season);
+  const slot = 'assets/images/cutscenes/explore_wound.png';
+  const port = 'assets/images/portraits/' + (wound.lead.id || 'bc') + '.png';
+  const opener = LR.EXPED_OPENERS[Math.floor(Math.random() * LR.EXPED_OPENERS.length)];
+  const woundLine = LR.EXPED_WOUND_LINES[Math.floor(Math.random() * LR.EXPED_WOUND_LINES.length)];
+  return {
+    id: 'exped_' + state.day,
+    frames: [
+      { image: slot, fallback: bg, slot: slot, text: opener(wound.spot) },
+      { image: port, fallback: bg, text: woundLine(wound.lead.name) },
+      { image: port, fallback: bg, text: '그래도 가방은 채웠다. 식량을 등에 지고, 다리를 절며 돌아왔다.' }
+    ]
+  };
 };
 LR.buildChoiceCutscene = function(node, choice, state) {
   const bg = LR.villageCutsceneBg(state.season);

@@ -663,6 +663,9 @@ LR.village._renderDecisionView = function() {
     dec.querySelectorAll('.vd-choice').forEach(btn => {
       btn.addEventListener('click', () => {
         if (LR.village._busy) return;
+        // 외출(탐색) 선택지는 바로 적용하지 않고 위험·보상 확인 패널을 먼저
+        const ch = (node.choices || []).find(c => c.id === btn.dataset.cid);
+        if (ch && ch.expedition) { LR.village._renderExpeditionConfirm(ch); return; }
         LR.village._busy = true;
         LR.engine.applyChoice(btn.dataset.cid);
       });
@@ -679,6 +682,68 @@ LR.village._advanceDecision = function() {
   const beats = LR.village._decBeats || [];
   LR.village._decIdx = Math.min((LR.village._decIdx || 0) + 1, beats.length);
   LR.village._renderDecisionView();
+};
+
+// 외출(탐색) 확인 패널 — "나갈 것인가". 보상·위험·남았을 때의 전망을 한눈에.
+LR.village._renderExpeditionConfirm = function(choice) {
+  const dec = document.getElementById('vhDecision');
+  const s = LR.village.state;
+  if (!dec || !s) return;
+  const ex = choice.expedition;
+  const aliveN = Math.max(1, LR.aliveChars(s).length);
+  const totalFood = s.food + s.driedFood + s.pickledFood;
+  const daysNow = Math.floor(totalFood / aliveN);
+  const afterFood = Math.min(100, totalFood + (ex.foodGain || 0));
+  const daysAfter = Math.floor(afterFood / aliveN);
+  const pct = Math.round((ex.injuryChance || 0.35) * 100);
+  const leadChar = ex.leadId && s.characters[ex.leadId];
+  const leadName = ex.leadName || (leadChar && leadChar.alive ? leadChar.name : '탐색대');
+  const foodT = LR.foodTier(totalFood);
+  const stayLine = totalFood <= 19
+    ? `보유 식량 ${totalFood} (기근) — 오늘도 전원이 체력을 잃는다`
+    : `보유 식량 ${totalFood} (${foodT.label}) — 약 ${daysNow}일치. 내일 ${Math.max(0, totalFood - aliveN)}`;
+
+  dec.innerHTML = `<div class="vd-head">
+      <span class="vd-day">Day ${s.day}</span>
+      <span class="vd-spacer"></span>
+      <button class="vd-min" id="vdMin" title="접기">▾</button>
+    </div>
+    <div class="vd-confirm">
+      <p class="vd-cf-title">⚑ 외출 — ${ex.spot || '바깥'}</p>
+      <p class="vd-cf-sub">${LR.nameGa(leadName)} 담장 밖으로 나간다. 바깥은 안전하지 않다.</p>
+      <div class="vd-cf-rows">
+        <div class="vd-cf-row good">
+          <span class="vd-cf-ic">🍞</span>
+          <span class="vd-cf-lab">성공 보상</span>
+          <span class="vd-cf-val">식량 +${ex.foodGain} → 보유 ${afterFood} (약 ${daysAfter}일치)</span>
+        </div>
+        <div class="vd-cf-row risk">
+          <span class="vd-cf-ic">🩸</span>
+          <span class="vd-cf-lab">부상 위험</span>
+          <span class="vd-cf-val">${pct}% — ${leadName} 체력 -${ex.injuryMin || 6}~${ex.injuryMax || 16}</span>
+        </div>
+        <div class="vd-cf-row stay">
+          <span class="vd-cf-ic">🏠</span>
+          <span class="vd-cf-lab">남는다면</span>
+          <span class="vd-cf-val">${stayLine}</span>
+        </div>
+      </div>
+      <div class="vd-cf-actions">
+        <button class="vd-cf-go" id="vdCfGo">⚑ 나간다 — 위험을 감수한다</button>
+        <button class="vd-cf-stay" id="vdCfStay">남는다</button>
+      </div>
+    </div>`;
+
+  const go = document.getElementById('vdCfGo');
+  if (go) go.addEventListener('click', () => {
+    if (LR.village._busy) return;
+    LR.village._busy = true;
+    LR.engine.applyChoice(choice.id);
+  });
+  const stay = document.getElementById('vdCfStay');
+  if (stay) stay.addEventListener('click', () => LR.village._renderDecisionView());
+  const minb = document.getElementById('vdMin');
+  if (minb) minb.addEventListener('click', () => LR.village.toggleDecision(false));
 };
 
 function applyDecisionHighlights() {

@@ -94,6 +94,7 @@
 | `raid_small.png` | 주의 · 소규모 (3~5마리) | 1280 × 720 |
 | `raid_mid.png` | 경계 · 중규모 (6~10마리) | 1280 × 720 |
 | `raid_large.png` | 위험 · 대규모 (11+마리) | 1280 × 720 |
+| `explore_wound.png` | 탐색(외출) 중 좀비 조우·부상 | 1280 × 720 |
 
 ## 6. 외부 정찰 (망루 뷰)
 `assets/images/outside/`

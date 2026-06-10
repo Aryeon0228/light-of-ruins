@@ -106,7 +106,10 @@ LR.cutscene._renderFrame = function() {
   txt.style.animation = 'none';
   txt.offsetHeight;
   txt.style.animation = '';
-  txt.textContent = frame.text || '';
+  // 문장 끝(마침표·물음표·느낌표·말줄임표, 닫는 따옴표 포함)마다 줄바꿈 — 읽는 호흡을 만든다
+  const raw = frame.text || '';
+  const esc = raw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  txt.innerHTML = esc.replace(/([.!?…]["”’']?)\s+/g, '$1<br>');
 
   // 진행 도트
   const prog = document.getElementById('cutsceneProgress');

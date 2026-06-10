@@ -78,6 +78,16 @@ LR.aliveChars = function(state) {
 
 LR.charById = function(state, id) { return state.characters[id]; };
 
+// 주격 조사 자동 선택 — 받침 있으면 '이'(재혁이), 없으면 '가'(은서가)
+LR.nameGa = function(name) {
+  if (!name) return '';
+  const code = name.charCodeAt(name.length - 1);
+  if (code >= 0xAC00 && code <= 0xD7A3) {
+    return name + (((code - 0xAC00) % 28) ? '이' : '가');
+  }
+  return name + '이(가)';
+};
+
 // ─── 일일 소음 (sec 4.2) ───
 LR.computeNoise = function(state, intentionalNoise) {
   let physiological = 0;

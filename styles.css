@@ -609,6 +609,8 @@ button {
   text-align: center;
   max-width: 680px;
   min-height: 4em;
+  word-break: keep-all;        /* 단어 중간 잘림 방지 (한국어 어절 단위 줄바꿈) */
+  overflow-wrap: break-word;
   padding: 0.7rem 1.4rem;
   border-radius: 6px;
   background: rgba(12, 11, 9, 0.55);

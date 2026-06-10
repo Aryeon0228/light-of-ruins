@@ -120,9 +120,9 @@ LR.tiRescueNode = function(state) {
     ],
     choices: [
       { id: 'A', label: '탐색대 즉시 파견',
-        body: '식량 +20, 의약품 +1. 탐색원 부상 위험.',
+        body: '식량 +20, 의약품 +1. 부상 위험 45%.',
         deltas: { food: +20, medicine: +1 },
-        perCharDeltas: { hayeong: { health: -10 } },
+        expedition: { leadId: 'hayeong', spot: '외곽의 보급품 더미', foodGain: 20, injuryChance: 0.45, injuryMin: 8, injuryMax: 18 },
         flags: { rescueTriggered: true } },
       { id: 'B', label: '신중한 정찰 후 결정',
         body: '식량 +10. 안전 우선.',
@@ -257,9 +257,9 @@ LR.tiPressureNode = function(state) {
     ],
     choices: [
       { id: 'A', label: '탐색 — 기대 vs 위험',
-        body: '식량 +5~+15. 부상 위험.',
+        body: '식량 +5~+15. 부상 위험 30%.',
         deltas: { food: +Math.floor(5 + Math.random() * 10) },
-        perCharDeltas: { hayeong: { health: -5 } },
+        expedition: { leadId: 'hayeong', spot: '폐기물 더미', foodGain: 10, injuryChance: 0.3, injuryMin: 4, injuryMax: 12 },
         moraleAll: +1 },
       { id: 'B', label: '소문 확인만 — 정찰',
         body: '식량 +3.',
