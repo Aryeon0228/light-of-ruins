@@ -70,12 +70,32 @@ LR.cutscene._renderFrame = function() {
   const frame = frames[idx];
 
   const img = document.getElementById('cutsceneImg');
+  const ph = document.getElementById('cutscenePlaceholder');
   // re-trigger fade-in by reassigning src after blanking
   img.style.animation = 'none';
   img.offsetHeight;  // force reflow
   img.style.animation = '';
-  // 카드 그림이 아직 없으면(업로드 전) 포트레이트로 폴백
-  img.onerror = frame.fallback ? function() { img.onerror = null; img.src = frame.fallback; } : null;
+  // 폴백 체인: 지정 이미지 → frame.fallback → 빈 프레임(일러스트 슬롯 표시)
+  //  마지막 폴백은 깨진 이미지 대신 점선 프레임 + 기대 파일명을 보여줘서
+  //  '여기에 그림을 올리면 들어간다'를 알 수 있게 한다.
+  img.style.display = '';
+  if (ph) ph.classList.remove('show');
+  const showPlaceholder = function() {
+    img.onerror = null;
+    img.style.display = 'none';
+    if (ph) {
+      ph.classList.add('show');
+      const f = document.getElementById('cutscenePhFile');
+      if (f) f.textContent = frame.slot || frame.image || '';
+    }
+  };
+  img.onerror = function() {
+    if (frame.fallback && img.src.indexOf(frame.fallback) === -1) {
+      img.src = frame.fallback;   // 1차 폴백 — 이것도 실패하면 빈 프레임
+      return;
+    }
+    showPlaceholder();
+  };
   img.src = frame.image;
   img.alt = frame.text || '';
 

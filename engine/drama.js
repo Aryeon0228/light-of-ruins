@@ -137,16 +137,25 @@ LR.tiRescueNode = function(state) {
 
 // TI 외부 압박 이벤트
 LR.tiPressureNode = function(state) {
-  const opts = ['water_pollution', 'zombie_pass', 'cache_rumor'];
-  const choice = opts[Math.floor(Math.random() * opts.length)];
+  const opts = ['water_pollution', 'zombie_pass', 'cache_rumor', 'fence_breach', 'night_howl'];
+  // 최근에 나온 압박 이벤트는 피한다 (반복 방지)
+  const fresh = opts.filter(o => !state.recentScenarios.some(id => id.indexOf('PRESSURE_' + o.toUpperCase()) === 0 ||
+                                                                   id.indexOf('PRESSURE_' + o.split('_')[0].toUpperCase()) === 0));
+  const pool = fresh.length ? fresh : opts;
+  const choice = pool[Math.floor(Math.random() * pool.length)];
 
   if (choice === 'water_pollution') {
+    const intro = [
+      '아침에 길어 온 물이 탁하다. 상류에서 무언가 흘러내린 모양이다. 물 자원 50% 손실.',
+      '빗물받이에 기름막이 떠 있다. 어디서 흘러든 건지 알 수 없다. 마실 수 있는 물이 절반으로 줄었다.',
+      '물통 바닥에 가라앉은 검은 침전물. 정훈이 냄새를 맡고 고개를 젓는다. "이건 못 씁니다."'
+    ];
     return {
       id: `PRESSURE_WATER_D${state.day}`,
       source: 'tiEvent',
       title: `Day ${state.day} — 물 오염`,
       body: [
-        { kind: 'narration', text: '아침에 길어 온 물이 탁하다. 상류에서 무언가 흘러내린 모양이다. 물 자원 50% 손실.' }
+        { kind: 'narration', text: intro[Math.floor(Math.random() * intro.length)] }
       ],
       choices: [
         { id: 'A', label: '의료용 물만 분리 보존',
@@ -182,6 +191,59 @@ LR.tiPressureNode = function(state) {
         { id: 'C', label: '평소대로 — 위험 감수',
           body: '평상 운영. 큰 위험.',
           intentionalNoise: 15 }
+      ]
+    };
+  }
+  if (choice === 'fence_breach') {
+    return {
+      id: `PRESSURE_FENCE_D${state.day}`,
+      source: 'tiEvent',
+      title: `Day ${state.day} — 담장의 균열`,
+      body: [
+        { kind: 'narration', text: '동호가 아침 점검에서 담장 동쪽 기둥 하나가 안으로 기울어진 것을 발견한다. 며칠 전 습격의 여파인지, 그냥 세월인지.' },
+        { kind: 'dialog', speaker: '동호', text: '"오늘 고치면 반나절 일입니다. 내일 고치면… 모르죠."' }
+      ],
+      choices: [
+        { id: 'A', label: '오늘 바로 보수 — 망치질',
+          body: '연료 -2, 소음 +10. 담장 안정. 동호 사기 +3.',
+          deltas: { fuel: -2 },
+          perCharDeltas: { dongho: { morale: +3 } },
+          intentionalNoise: 10 },
+        { id: 'B', label: '조용한 임시 보강',
+          body: '소음 없이 줄로 묶고 받침목을 댄다. 불안은 남는다.',
+          moraleAll: -2,
+          intentionalNoise: 2 },
+        { id: 'C', label: '내일로 미룬다 (위험)',
+          body: '오늘은 손대지 않는다. 밤이 무겁다.',
+          moraleAll: -1,
+          intentionalNoise: 0,
+          risk: 'danger' }
+      ]
+    };
+  }
+  if (choice === 'night_howl') {
+    return {
+      id: `PRESSURE_HOWL_D${state.day}`,
+      source: 'tiEvent',
+      title: `Day ${state.day} — 멀리서 우는 소리`,
+      body: [
+        { kind: 'narration', text: '해 질 무렵부터 먼 데서 길게 우는 소리가 들린다. 좀비인지 바람인지 개인지 — 알 수 없다는 것이 가장 나쁘다.' },
+        { kind: 'narration', text: '민수가 귀를 막고 미연 옆에 붙어 앉는다. 어른들도 말수가 줄었다.' }
+      ],
+      choices: [
+        { id: 'A', label: '등불 끄고 일찍 잠자리에',
+          body: '소음·불빛 최소. 사기 약간 하락.',
+          moraleAll: -2,
+          intentionalNoise: 0 },
+        { id: 'B', label: '모여서 낮은 목소리로 이야기',
+          body: '함께 있는 것으로 무서움을 나눈다. 소음 약간.',
+          moraleAll: +2,
+          intentionalNoise: 5 },
+        { id: 'C', label: '망루 야간 경계 강화',
+          body: '하영이 밤을 새운다. 체력 -6. 마을은 안심.',
+          perCharDeltas: { hayeong: { health: -6 } },
+          moraleAll: +1,
+          intentionalNoise: 2 }
       ]
     };
   }

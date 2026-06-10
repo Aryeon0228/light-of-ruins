@@ -579,6 +579,25 @@ button {
   object-fit: cover;
   animation: cutsceneIn 0.6s ease-out;
 }
+/* 일러스트가 아직 없는 장면 — 빈 프레임 폴백 (업로드 전 슬롯 표시) */
+.cutscene-placeholder {
+  position: absolute; inset: 0;
+  display: none;
+  flex-direction: column; align-items: center; justify-content: center;
+  gap: .55rem;
+  background:
+    radial-gradient(ellipse at 50% 42%, rgba(224,178,74,.05), transparent 65%),
+    repeating-linear-gradient(45deg, #16181d 0 14px, #14161a 14px 28px);
+}
+.cutscene-placeholder.show { display: flex; }
+.cs-ph-frame {
+  position: absolute; inset: 12px;
+  border: 1px dashed rgba(246,241,226,.22);
+  border-radius: 3px;
+  pointer-events: none;
+}
+.cs-ph-cap { color: rgba(246,241,226,.5); font-size: .95rem; letter-spacing: .12em; }
+.cs-ph-file { color: rgba(246,241,226,.28); font-size: .72rem; font-family: monospace; }
 @keyframes cutsceneIn {
   from { opacity: 0; transform: scale(1.05); }
   to { opacity: 1; transform: scale(1); }

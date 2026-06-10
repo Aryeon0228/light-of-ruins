@@ -57,7 +57,15 @@ const pick = {
   random: (cs) => cs[Math.floor(Math.random() * cs.length)],
   safe:   (cs) => cs.find(c => c.risk !== 'danger' && !(c.intentionalNoise > 8)) || cs[0],
   // 도덕 축을 직접 미는 전략: 마을 이로운(긍정 전례) vs 이기적/방치(부정 전례)
-  kind:   (cs) => cs.find(c => c.precedentCandidate && c.precedentCandidate.villageBenefit) || cs.find(c => c.risk !== 'danger') || cs[0],
+  //  단, 식량이 바닥나면(35 미만) 상식적으로 탐색/식량 확보를 우선한다 — 굶으면서 착한 선택만 누르는 봇 방지
+  kind:   (cs, state) => {
+    const totalFood = state ? (state.food + state.driedFood + state.pickledFood) : 99;
+    if (totalFood < 35) {
+      const forage = cs.find(c => (c.deltas && c.deltas.food > 0) || /탐색/.test(c.label || ''));
+      if (forage) return forage;
+    }
+    return cs.find(c => c.precedentCandidate && c.precedentCandidate.villageBenefit) || cs.find(c => c.risk !== 'danger') || cs[0];
+  },
   harsh:  (cs) => cs.find(c => c.precedentCandidate && c.precedentCandidate.villageBenefit === false) || cs[cs.length - 1],
 };
 
@@ -70,7 +78,7 @@ function playOne(strategy) {
     if (!node || !s.awaitingChoice) break;
     const cs = validChoices(node, s);
     if (!cs.length) { deadEnd = { day: s.day, node: node.id }; break; }
-    LR.engine.applyChoice(pick[strategy](cs).id);
+    LR.engine.applyChoice(pick[strategy](cs, s).id);
   }
   const alive = LR.aliveChars(s);
   return {

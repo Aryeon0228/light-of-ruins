@@ -23,6 +23,14 @@ LR.tpl = {
 
   noise_phrase: function(state) {
     if (state.raidedLastNight) return '어젯밤 습격이 마을을 흔들었다';
+    if (state.nearMissLastNight) {
+      const lines = [
+        '간밤, 발소리가 담장을 따라 한 바퀴 돌고 멀어졌다. 아무도 그 얘기를 먼저 꺼내지 않는다',
+        '새벽에 뒷담장 판자를 긁는 소리가 났다. 다행히 그뿐이었다 — 오늘은',
+        '담장 밖에서 낮게 으르렁대는 소리가 두어 번. 모두 숨을 죽였고, 소리는 지나갔다'
+      ];
+      return lines[Math.floor(Math.random() * lines.length)];
+    }
     if (state.yesterdayNoise <= 20) return '어젯밤은 조용했다';
     if (state.yesterdayNoise <= 50) return '어젯밤 멀리서 발걸음 소리가 몇 번 났다';
     return '어젯밤 신음과 발소리가 새벽까지 멈추지 않았다';
@@ -155,13 +163,18 @@ LR.generateTemplateChoices = function(state) {
     });
   }
 
-  // 탐색 옵션 — 체력 50+면 출동 가능 (관대)
+  // 탐색 옵션 — 체력 50+면 출동 가능 (관대). 행선지를 돌려 매번 같은 문장이 안 나오게.
   const explorers = LR.aliveChars(state).filter(c => c.health >= 50 && c.morale >= 25);
-  const lead = explorers[0];
+  const lead = explorers[Math.floor(Math.random() * Math.max(1, explorers.length))] || explorers[0];
   const foodGain = 10 + Math.floor(Math.random() * 12);
+  const spots = [
+    '무너진 편의점', '버려진 아파트 상가', '약국 뒷창고', '고가 밑에 버려진 트럭',
+    '폐주유소 매점', '셔터 내린 마트 창고', '학교 급식실', '반쯤 무너진 시장 골목'
+  ];
+  const spot = spots[Math.floor(Math.random() * spots.length)];
   choices.push({
-    id: 'B', label: '탐색 — 식량 회수 시도',
-    body: lead ? `탐색대 ${lead.name} 출동. 식량 +${foodGain} 기대. 부상 위험.` : '출동 가능 인원 없음.',
+    id: 'B', label: `탐색 — ${spot}`,
+    body: lead ? `탐색대 ${lead.name}, ${spot}으로. 식량 +${foodGain} 기대. 부상 위험.` : '출동 가능 인원 없음.',
     deltas: { food: +foodGain },
     perCharDeltas: lead ? { [lead.id]: { health: -3 - Math.floor(Math.random() * 8) } } : {},
     enabled: !!lead

@@ -220,16 +220,48 @@ LR.buildSmallWinCutscene = function(def) {
   return { id: 'swcard_' + def.id, frames: [{ image: img, fallback: portrait, text: def.text }] };
 };
 // 습격(부상) 컷씬 — 다침은 큰 사건이므로 스몰윈처럼 컷씬 + 체력 변화 표시.
-LR.buildRaidCutscene = function(state, victim, dmg, scale) {
+//  텍스트는 규모별 풀에서 랜덤 — 매번 같은 문장이 반복되지 않게.
+//  1프레임 이미지는 전용 일러스트 슬롯(assets/images/cutscenes/raid_*.png) → 없으면 마을 배경 폴백.
+LR.RAID_SLOT_KEY = { '잠잠': 'calm', '주의': 'small', '경계': 'mid', '위험': 'large' };
+LR.RAID_OPENERS = {
+  '잠잠': [
+    '새벽, 담장 밖에서 무언가 끌리는 소리가 났다. 한두 마리. 그러나 한두 마리도 손톱은 있다.',
+    '거의 조용한 밤이었다 — 거의. 뒷담장 판자 하나가 안쪽으로 휘었다.'
+  ],
+  '주의': [
+    '간밤, 소규모 무리가 담장을 더듬었다. 손바닥으로 벽을 두드리는 소리가 새벽까지 이어졌다.',
+    '서너 마리가 정문 쪽으로 몰렸다. 어둠 속에서 누군가 먼저 막아섰다.',
+    '낮의 소음이 손님을 불렀다. 많지는 않다. 그러나 빈손으로 돌아가지도 않았다.'
+  ],
+  '경계': [
+    '중규모 습격. 담장 한 구간이 무게를 못 이기고 삐걱였다. 모두가 깨어 있어야 했다.',
+    '여섯, 일곱… 세다가 그만뒀다. 막는 것이 먼저였다.',
+    '간밤의 소리가 무리를 끌고 왔다. 횃불과 몽둥이로 새벽을 버텼다.'
+  ],
+  '위험': [
+    '대규모 습격. 담장 전체가 울렸다. 마을의 모든 손이 무기를 잡았다.',
+    '어둠 속에서 수를 셀 수 없었다. 물러난 것은 해가 뜨고 나서였다.'
+  ]
+};
+LR.RAID_WOUND_LINES = [
+  (n) => `${n}이(가) 앞에 나섰다가 다쳤다. 깊지는 않지만, 가볍지도 않다.`,
+  (n) => `${n}이(가) 무너지는 판자를 몸으로 받았다. 어깨에서 피가 배어 나온다.`,
+  (n) => `${n}이(가) 손을 물릴 뻔했다. 물리진 않았다 — 대신 팔이 찢어졌다.`,
+  (n) => `밀려나던 ${n}이(가) 잔해에 깔렸다. 끌어내는 데 두 사람이 붙었다.`
+];
+LR.buildRaidCutscene = function(state, victims, scale) {
   const bg = LR.villageCutsceneBg(state.season);
-  const port = 'assets/images/portraits/' + (victim.id || 'bc') + '.png';
-  return {
-    id: 'raid_' + state.day,
-    frames: [
-      { image: bg, text: `간밤, ${scale} 습격이 있었다. 담장 너머가 술렁였다.` },
-      { image: port, fallback: bg, text: `${victim.name}이(가) 앞에 나섰다가 다쳤다. 깊지는 않지만, 가볍지도 않다.` }
-    ]
-  };
+  const slotKey = LR.RAID_SLOT_KEY[scale] || 'small';
+  const slot = 'assets/images/cutscenes/raid_' + slotKey + '.png';
+  const openers = LR.RAID_OPENERS[scale] || LR.RAID_OPENERS['주의'];
+  const opener = openers[Math.floor(Math.random() * openers.length)];
+  const frames = [{ image: slot, fallback: bg, slot: slot, text: opener }];
+  for (const v of victims) {
+    const port = 'assets/images/portraits/' + (v.id || 'bc') + '.png';
+    const line = LR.RAID_WOUND_LINES[Math.floor(Math.random() * LR.RAID_WOUND_LINES.length)];
+    frames.push({ image: port, fallback: bg, text: line(v.name) });
+  }
+  return { id: 'raid_' + state.day, frames };
 };
 LR.buildChoiceCutscene = function(node, choice, state) {
   const bg = LR.villageCutsceneBg(state.season);
@@ -276,9 +308,9 @@ LR.engine.endOfDay = function() {
   const totalFood = state.food + state.driedFood + state.pickledFood;
   const foodTier = LR.foodTier(totalFood);
   if (foodTier.tier === 'famine' || need > 0) {
-    // 신선+비축으로도 부족 → 기근 (아프지만 즉사 나선은 아니게: -4/-8 → -3/-5)
+    // 신선+비축으로도 부족 → 기근. 기획서 수치(체력 -5/일) 복원 — 기근이 실제 위협이어야 긴장이 생긴다
     for (const c of LR.aliveChars(state)) {
-      c.health = Math.max(0, c.health - 3);
+      c.health = Math.max(0, c.health - 5);
       c.morale = Math.max(0, c.morale - 5);
     }
   } else if (foodTier.tier === 'crisis') {
@@ -290,9 +322,10 @@ LR.engine.endOfDay = function() {
   const villageMul = LR.villageMoraleMultiplier(state.spiral.state, avg);
   for (const c of LR.aliveChars(state)) {
     const recMul = LR.recoveryMultiplier(state, c) * villageMul;
-    // 체력 회복(기존 +8) — 단, 배수에 하한(0.5)을 둬 사기 붕괴 시에도 회복이 멈추지 않게(죽음의 나선 차단)
+    // 체력 회복(기본 +6) — 배수 하한(0.5)으로 죽음의 나선은 차단하되,
+    //  부상이 하루 만에 지워지지 않게 회복량을 낮춰 긴장을 유지(기존 +8)
     if (c.health < 100 && totalFood >= 20) {
-      const heal = Math.round(8 * Math.max(0.5, recMul) * (foodTier.tier === 'crisis' ? 0.5 : 1));
+      const heal = Math.round(6 * Math.max(0.5, recMul) * (foodTier.tier === 'crisis' ? 0.5 : 1));
       c.health = Math.min(100, c.health + heal);
     }
     // 사기: 공동체 상태가 정한 '기준선'으로 매일 조금씩 수렴.
@@ -326,24 +359,47 @@ LR.engine.endOfDay = function() {
   }
 
   // 어제 소음 → 오늘 새벽 습격 판정
+  //  습격 직후 하룻밤은 '소강' — 무리가 흩어져 연속 습격 확률이 줄어든다 (연쇄 사망 나선 방지)
   const raidProb = LR.raidProbability(state.noiseToday);
-  state.raidedLastNight = Math.random() < raidProb.p;
+  const lull = state.raidLullUntil && state.day <= state.raidLullUntil;
+  state.raidedLastNight = Math.random() < raidProb.p * (lull ? 0.35 : 1);
+  state.nearMissLastNight = false;
   let raidCut = null, raidDeltas = null;
   if (state.raidedLastNight) {
-    // 피해
-    const targets = LR.aliveChars(state).filter(c => c.role === '행동가' || c.role === '리더');
-    const victim = targets[Math.floor(Math.random() * targets.length)] || LR.aliveChars(state)[0];
-    if (victim) {
-      const dmg = Math.floor(15 + Math.random() * 25);
-      victim.health = Math.max(0, victim.health - dmg);
-      state.raidLastNightSummary = `${raidProb.scale} 습격. ${victim.name} 체력 -${dmg}.`;
-      LR.render.toast(`습격 — ${victim.name} 부상`, 'raid');
+    state.raidLullUntil = state.day + 1;
+    // 피해 — 규모가 클수록 깊게, 경계 이상이면 부상자가 둘이 될 수 있다
+    //  단, 이미 중상(체력<35)인 인원은 뒤로 빠진다 — 같은 사람이 연타당해 죽는 나선 방지
+    const dmgBand = { '잠잠': [8, 18], '주의': [12, 28], '경계': [18, 40], '위험': [26, 52] }[raidProb.scale] || [12, 28];
+    const defenders = LR.aliveChars(state).filter(c => (c.role === '행동가' || c.role === '리더') && c.health >= 35);
+    const others = LR.aliveChars(state).filter(c => c.health >= 35 && c.role !== '행동가' && c.role !== '리더');
+    const pickFrom = (arr) => arr.length ? arr[Math.floor(Math.random() * arr.length)] : null;
+    const victims = [];
+    const first = pickFrom(defenders) || pickFrom(others) || LR.aliveChars(state)[0];
+    if (first) victims.push(first);
+    const twoVictimP = raidProb.scale === '위험' ? 0.5 : raidProb.scale === '경계' ? 0.3 : 0;
+    if (Math.random() < twoVictimP) {
+      const second = pickFrom(others.filter(c => c !== first)) || pickFrom(defenders.filter(c => c !== first));
+      if (second) victims.push(second);
+    }
+    let totalDmg = 0;
+    const parts = [];
+    for (const v of victims) {
+      const dmg = Math.floor(dmgBand[0] + Math.random() * (dmgBand[1] - dmgBand[0]));
+      v.health = Math.max(0, v.health - dmg);
+      totalDmg += dmg;
+      parts.push(`${v.name} 체력 -${dmg}`);
+      LR.render.toast(`습격 — ${v.name} 부상`, 'raid');
+    }
+    state.raidLastNightSummary = `${raidProb.scale} 습격. ${parts.join(', ')}.`;
+    if (victims.length) {
       // 부상은 큰 사건 → 컷씬 + 체력 변화 표시(스몰윈처럼)
-      raidCut = LR.buildRaidCutscene(state, victim, dmg, raidProb.scale);
-      raidDeltas = { health: -dmg };
+      raidCut = LR.buildRaidCutscene(state, victims, raidProb.scale);
+      raidDeltas = { health: -totalDmg };
     }
   } else {
     state.raidLastNightSummary = null;
+    // 습격은 비껴갔지만 가까웠다 — 다음 날 아침 내레이션용 니어미스 (피해 없음, 긴장만)
+    if (raidProb.p >= 0.25 && Math.random() < 0.6) state.nearMissLastNight = true;
   }
 
   // 일일 로그

@@ -98,6 +98,7 @@ LR.SCRIPTED_DAYS = {
   4: {
     id: 'D4_rain_arrives',
     day: 4,
+    weather: 'rain',
     title: 'Day 4 — 빗소리가 온다, 비컨이 멈춘다',
     body: [
       { kind: 'narration', text: '오후부터 비가 내리기 시작한다. 빗소리 마스킹으로 소음 보정 ×0.5.' },
@@ -125,6 +126,7 @@ LR.SCRIPTED_DAYS = {
   5: {
     id: 'D5_yeongsu_food_poisoning',
     day: 5,
+    weather: 'rain',
     title: 'Day 5 — 썩은 빵, 새겨지는 전례',
     body: [
       { kind: 'narration', text: '식량 위기 구간. 영수가 곰팡이 핀 육포를 먹고 배탈을 호소한다. 체력 55 → 35, 중상.' },
@@ -154,6 +156,7 @@ LR.SCRIPTED_DAYS = {
   6: {
     id: 'D6_rain_clearing',
     day: 6,
+    weather: 'overcast',
     title: 'Day 6 — 비가 그친다, 결속이 일시 진입한다',
     body: [
       { kind: 'narration', text: '비가 그쳤다. 빗소리 마스킹이 사라지고 마을의 모든 소음이 드러난다.' },
@@ -181,6 +184,7 @@ LR.SCRIPTED_DAYS = {
   7: {
     id: 'D7_birth_and_death',
     day: 7,
+    weather: 'overcast',
     title: 'Day 7 — 불빛의 선택, 결속은 소실되고 비컨은 부분 성공',
     body: [
       { kind: 'narration', text: '새벽. 미연의 진통이 시작된다. 수진이 출산을 돕는다.' },

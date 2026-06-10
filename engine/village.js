@@ -80,7 +80,7 @@ const PEOPLE_FILES = [
   { file:'miyeon',         char:'miyeon',    inplace:true, box:[55.6,50.8,2.8,7.3], ox:57.0, oy:58.1 },
   { file:'dongho',         char:'dongho',    inplace:true, box:[74.4,56.1,4.1,9.3], ox:76.4, oy:65.4 },
   { file:'jonghyeok',      char:'jonghyeok', inplace:true, box:[84.3,60.4,3.7,8.1], ox:86.1, oy:68.5 },
-  { file:'hayeong',        char:'hayeong',   inplace:true, box:[59.0,37.9,2.0,8.1], ox:60.0, oy:46.0, dy:8.0 },
+  { file:'hayeong',        char:'hayeong',   inplace:true, box:[59.0,29.9,2.0,8.1], ox:60.0, oy:38.0 },
   { file:'jaehyeok',       char:'jaehyeok',  inplace:true, box:[45.0,50.7,3.2,6.8], ox:46.6, oy:57.5 },
   { file:'minsu',          char:'minsu',     inplace:true, box:[67.6,32.9,2.3,4.2], ox:68.7, oy:37.2 }
 ];
@@ -742,34 +742,41 @@ function renderTopbar(s) {
   document.getElementById('vhSeason').textContent = seasonName;
   document.getElementById('vhClock').textContent = dayPhase(s).label;
   const resEl = document.getElementById('vhResources');
+  const pct = Math.round(raid.p * 100);
   if (resEl) {
-    // 상단엔 한눈에 위급도를 읽는 핵심(식량·사기·생존자·위협). 위급(danger)이면 빨갛게 깜빡임.
+    // 상단엔 한눈에 위급도를 읽는 핵심(식량·사기·생존자·위협).
+    //  숫자만으로는 직관이 안 서므로 구간 라벨(부족/불안/…)을 함께 표기. 위급(danger)이면 빨갛게 깜빡임.
     const alive = LR.aliveChars(s).length;
     const foodT = LR.foodTier(s.food);
     const foodCls = foodT.tier === 'famine' ? 'danger' : foodT.tier === 'crisis' ? 'warn' : '';
     const avgMo = Math.round(LR.avgMorale(s));
+    const moT = LR.moraleTier(avgMo);
     const moraleCls = avgMo < 30 ? 'danger' : avgMo < 50 ? 'warn' : '';
     const peopleCls = alive < 10 ? 'warn' : '';
     const threatCls = raid.p >= 0.6 ? 'danger' : raid.p >= 0.25 ? 'warn' : 'dim';
     resEl.innerHTML =
-      pill('food',   '식량',   s.food,        foodCls,   s.food / 100) +
-      pill('morale', '사기',   avgMo,         moraleCls, avgMo / 100) +
-      pill('people', '생존자', alive + '/10', peopleCls, alive / 10) +
-      pill('noise',  '위협',   raid.scale,    threatCls);
+      pill('food',   '식량',   s.food + ' · ' + foodT.label, foodCls,   s.food / 100) +
+      pill('morale', '사기',   avgMo + ' · ' + moT.label,    moraleCls, avgMo / 100) +
+      pill('people', '생존자', alive + '/10',                peopleCls, alive / 10) +
+      pill('noise',  '습격',   raid.scale + ' · ' + pct + '%', threatCls);
   }
 
-  // 위협 배너
+  // 위협 배너 — '오늘 밤 무슨 일이 일어날 수 있는가'를 그대로 말해준다
   const banner = document.getElementById('vhAlert');
   if (raid.p >= 0.6) {
     banner.className = 'vh-alert danger';
-    banner.textContent = '⚠ ' + raid.scale + ' — ' + raid.size + ' 접근 가능';
+    banner.textContent = '⚠ 오늘 밤 습격 확률 ' + pct + '% — ' + raid.size + ' 접근 가능';
   } else if (raid.p >= 0.25) {
     banner.className = 'vh-alert warn';
-    banner.textContent = raid.scale + ' — 소음을 줄이는 것이 좋다';
+    banner.textContent = '오늘 밤 습격 확률 ' + pct + '% — 소음을 줄이는 것이 좋다';
   } else {
     banner.className = 'vh-alert calm';
-    banner.textContent = raid.scale + ' — 주변은 비교적 조용하다';
+    banner.textContent = raid.scale + ' — 주변은 비교적 조용하다 (습격 ' + pct + '%)';
   }
+
+  // 위협 비네트 — 경계 이상이면 화면 가장자리가 붉게 고동친다 (긴장 가시화)
+  const scr = document.getElementById('villageScreen');
+  if (scr) scr.classList.toggle('threat-high', raid.p >= 0.6);
 }
 
 function pill(key, label, value, cls, pct, trend) {
@@ -933,8 +940,11 @@ function updateScopeReadout(s) {
   const v = document.getElementById('vhScopeVal');
   if (!v) return;
   const n = s.noiseToday, col = scopeColor(n);
+  const raid = LR.raidProbability(n);
   v.textContent = n; v.style.color = col;
-  document.getElementById('vhScopeState').textContent = LR.raidProbability(n).scale;
+  // 소음이 무엇으로 이어지는지(오늘 밤 습격 확률)까지 한 줄에
+  document.getElementById('vhScopeState').textContent =
+    raid.scale + ' · 습격 ' + Math.round(raid.p * 100) + '%';
   const dot = document.getElementById('vhScopeDot');
   if (dot) { dot.style.background = col; dot.style.boxShadow = '0 0 6px ' + col; }
 }
@@ -1060,6 +1070,11 @@ LR.village.startRain = function() {
   LR.village._rainStop = () => { stopped = true; if (LR.village._rainRaf) cancelAnimationFrame(LR.village._rainRaf); };
   function frame() {
     if (stopped) return;
+    if (canvas.style.display === 'none') {                 // 비 안 오는 날 — 그리지 않음
+      ctx.clearRect(0, 0, W, H);
+      LR.village._rainRaf = requestAnimationFrame(frame);
+      return;
+    }
     ctx.clearRect(0, 0, W, H);
     ctx.strokeStyle = 'rgba(184,202,222,0.22)'; ctx.lineWidth = Math.max(1, dpr * 0.9);
     ctx.beginPath();
@@ -1142,6 +1157,7 @@ LR.village.renderScene = function() {
   const host = document.getElementById('vhScene');
   host.className = 'vh-scene ' + LR.village.mode + ' ' + dayPhase(s).cls;
   host.innerHTML = LR.village.mode === 'section' ? sceneSection(s) : sceneCompound(s);
+  LR.village.syncWeather();   // 비 이펙트는 실제 비 오는 날만
   // 클릭 선택 (측면 SVG 피규어)
   host.querySelectorAll('[data-char]').forEach(g => {
     g.addEventListener('click', () => LR.village.select(g.dataset.char));
@@ -1623,8 +1639,24 @@ function dayPhase(s) {
     autumn:      { cls: 'dusk',  label: '해질녘 · 18:20',   sky0: '#3a2f44', sky1: '#9a5a2e', gnd0: '#2e2820', gnd1: '#201c16', ruin: '#2c2230' },
     winter:      { cls: 'night', label: '늦은 밤 · 22:40',  sky0: '#1c2230', sky1: '#2a3346', gnd0: '#20242c', gnd1: '#15171c', ruin: '#1b2230' }
   };
+  // 날씨 오버라이드 — 비 오는 날(스크립트 D4~5 포함)은 흐린 톤. '소강(overcast)'도 흐린 톤이되 비는 안 내림(syncWeather가 끔).
+  const w = LR.weatherOn ? LR.weatherOn(s) : null;
+  if (w === 'rain' || (w === 'overcast' && s.season === 'rainy')) {
+    return Object.assign({}, map.rainy, w === 'overcast' ? { label: '비 갠 오후 · 15:30' } : null);
+  }
   return map[s.season] || map.spring_late;
 }
+
+// 비 이펙트 ↔ 날씨 동기화 — 실제로 비 오는 날에만 빗줄기 캔버스를 켠다.
+//  (이전: 모든 계절에 옅은 비가 상시 렌더 → "비 그쳤다는데 비가 온다" 문제)
+LR.village.syncWeather = function() {
+  const canvas = document.getElementById('vhRain');
+  if (!canvas) return;
+  const s = LR.village.state;
+  const raining = !!(s && LR.weatherOn && LR.weatherOn(s) === 'rain');
+  canvas.style.display = raining ? 'block' : 'none';
+  if (raining && LR.village._rainResize) LR.village._rainResize();   // 밀도 재계산
+};
 
 // 자원 메타 — 고유 색 + 또렷한 실루엣 (색/형태만으로 즉시 구분)
 const RES = {

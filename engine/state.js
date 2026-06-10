@@ -21,6 +21,14 @@ LR.seasonOnDay = function(day) {
   return 'winter';
 };
 
+// 오늘의 날씨 — 스크립트 일자의 명시 날씨(D4~5 비, D6~7 소강)가 계절 기본값보다 우선.
+//  'rain'(비 내림·빗소리 마스킹 연출) | 'overcast'(흐림·비 그침) | 'clear'
+LR.weatherOn = function(state) {
+  const sd = LR.SCRIPTED_DAYS && LR.SCRIPTED_DAYS[state.day];
+  if (sd && sd.weather) return sd.weather;
+  return state.season === 'rainy' ? 'rain' : 'clear';
+};
+
 LR.createInitialState = function() {
   const characters = {};
   for (const id of LR.CHARACTER_ORDER) {
@@ -83,16 +91,12 @@ LR.createInitialState = function() {
       lastResolvedText: null
     },
 
-    // Small Win 쿨다운 (sec 5.7)
-    smallWins: {
-      SW1: { lastFired: 0, weekCount: 0 },
-      SW2: { lastFired: 0, weekCount: 0 },
-      SW3: { lastFired: 0, weekCount: 0 },
-      SW4: { lastFired: 0, weekCount: 0 },
-      SW5: { lastFired: 0, weekCount: 0 },
-      SW6: { lastFired: 0, weekCount: 0 },
-      SW7: { lastFired: 0, weekCount: 0 }
-    },
+    // Small Win 쿨다운 (sec 5.7) — 정의된 모든 SW를 자동 등록
+    smallWins: Object.keys(LR.SMALL_WIN_DEFS || {}).reduce((acc, id) => {
+      acc[id] = { lastFired: 0, weekCount: 0 };
+      return acc;
+    }, {}),
+    swMeta: { weekTotal: 0 },        // 주간 전체 발동 수 (3중 캡의 '주간 최대')
 
     // 일일 휘발 상태
     noiseToday: 6,
