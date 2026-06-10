@@ -593,15 +593,11 @@
   background: none; box-shadow: none;
 }
 .vd-day {
-  font-family: 'Galmuri14','Galmuri11',monospace; font-size: 0.78rem;
-  color: #15140d; background: var(--c-warn); padding: 1px 7px; border-radius: 1px;
+  font-family: 'Galmuri14','Galmuri11',monospace; font-size: 0.88rem;
+  color: #15140d; background: var(--c-warn); padding: 2px 9px; border-radius: 1px;
   letter-spacing: 1px; flex-shrink: 0; text-shadow: none;
 }
-.vd-title {
-  font-family: 'Galmuri14','Galmuri11',monospace; font-size: 0.98rem;
-  color: #ffcf86; margin: 0; letter-spacing: 0.5px; text-shadow: 1px 1px 0 #000;
-  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
+.vd-spacer { flex: 1; min-width: 0; }
 .vd-min {
   flex-shrink: 0; width: 26px; height: 22px; border-radius: 2px;
   border: 2px solid #14130d; color: #d8c882; font-size: 0.8rem;
