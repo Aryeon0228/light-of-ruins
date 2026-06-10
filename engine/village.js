@@ -1771,10 +1771,7 @@ LR.village._syncPause = function() {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 타이틀 진입 버튼
-  const btnT = document.getElementById('btnVillage');
-  if (btnT) btnT.addEventListener('click', () => LR.village.open(null));
-  // 게임 내 상단 버튼
+  // 게임 내 상단 버튼 (타이틀의 마을 전경 진입 버튼은 제거됨)
   const btnG = document.getElementById('btnVillageView');
   if (btnG) btnG.addEventListener('click', () => LR.village.open(LR.state));
 });
