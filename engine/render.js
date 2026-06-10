@@ -146,6 +146,12 @@ LR.render.scenario = function(state) {
 
   document.getElementById('sceneTitle').textContent = node.title;
 
+  // 새 장면 진입 시 화면 중앙 인트로 배너 (같은 장면 재렌더는 무시)
+  if (node.title && node.title !== LR.render._lastBannerTitle) {
+    LR.render._lastBannerTitle = node.title;
+    LR.render.dayBanner(node.title);
+  }
+
   // 본문
   const bodyEl = document.getElementById('sceneBody');
   bodyEl.innerHTML = '';
@@ -319,4 +325,17 @@ LR.render.showEnding = function(state) {
 
 LR.render.hideEnding = function() {
   document.getElementById('endingOverlay').classList.remove('active');
+};
+
+// ─── 날짜/장면 인트로 배너 (화면 중앙, 검은 아웃글로우, 잠깐 떴다 사라짐) ───
+LR.render.dayBanner = function(text) {
+  const el = document.getElementById('dayBanner');
+  const txt = document.getElementById('dayBannerText');
+  if (!el || !txt) return;
+  txt.textContent = text;
+  el.classList.remove('show');
+  void el.offsetWidth;             // 리플로우 → 애니메이션 재시작
+  el.classList.add('show');
+  clearTimeout(LR.render._bannerTimer);
+  LR.render._bannerTimer = setTimeout(() => el.classList.remove('show'), 2600);
 };
