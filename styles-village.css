@@ -691,7 +691,25 @@
 .vd-runner.narration .vd-line { font-style: italic; color: #cdd0a0; }
 .vd-runner.note .vd-line { font-size: 0.84rem; color: #a7a874; }
 .vd-runner.banner-danger .vd-line { color: #e08a8a; }
-.vd-runner.banner-beacon .vd-line { color: #b9a8e0; }
+/* 비컨 신호 — 사람 대사와 다르게: 픽셀(전송) 폰트 + 비컨 보라색 + 신호 글로우 */
+.vd-runner.banner-beacon .vd-spk {
+  color: #c3b3ea; font-weight: 700;
+  text-shadow: 0 0 7px rgba(139, 122, 176, .55);
+}
+.vd-runner.banner-beacon .vd-line {
+  color: #c3b3ea; font-family: 'Galmuri11', 'Galmuri14', monospace;
+  letter-spacing: 0.04em; line-height: 1.75;
+  text-shadow: 0 0 6px rgba(139, 122, 176, .4);
+}
+.vd-runner.banner-beacon .vd-portrait {
+  border-color: #8b7ab0;
+  box-shadow: inset 0 1px 0 #5a5e4355, 0 0 14px rgba(139, 122, 176, .6);
+  animation: vdBeaconPulse 1.8s ease-in-out infinite;
+}
+@keyframes vdBeaconPulse {
+  0%, 100% { box-shadow: inset 0 1px 0 #5a5e4355, 0 0 10px rgba(139, 122, 176, .4); }
+  50%      { box-shadow: inset 0 1px 0 #5a5e4355, 0 0 20px rgba(139, 122, 176, .75); }
+}
 .vd-runfoot { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
 .vd-progress { font-size: 0.66rem; color: #6a6a48; letter-spacing: 0.05em; }
 .vd-next { font-size: 0.74rem; color: #d4a14f; animation: vdBlink 1.25s ease-in-out infinite; }
