@@ -261,6 +261,16 @@ LR.render.showEnding = function(state) {
   document.getElementById('endingTitle').textContent = ending.title;
   document.getElementById('endingSubtitle').textContent = ending.subtitle;
 
+  // 엔딩 히어로 일러스트 — assets/images/endings/{id소문자}.png, 없으면 숨김
+  const heroWrap = document.getElementById('endingHero');
+  const heroImg = document.getElementById('endingHeroImg');
+  if (heroWrap && heroImg) {
+    heroWrap.style.display = '';
+    heroImg.onerror = function() { heroImg.onerror = null; heroWrap.style.display = 'none'; };
+    heroImg.src = 'assets/images/endings/' + ending.id.toLowerCase() + '.png';
+    heroImg.alt = ending.title;
+  }
+
   // 내레이션
   const lines = ending.narration(state);
   document.getElementById('endingNarration').innerHTML =
