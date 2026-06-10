@@ -844,7 +844,7 @@
 /* 창이 떠 있는 동안 = 시간 정지: 패럴렉스 멈춤 + 씬의 모든 움직임(숨쉬기·모닥불·
    좀비 흔들림·동심원 등) 정지 → 멈춘 한 장면 위에 창이 뜨는 느낌 */
 #villageScreen.paused .vh-stagebox {
-  transform: translate(0, calc(-1 * var(--biasy, 0px))) scale(calc(1.12 * var(--zoom, 1)));
+  transform: translate(0, calc(-1 * var(--biasy, 0px))) scale(var(--zoom, 1));
 }
 #villageScreen.paused .vh-stagebox *,
 #villageScreen.paused .vh-fx * {
@@ -1033,13 +1033,12 @@
 .vh-fx { position: absolute; overflow: hidden; pointer-events: none; z-index: 8; }
 .vh-fx > * { position: absolute; inset: 0; pointer-events: none; }
 
-/* 포인터 패럴렉스 — 살짝 줌인(1.12)한 카메라가 커서를 따라 부드럽게 패닝.
+/* 포인터 패럴렉스 — contain 박스를 --zoom 으로 확대한 카메라가 커서를 따라 패닝.
    커서 우측 → 화면 좌측으로, 아래 → 위로 스윽(전경 이동), 하늘은 상쇄해 제자리 고정.
-   패닝 폭(--panx/--pany)은 fitStage가 '실제로 잘린 양(오버행)'을 px로 계산해 넣어준다.
-   → 화면 비율과 무관하게 잘린 가장자리 끝까지 드러나고 빈 배경은 안 샌다.
-   주의: 아래 scale(1.12)는 village.js fitStage의 S=1.12와 반드시 일치. */
+   패닝 폭(--panx/--pany)은 fitStage/_applyCamera가 '뷰포트를 넘치는 양(오버행)'을 px로 계산해 넣어준다.
+   → zoom=1 이면 오버행 0(전체 보임, 레터박스), 키울수록 끝까지 패닝. */
 .vh-stagebox {
-  transform: translate(calc(-1 * var(--px,0) * var(--panx, 0px)), calc(-1 * var(--biasy, 0px) - var(--py,0) * var(--pany, 0px))) scale(calc(1.12 * var(--zoom, 1)));
+  transform: translate(calc(-1 * var(--px,0) * var(--panx, 0px)), calc(-1 * var(--biasy, 0px) - var(--py,0) * var(--pany, 0px))) scale(var(--zoom, 1));
   transition: transform .3s ease-out;
 }
 .vh-fx-fog     { transform: translate(calc(var(--px,0) * 20px), calc(var(--py,0) * 8px)); transition: transform .3s ease-out; }
