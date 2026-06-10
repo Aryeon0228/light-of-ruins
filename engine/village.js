@@ -1034,6 +1034,26 @@ LR.village.startRain = function() {
 };
 LR.village.stopRain = function() { if (LR.village._rainStop) LR.village._rainStop(); };
 
+LR.village._zoom = LR.village._zoom || 1;
+// 카메라 적용 — 현재 줌(_zoom)에 맞춰 패닝 폭(--panx/--pany)을 '실제 잘린 양' 전체로 설정.
+//  커서를 끝으로 가져가면 그쪽 끝까지 쭈르르 보임(턱 막힘 없음). 줌인할수록 더 멀리 패닝.
+LR.village._applyCamera = function() {
+  const cam = LR.village._cam;
+  const box = document.querySelector('.vh-stagebox');
+  const scr = document.getElementById('villageScreen');
+  if (!cam || !box || !scr) return;
+  const z = LR.village._zoom || 1;
+  const S = 1.12 * z;                         // ※ styles-village.css .vh-stagebox base scale(1.12)
+  const ohX = Math.max(0, (S * cam.w - cam.cw) / 2) * 0.97;
+  const ohY = Math.max(0, (S * cam.h - cam.ch) / 2) * 0.97;
+  scr.style.setProperty('--zoom', z.toFixed(3));
+  box.style.setProperty('--panx', ohX.toFixed(1) + 'px');
+  box.style.setProperty('--pany', ohY.toFixed(1) + 'px');
+  box.style.setProperty('--biasy', '0px');
+  box.style.setProperty('--skx', (ohX / S).toFixed(1) + 'px');   // 하늘 상쇄(부모 scale 보정)
+  box.style.setProperty('--sky', (ohY / S).toFixed(1) + 'px');
+};
+
 LR.village.bindParallax = function() {
   if (LR.village._plxBound) return;
   const stage = document.querySelector('.vh-stage');
@@ -1054,6 +1074,13 @@ LR.village.bindParallax = function() {
     if (!raf) raf = requestAnimationFrame(apply);
   });
   stage.addEventListener('pointerleave', () => { tx = 0; ty = 0; if (!raf) raf = requestAnimationFrame(apply); });
+  // 휠(또는 트랙패드 핀치) → 줌 인/아웃
+  stage.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const dz = (e.deltaY < 0 ? 0.12 : -0.12);
+    LR.village._zoom = Math.max(1, Math.min(2.4, (LR.village._zoom || 1) + dz));
+    LR.village._applyCamera();
+  }, { passive: false });
 };
 
 LR.village.startFx = function() {
@@ -1121,20 +1148,9 @@ function fitStage() {
   box.style.width = Math.round(w) + 'px';
   box.style.height = Math.round(h) + 'px';
 
-  // 패닝 폭 = '실제로 잘린 양(오버행)'의 일부만(damp) — 멀미 안 나게 살짝씩만 움직임.
-  //  평소엔 시선을 약간 아래로(biasY) 둬서 정문·땅이 보이고, 위로 올리면 하늘이 드러난다.
-  const S = 1.12;                 // ※ styles-village.css .vh-stagebox scale(1.12)와 일치
-  const dampX = 0.22, dampY = 0.12;  // 움직임 세기 — 멀미 방지로 아주 살짝만(세로는 더 작게)
-  const ohX = Math.max(0, (S * w - cw) / 2);
-  const ohY = Math.max(0, (S * h - ch) / 2);
-  const panX = ohX * dampX;
-  const panY = ohY * dampY;
-  const biasY = ohY * 0.42;       // 평소 살짝 아래(정문·땅) 보이게
-  box.style.setProperty('--panx', panX.toFixed(1) + 'px');
-  box.style.setProperty('--pany', panY.toFixed(1) + 'px');
-  box.style.setProperty('--biasy', biasY.toFixed(1) + 'px');
-  box.style.setProperty('--skx', (panX / S).toFixed(1) + 'px');   // 하늘 상쇄(부모 scale 보정)
-  box.style.setProperty('--sky', (panY / S).toFixed(1) + 'px');
+  // 카메라(줌·패닝) — 박스 치수 저장 후 현재 줌으로 패닝 폭 적용
+  LR.village._cam = { w: w, h: h, cw: cw, ch: ch };
+  LR.village._applyCamera();
 
   // FX 레이어(비·안개·좀비·불씨)를 스테이지박스(이미지 영역)에 픽셀 정렬
   const fx = document.getElementById('vhFx');

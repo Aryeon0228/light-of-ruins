@@ -826,7 +826,7 @@
 /* 창이 떠 있는 동안 = 시간 정지: 패럴렉스 멈춤 + 씬의 모든 움직임(숨쉬기·모닥불·
    좀비 흔들림·동심원 등) 정지 → 멈춘 한 장면 위에 창이 뜨는 느낌 */
 #villageScreen.paused .vh-stagebox {
-  transform: translate(0, calc(-1 * var(--biasy, 0px))) scale(1.12);
+  transform: translate(0, calc(-1 * var(--biasy, 0px))) scale(calc(1.12 * var(--zoom, 1)));
 }
 #villageScreen.paused .vh-stagebox *,
 #villageScreen.paused .vh-fx * {
@@ -1021,7 +1021,7 @@
    → 화면 비율과 무관하게 잘린 가장자리 끝까지 드러나고 빈 배경은 안 샌다.
    주의: 아래 scale(1.12)는 village.js fitStage의 S=1.12와 반드시 일치. */
 .vh-stagebox {
-  transform: translate(calc(-1 * var(--px,0) * var(--panx, 0px)), calc(-1 * var(--biasy, 0px) - var(--py,0) * var(--pany, 0px))) scale(1.12);
+  transform: translate(calc(-1 * var(--px,0) * var(--panx, 0px)), calc(-1 * var(--biasy, 0px) - var(--py,0) * var(--pany, 0px))) scale(calc(1.12 * var(--zoom, 1)));
   transition: transform .3s ease-out;
 }
 .vh-fx-fog     { transform: translate(calc(var(--px,0) * 20px), calc(var(--py,0) * 8px)); transition: transform .3s ease-out; }
