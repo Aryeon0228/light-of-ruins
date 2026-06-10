@@ -73,6 +73,9 @@ LR.cutscene._renderFrame = function() {
   const ph = document.getElementById('cutscenePlaceholder');
   // re-trigger fade-in by reassigning src after blanking
   img.style.animation = 'none';
+  // 이전 컷씬 이미지 잔상 제거 — src를 지우지 않으면 새 이미지가 로드될 때까지
+  // 직전 카드(예: 며칠 전 스몰윈)가 잠깐 보이는 플래시가 생긴다
+  img.removeAttribute('src');
   img.offsetHeight;  // force reflow
   img.style.animation = '';
   // 폴백 체인: 지정 이미지 → frame.fallback → 빈 프레임(일러스트 슬롯 표시)
