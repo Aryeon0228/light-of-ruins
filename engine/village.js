@@ -604,7 +604,7 @@ LR.village._renderDecisionView = function() {
     const b = beats[idx];
     const isLast = idx === beats.length - 1;
     const portrait = b.pid
-      ? `<img class="vd-port" src="assets/images/portraits/${b.pid}.png" alt="" onerror="this.parentNode.style.display='none'">`
+      ? `<img class="vd-port" src="assets/images/busts/${b.pid}.png" alt="" onerror="if(!this.dataset.fb){this.dataset.fb=1;this.src='assets/images/portraits/${b.pid}.png';}else{const p=this.closest('.vd-portrait'); if(p) p.style.display='none';}">`
       : '';
     const spkLabel = b.kind === 'dialog' ? b.speaker
       : b.kind === 'note' ? '기록'
@@ -615,7 +615,7 @@ LR.village._renderDecisionView = function() {
     const spkStyle = (b.kind === 'dialog' && b.pid) ? ` style="color:${nameColor(b.pid)}"` : '';
     dec.innerHTML = head + `
       <div class="vd-runner ${b.kind}" id="vdRunner">
-        ${b.pid ? `<div class="vd-portrait">${portrait}</div>` : ''}
+        ${b.pid ? `<div class="vd-portrait"${(b.kind === 'dialog' && b.pid) ? ` style="border-color:${nameColor(b.pid)}"` : ''}>${portrait}</div>` : ''}
         <div class="vd-textbox">
           <span class="vd-spk${spkCls}"${spkStyle}>${spkLabel}</span>
           <p class="vd-line">${colorizeNames(b.text)}</p>
