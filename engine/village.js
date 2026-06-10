@@ -62,9 +62,10 @@ const ZONES = [
   { z:'barracks',   label:'숙소',        box:[61.4, 24.4, 38.6, 38.6], o:[80.7, 63.0] },
   { z:'workshop',   label:'작업장 · 통신', box:[77.0, 53.0, 19.0, 16.0], o:[86.0, 63.0] },
   { z:'infirmary',  label:'의무실',      box:[78.2, 30.0, 15.7, 15.4], o:[86.0, 45.4] },
-  { z:'watchtower', label:'망루',        box:[54.5, 30.0, 11.0, 30.0], o:[60.0, 58.0] },
+  { z:'watchtower', label:'망루',        box:[54.5, 16.0, 11.0, 30.0], o:[60.0, 38.0] },
   { z:'gate',       label:'정문',        box:[46.4, 60.7, 8.4, 11.7], o:[50.6, 72.0] },
-  { z:'water',      label:'물 · 빗물받이', box:[2.0, 62.0, 13.0, 16.0], o:[8.0, 72.0] }
+  // water 그림(water.png 풀캔버스)의 실제 알파 bbox에 맞춤 — 키친 옆 중앙
+  { z:'water',      label:'물 · 빗물받이', box:[39.5, 32.5, 12.2, 13.1], o:[45.6, 39.0] }
 ];
 // 인물 스프라이트 — 전원 풀캔버스(2896×2172) 제자리. 0,0에 그대로 겹침(작가가 맞춘 위치/크기 유지).
 //  (개별 크롭으로 줄 경우엔 inplace 빼고 cx/cy + h|w(%)로 배치 가능)
@@ -1319,7 +1320,7 @@ function sceneCompound(s) {
   const BLD = 'assets/images/buildings/';
   // 건물 스프라이트 — 위치는 각 시설 ZONES 박스에서 산출(가이드 측정값이 박스에 반영됨 → 클릭영역과 동일).
   //  발끝(하단중앙) 기준 배치. 파일 없으면 onerror로 자동 생략.
-  const buildings = ZONES.map(zn => {
+  const buildings = ZONES.filter(zn => zn.z !== 'water').map(zn => {  // water는 풀캔버스 water.png가 담당(중복 방지)
     const cx = zn.box[0] + zn.box[2] / 2, by = zn.box[1] + zn.box[3], h = zn.box[3];
     return `<img class="vh-bldg" src="${BLD}${zn.z}_idle.png" alt="" style="left:${cx}%;top:${by}%;height:${h}%" onerror="this.remove()">`;
   }).join('') +
