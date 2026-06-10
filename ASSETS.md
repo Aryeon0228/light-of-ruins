@@ -83,6 +83,23 @@
 - 형식: 스몰윈 def의 `cutscene: { frames:[{image, text}] }`. 이미지 **16:9** 권장.
 - 안 하면 카드 1장(`cardImage`)으로 충분.
 
+## 8. 엔딩 히어로 일러스트 — 8장
+`assets/images/endings/`  →  `{엔딩id}.png` (소문자). 없으면 **자동 숨김**(글만).
+
+| 파일명 | 엔딩 | 분류 |
+|---|---|---|
+| `totaldeath.png` | 꺼진 등불 (전멸) | 게임오버 |
+| `collapse.png` | 흩어진 사람들 (사기 붕괴) | 게임오버 |
+| `contagion.png` | 말 없는 마을 (전염) | 게임오버 |
+| `lightvillage.png` | 빛의 마을 (결속) | 생존 |
+| `forgottenvillage.png` | 잊혀진 마을 (차가운 생존) | 생존 |
+| `shakingvillage.png` | 흔들리는 마을 (혼재) | 생존 |
+| `safezone.png` | 안전지대 도달 (비컨 완성) | 생존 |
+| `weightedsurvival.png` | 30일 생존 (담담한 일상) | 생존 |
+
+- 사이즈 **1280 × 720 (16:9)** 권장, `image-rendering: pixelated`로 표시.
+- 엔딩 화면 부제 아래에 자동으로 뜨고, 파일 없으면 깨지지 않고 숨김.
+
 ---
 
 ## ✅ 지금 바로 덮어쓰면 되는 것 (코드 변경 0)
