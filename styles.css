@@ -245,30 +245,39 @@ button {
   from { opacity: 0; transform: scale(1.03); }
   to { opacity: 1; transform: scale(1); }
 }
-/* 날짜/장면 인트로 배너 — 화면 중앙, 검은 아웃글로우 */
+/* 하루 전환 — 암전(검은 막) → 타이틀 등장 → 다시 밝아짐 */
 #dayBanner {
   position: fixed; inset: 0; z-index: 300;
   display: flex; align-items: flex-start; justify-content: center;
   pointer-events: none; opacity: 0; visibility: hidden;
-  padding: 18vh 6vw 0;
+  padding: 22vh 6vw 0;
+  background: #000;   /* 암전 막 */
 }
-#dayBanner.show { animation: dayBannerCycle 2.6s ease both; }
+#dayBanner.show {
+  pointer-events: auto;                 /* 전환 중 오클릭 흡수 */
+  animation: dayFade 2.4s ease both;
+}
+/* 검은 막: 빠르게 암전 → 유지 → 다시 밝아짐 */
+@keyframes dayFade {
+  0%   { opacity: 0; visibility: visible; }
+  17%  { opacity: 1; }
+  76%  { opacity: 1; }
+  100% { opacity: 0; visibility: visible; }
+}
 #dayBannerText {
   font-family: 'Galmuri14', 'Galmuri11', monospace;
-  font-size: clamp(1.6rem, 4.2vw, 3rem); font-weight: 400;
+  font-size: clamp(1.8rem, 4.6vw, 3.2rem); font-weight: 400;
   color: #ffcf86; text-align: center; line-height: 1.35;
   letter-spacing: 0.01em;
-  /* 검은 아웃글로우(외곽선 + 넓은 번짐) */
-  text-shadow:
-    0 0 3px #000, 0 0 6px #000,
-    3px 3px 0 #000, -3px 3px 0 #000, 3px -3px 0 #000, -3px -3px 0 #000,
-    0 0 30px rgba(0,0,0,1), 0 0 55px rgba(0,0,0,.95), 0 0 85px rgba(0,0,0,.8);
+  text-shadow: 0 0 18px rgba(255,207,134,.25), 0 2px 4px #000;
 }
-@keyframes dayBannerCycle {
-  0%   { opacity: 0; visibility: visible; transform: scale(1.06); letter-spacing: 0.12em; }
-  16%  { opacity: 1; transform: scale(1); letter-spacing: 0.01em; }
-  78%  { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; visibility: visible; transform: scale(0.99); }
+/* 타이틀: 암전이 깔린 뒤 등장 → 밝아지기 직전 사라짐 */
+#dayBanner.show #dayBannerText { animation: dayTitleIn 2.4s ease both; }
+@keyframes dayTitleIn {
+  0%, 12%   { opacity: 0; transform: translateY(10px); letter-spacing: 0.14em; }
+  26%       { opacity: 1; transform: translateY(0); letter-spacing: 0.01em; }
+  68%       { opacity: 1; }
+  80%, 100% { opacity: 0; transform: translateY(-4px); }
 }
 
 #sceneTitle {

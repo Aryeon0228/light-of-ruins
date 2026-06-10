@@ -147,9 +147,9 @@ LR.render.scenario = function(state) {
 
   document.getElementById('sceneTitle').textContent = node.title;
 
-  // 새 장면 진입 시 화면 중앙 인트로 배너 (같은 장면 재렌더는 무시)
-  if (node.title && node.title !== LR.render._lastBannerTitle) {
-    LR.render._lastBannerTitle = node.title;
+  // 하루가 바뀔 때마다 암전 → 타이틀 → 다시 밝아짐 전환 (같은 날 재렌더는 무시)
+  if (node.title && state.day !== LR.render._lastBannerDay) {
+    LR.render._lastBannerDay = state.day;
     LR.render.dayBanner(node.title);
   }
 
@@ -328,7 +328,7 @@ LR.render.hideEnding = function() {
   document.getElementById('endingOverlay').classList.remove('active');
 };
 
-// ─── 날짜/장면 인트로 배너 (화면 중앙, 검은 아웃글로우, 잠깐 떴다 사라짐) ───
+// ─── 하루 전환 (암전 → 타이틀 → 다시 밝아짐) ───
 LR.render.dayBanner = function(text) {
   const el = document.getElementById('dayBanner');
   const txt = document.getElementById('dayBannerText');
@@ -338,5 +338,5 @@ LR.render.dayBanner = function(text) {
   void el.offsetWidth;             // 리플로우 → 애니메이션 재시작
   el.classList.add('show');
   clearTimeout(LR.render._bannerTimer);
-  LR.render._bannerTimer = setTimeout(() => el.classList.remove('show'), 2600);
+  LR.render._bannerTimer = setTimeout(() => el.classList.remove('show'), 2400);
 };
