@@ -26,7 +26,7 @@ LR.cutscene.play = function(cutsceneDef, onComplete, tone, badgeText, isNew, res
   // 결과 변화량 칩(식량·사기 등) — 크게 표시
   const res = document.getElementById('cutsceneResult');
   if (res) {
-    const labels = { food: '식량', morale: '사기', water: '물', fuel: '연료', medicine: '의약품', noise: '소음' };
+    const labels = { food: '식량', morale: '사기', water: '물', fuel: '연료', medicine: '의약품', health: '체력', noise: '소음' };
     let chips = '';
     if (resultDeltas) {
       for (const k in labels) {
