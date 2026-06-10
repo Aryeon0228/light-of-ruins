@@ -150,7 +150,7 @@ LR.render.scenario = function(state) {
   // 하루가 바뀔 때마다 암전 → 타이틀 → 다시 밝아짐 전환 (같은 날 재렌더는 무시)
   if (node.title && state.day !== LR.render._lastBannerDay) {
     LR.render._lastBannerDay = state.day;
-    LR.render.dayBanner(node.title);
+    LR.render.dayBanner(node.title, state);
   }
 
   // 본문
@@ -328,15 +328,31 @@ LR.render.hideEnding = function() {
   document.getElementById('endingOverlay').classList.remove('active');
 };
 
-// ─── 하루 전환 (암전 → 타이틀 → 다시 밝아짐) ───
-LR.render.dayBanner = function(text) {
+// ─── 하루 전환 (암전 → 타이틀 + 매일 상태 → 다시 밝아짐) ───
+LR.render.dayBanner = function(text, state) {
   const el = document.getElementById('dayBanner');
   const txt = document.getElementById('dayBannerText');
   if (!el || !txt) return;
   txt.textContent = text;
+
+  // 매일 핵심 3축(식량·사기·소음) 표시
+  const statsEl = document.getElementById('dayBannerStats');
+  if (statsEl && state) {
+    const stats = [
+      ['식량', state.food, 'var(--c-axis-food)'],
+      ['사기', Math.round(LR.avgMorale(state)), 'var(--c-axis-morale)'],
+      ['소음', state.noiseToday, 'var(--c-axis-noise)']
+    ];
+    statsEl.innerHTML = stats.map(s =>
+      `<div class="db-stat"><span class="db-stat-l">${s[0]}</span><span class="db-stat-v" style="color:${s[1] != null ? s[2] : ''}">${s[1]}</span></div>`
+    ).join('');
+  }
+
+  const dismiss = () => { el.classList.remove('show'); clearTimeout(LR.render._bannerTimer); };
+  el.onclick = dismiss;                // 클릭하면 즉시 넘어가기
   el.classList.remove('show');
-  void el.offsetWidth;             // 리플로우 → 애니메이션 재시작
+  void el.offsetWidth;                 // 리플로우 → 애니메이션 재시작
   el.classList.add('show');
   clearTimeout(LR.render._bannerTimer);
-  LR.render._bannerTimer = setTimeout(() => el.classList.remove('show'), 2400);
+  LR.render._bannerTimer = setTimeout(dismiss, 2600);
 };
