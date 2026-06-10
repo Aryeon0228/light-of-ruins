@@ -687,6 +687,7 @@
 }
 .vd-textbox .vd-spk.dim { color: #9a9a6a; font-weight: 500; }
 .vd-line { margin: 0; font-size: 0.94rem; line-height: 1.62; color: #e8e2c4; font-family: 'Noto Sans KR', sans-serif; }
+.vd-nm { font-weight: 700; }   /* 본문 속 인물 이름 강조(색은 인라인) */
 .vd-runner.narration .vd-line { font-style: italic; color: #cdd0a0; }
 .vd-runner.note .vd-line { font-size: 0.84rem; color: #a7a874; }
 .vd-runner.banner-danger .vd-line { color: #e08a8a; }

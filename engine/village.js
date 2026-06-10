@@ -495,6 +495,29 @@ function nameToId(name) {
   return null;
 }
 
+// 인물 고유색을 어두운 배경에서 읽히게 흰색 쪽으로 섞어 밝힘
+function nameColor(id) {
+  const d = LR.CHARACTER_DEFS[id];
+  if (!d) return '#e8e2c4';
+  const n = parseInt(d.color.slice(1), 16);
+  let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  const t = 0.5;   // 흰색 혼합 비율
+  r = Math.round(r + (255 - r) * t); g = Math.round(g + (255 - g) * t); b = Math.round(b + (255 - b) * t);
+  return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+// 본문 텍스트 속 인물 이름을 고유색·볼드로 강조 (이름 길이 긴 것부터 치환)
+function colorizeNames(text) {
+  if (!text) return text;
+  const ids = LR.CHARACTER_ORDER.slice().sort((a, b) =>
+    (LR.CHARACTER_DEFS[b].name || '').length - (LR.CHARACTER_DEFS[a].name || '').length);
+  for (const id of ids) {
+    const nm = LR.CHARACTER_DEFS[id].name;
+    if (!nm) continue;
+    text = text.split(nm).join(`<span class="vd-nm" style="color:${nameColor(id)}">${nm}</span>`);
+  }
+  return text;
+}
+
 // 시나리오 노드에서 '관련 인물' 추려내기 (대사 화자 + 인물별 델타 대상)
 function decisionActors(node, state) {
   const set = new Set();
@@ -589,12 +612,13 @@ LR.village._renderDecisionView = function() {
       : b.kind === 'banner-beacon' ? '신호'
       : '상황';
     const spkCls = b.kind === 'dialog' ? '' : ' dim';
+    const spkStyle = (b.kind === 'dialog' && b.pid) ? ` style="color:${nameColor(b.pid)}"` : '';
     dec.innerHTML = head + `
       <div class="vd-runner ${b.kind}" id="vdRunner">
         ${b.pid ? `<div class="vd-portrait">${portrait}</div>` : ''}
         <div class="vd-textbox">
-          <span class="vd-spk${spkCls}">${spkLabel}</span>
-          <p class="vd-line">${b.text}</p>
+          <span class="vd-spk${spkCls}"${spkStyle}>${spkLabel}</span>
+          <p class="vd-line">${colorizeNames(b.text)}</p>
           <div class="vd-runfoot">
             <span class="vd-progress">${idx + 1} / ${beats.length}</span>
             <span class="vd-next">${isLast ? '▸ 선택지' : '▸ 계속 (클릭)'}</span>
