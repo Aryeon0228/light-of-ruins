@@ -72,6 +72,13 @@ LR.engine.applyChoice = function(choiceId) {
   const choice = node.choices.find(c => c.id === choiceId);
   if (!choice) return;
 
+  // 선택 직전 자원 스냅샷(결과 변화량 표시용)
+  const _resSnap = (st) => ({
+    food: st.food + st.driedFood + st.pickledFood, water: st.water, fuel: st.fuel,
+    medicine: st.medicine, morale: Math.round(LR.avgMorale(st)), noise: st.noiseToday
+  });
+  const _before = _resSnap(state);
+
   // 1. 기본 자원 델타
   if (choice.deltas) {
     for (const k in choice.deltas) {
@@ -186,8 +193,15 @@ LR.engine.applyChoice = function(choiceId) {
     cut = LR.buildChoiceCutscene(node, choice, state);
     tone = (choice.risk === 'danger') ? 'bad' : 'plain';
   }
+  // 결과 변화량(식량·사기·물·연료·의약품·소음) — 컷씬에 크게 표시
+  const _after = _resSnap(state);
+  const resultDeltas = {
+    food: _after.food - _before.food, morale: _after.morale - _before.morale,
+    water: _after.water - _before.water, fuel: _after.fuel - _before.fuel,
+    medicine: _after.medicine - _before.medicine, noise: _after.noise - _before.noise
+  };
   if (LR.cutscene && LR.cutscene.play) {
-    LR.cutscene.play(cut, () => LR.engine.endOfDay(), tone, badgeText, isNew);
+    LR.cutscene.play(cut, () => LR.engine.endOfDay(), tone, badgeText, isNew, resultDeltas);
   } else {
     LR.engine.endOfDay();
   }

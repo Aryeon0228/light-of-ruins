@@ -14,7 +14,7 @@ LR.cutscene._activeFrames = null;
 LR.cutscene._activeIdx = 0;
 LR.cutscene._onComplete = null;
 
-LR.cutscene.play = function(cutsceneDef, onComplete, tone, badgeText, isNew) {
+LR.cutscene.play = function(cutsceneDef, onComplete, tone, badgeText, isNew, resultDeltas) {
   if (!cutsceneDef || !cutsceneDef.frames || cutsceneDef.frames.length === 0) {
     if (onComplete) onComplete();
     return;
@@ -22,6 +22,24 @@ LR.cutscene.play = function(cutsceneDef, onComplete, tone, badgeText, isNew) {
   LR.cutscene._activeFrames = cutsceneDef.frames;
   LR.cutscene._activeIdx = 0;
   LR.cutscene._onComplete = onComplete;
+
+  // 결과 변화량 칩(식량·사기 등) — 크게 표시
+  const res = document.getElementById('cutsceneResult');
+  if (res) {
+    const labels = { food: '식량', morale: '사기', water: '물', fuel: '연료', medicine: '의약품', noise: '소음' };
+    let chips = '';
+    if (resultDeltas) {
+      for (const k in labels) {
+        const v = resultDeltas[k];
+        if (!v) continue;
+        const good = (k === 'noise') ? v < 0 : v > 0;   // 소음은 +가 나쁨
+        chips += '<span class="cs-rchip ' + (good ? 'up' : 'down') + '">' + labels[k] +
+          ' <b>' + (v > 0 ? '+' : '') + v + '</b></span>';
+      }
+    }
+    res.innerHTML = chips;
+    res.style.display = chips ? 'flex' : 'none';
+  }
 
   const overlay = document.getElementById('cutsceneOverlay');
   // 톤별 연출(plain=담백 / reward=스몰윈 금색 보상 / bad=붉은 경고 / special=전용 아트)
