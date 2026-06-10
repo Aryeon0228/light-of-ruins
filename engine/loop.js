@@ -219,6 +219,18 @@ LR.buildSmallWinCutscene = function(def) {
   const img = def.cardImage || portrait;
   return { id: 'swcard_' + def.id, frames: [{ image: img, fallback: portrait, text: def.text }] };
 };
+// 습격(부상) 컷씬 — 다침은 큰 사건이므로 스몰윈처럼 컷씬 + 체력 변화 표시.
+LR.buildRaidCutscene = function(state, victim, dmg, scale) {
+  const bg = LR.villageCutsceneBg(state.season);
+  const port = 'assets/images/portraits/' + (victim.id || 'bc') + '.png';
+  return {
+    id: 'raid_' + state.day,
+    frames: [
+      { image: bg, text: `간밤, ${scale} 습격이 있었다. 담장 너머가 술렁였다.` },
+      { image: port, fallback: bg, text: `${victim.name}이(가) 앞에 나섰다가 다쳤다. 깊지는 않지만, 가볍지도 않다.` }
+    ]
+  };
+};
 LR.buildChoiceCutscene = function(node, choice, state) {
   const bg = LR.villageCutsceneBg(state.season);
   const frames = [];
@@ -316,6 +328,7 @@ LR.engine.endOfDay = function() {
   // 어제 소음 → 오늘 새벽 습격 판정
   const raidProb = LR.raidProbability(state.noiseToday);
   state.raidedLastNight = Math.random() < raidProb.p;
+  let raidCut = null, raidDeltas = null;
   if (state.raidedLastNight) {
     // 피해
     const targets = LR.aliveChars(state).filter(c => c.role === '행동가' || c.role === '리더');
@@ -325,6 +338,9 @@ LR.engine.endOfDay = function() {
       victim.health = Math.max(0, victim.health - dmg);
       state.raidLastNightSummary = `${raidProb.scale} 습격. ${victim.name} 체력 -${dmg}.`;
       LR.render.toast(`습격 — ${victim.name} 부상`, 'raid');
+      // 부상은 큰 사건 → 컷씬 + 체력 변화 표시(스몰윈처럼)
+      raidCut = LR.buildRaidCutscene(state, victim, dmg, raidProb.scale);
+      raidDeltas = { health: -dmg };
     }
   } else {
     state.raidLastNightSummary = null;
@@ -346,19 +362,26 @@ LR.engine.endOfDay = function() {
   // 자동 저장
   if (LR.save) LR.save.auto(state);
 
-  // 엔딩 판정
-  const ending = LR.checkEnding(state);
-  if (ending) {
-    state.ending = ending;
-    LR.render.showEnding(state);
-    return;
+  // 엔딩/다음날 진행 (습격 부상 컷씬이 있으면 그 후에)
+  const proceed = function() {
+    // 엔딩 판정
+    const ending = LR.checkEnding(state);
+    if (ending) {
+      state.ending = ending;
+      LR.render.showEnding(state);
+      return;
+    }
+    // 다음 날
+    state.day += 1;
+    state.season = LR.seasonOnDay(state.day);
+    state.pendingChoice = null;
+    state.awaitingChoice = false;
+    setTimeout(() => LR.engine.beginDay(), 350);
+  };
+
+  if (raidCut && LR.cutscene && LR.cutscene.play) {
+    LR.cutscene.play(raidCut, proceed, 'bad', '간밤의 습격', false, raidDeltas);
+  } else {
+    proceed();
   }
-
-  // 다음 날
-  state.day += 1;
-  state.season = LR.seasonOnDay(state.day);
-  state.pendingChoice = null;
-  state.awaitingChoice = false;
-
-  setTimeout(() => LR.engine.beginDay(), 350);
 };
