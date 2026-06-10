@@ -544,6 +544,21 @@ function speakerPortrait(name) {
   if (/라디오|무전|신호|수신기|스피커|비컨/.test(name || '')) return 'bc';
   return null;
 }
+// 내레이션 본문에서 가장 먼저 등장하는 인물 → 포트레이트 id
+//  (예: "하영이 제안한다. …" → 하영). 라디오/신호류면 비컨(bc).
+function narrationPortrait(text) {
+  if (!text) return null;
+  let best = null, bestIdx = Infinity;
+  for (const id of LR.CHARACTER_ORDER) {
+    const nm = LR.CHARACTER_DEFS[id] && LR.CHARACTER_DEFS[id].name;
+    if (!nm) continue;
+    const i = text.indexOf(nm);
+    if (i >= 0 && i < bestIdx) { bestIdx = i; best = id; }
+  }
+  if (best) return best;
+  if (/라디오|무전|신호|수신기|스피커|비컨/.test(text)) return 'bc';
+  return null;
+}
 function buildDecisionBeats(node, s) {
   const beats = [];
   if (s.raidLastNightSummary) beats.push({ kind: 'banner-danger', text: '🩸 ' + s.raidLastNightSummary });
@@ -553,7 +568,7 @@ function buildDecisionBeats(node, s) {
     s.pendingBeaconResolution = null;
   }
   (node.body || []).forEach(part => {
-    if (part.kind === 'narration') beats.push({ kind: 'narration', text: part.text });
+    if (part.kind === 'narration') beats.push({ kind: 'narration', text: part.text, pid: narrationPortrait(part.text) });
     else if (part.kind === 'dialog') beats.push({ kind: 'dialog', speaker: part.speaker, text: part.text, pid: speakerPortrait(part.speaker) });
     else if (part.kind === 'systemNote') beats.push({ kind: 'note', text: part.text });
   });
@@ -616,7 +631,7 @@ LR.village._renderDecisionView = function() {
     const spkStyle = (b.kind === 'dialog' && b.pid) ? ` style="color:${nameColor(b.pid)}"` : '';
     dec.innerHTML = head + `
       <div class="vd-runner ${b.kind}" id="vdRunner">
-        ${b.pid ? `<div class="vd-portrait"${(b.kind === 'dialog' && b.pid) ? ` style="border-color:${nameColor(b.pid)}"` : ''}>${portrait}</div>` : ''}
+        ${b.pid ? `<div class="vd-portrait"${((b.kind === 'dialog' || b.kind === 'narration') && b.pid !== 'bc') ? ` style="border-color:${nameColor(b.pid)}"` : ''}>${portrait}</div>` : ''}
         <div class="vd-textbox">
           <span class="vd-spk${spkCls}"${spkStyle}>${spkLabel}</span>
           <p class="vd-line">${colorizeNames(b.text)}</p>
