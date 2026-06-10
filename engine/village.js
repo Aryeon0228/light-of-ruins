@@ -62,10 +62,11 @@ const ZONES = [
   { z:'barracks',   label:'숙소',        box:[61.4, 24.4, 38.6, 38.6], o:[80.7, 63.0] },
   { z:'workshop',   label:'작업장 · 통신', box:[77.0, 53.0, 19.0, 16.0], o:[86.0, 63.0] },
   { z:'infirmary',  label:'의무실',      box:[78.2, 30.0, 15.7, 15.4], o:[86.0, 45.4] },
-  { z:'watchtower', label:'망루',        box:[54.5, 16.0, 11.0, 30.0], o:[60.0, 38.0] },
+  // watchtower_idle_guide.png 알파 bbox 측정값
+  { z:'watchtower', label:'망루',        box:[56.3, 26.8, 8.9, 24.3], o:[60.7, 39.0] },
   { z:'gate',       label:'정문',        box:[46.4, 60.7, 8.4, 11.7], o:[50.6, 72.0] },
-  // water 그림(water.png 풀캔버스)의 실제 알파 bbox에 맞춤 — 키친 옆 중앙
-  { z:'water',      label:'물 · 빗물받이', box:[39.5, 32.5, 12.2, 13.1], o:[45.6, 39.0] }
+  // water_idle_guide.png 알파 bbox 측정값 (좌중앙)
+  { z:'water',      label:'물 · 빗물받이', box:[21.6, 38.6, 12.3, 13.3], o:[27.8, 45.3] }
 ];
 // 인물 스프라이트 — 전원 풀캔버스(2896×2172) 제자리. 0,0에 그대로 겹침(작가가 맞춘 위치/크기 유지).
 //  (개별 크롭으로 줄 경우엔 inplace 빼고 cx/cy + h|w(%)로 배치 가능)
@@ -1074,30 +1075,24 @@ LR.village.startRain = function() {
 };
 LR.village.stopRain = function() { if (LR.village._rainStop) LR.village._rainStop(); };
 
-LR.village._zoom = LR.village._zoom || 1;
-// 카메라 적용 — 패닝 폭(--panx/--pany) 계산.
-//  기본 줌에선 살살(멀미 방지 damp), 줌인으로 늘어난 만큼은 거의 끝까지(탐색용).
+LR.village._zoom = LR.village._zoom || 0;   // 0 = 미초기화(fitStage가 cover줌으로 세팅)
+// 카메라 적용 — contain 기준. zoom=1 이면 전체가 화면에 다 보임(양옆 레터박스),
+//  zoom을 키우면 화면을 가득 채우고(cover) 넘치는 만큼 커서로 끝까지 패닝.
 LR.village._applyCamera = function() {
   const cam = LR.village._cam;
   const box = document.querySelector('.vh-stagebox');
   const scr = document.getElementById('villageScreen');
   if (!cam || !box || !scr) return;
   const z = LR.village._zoom || 1;
-  const Sbase = 1.12, S = Sbase * z;
-  const DAMP = 0.3;                            // 기본 줌 패럴렉스 세기(작을수록 차분)
-  // 기본(줌1) 오버행은 살살, 줌으로 추가된 오버행은 거의 전부 패닝
-  const baseX = Math.max(0, (Sbase * cam.w - cam.cw) / 2);
-  const baseY = Math.max(0, (Sbase * cam.h - cam.ch) / 2);
-  const totX = Math.max(0, (S * cam.w - cam.cw) / 2);
-  const totY = Math.max(0, (S * cam.h - cam.ch) / 2);
-  const ohX = baseX * DAMP + Math.max(0, totX - baseX) * 0.95;
-  const ohY = baseY * DAMP + Math.max(0, totY - baseY) * 0.95;
+  // 스케일된 이미지가 뷰포트를 넘치는 양(한쪽) = 패닝으로 드러낼 수 있는 최대치
+  const ohX = Math.max(0, (cam.w * z - cam.cw) / 2);
+  const ohY = Math.max(0, (cam.h * z - cam.ch) / 2);
   scr.style.setProperty('--zoom', z.toFixed(3));
   box.style.setProperty('--panx', ohX.toFixed(1) + 'px');
   box.style.setProperty('--pany', ohY.toFixed(1) + 'px');
   box.style.setProperty('--biasy', '0px');
-  box.style.setProperty('--skx', (ohX / S).toFixed(1) + 'px');   // 하늘 상쇄(부모 scale 보정)
-  box.style.setProperty('--sky', (ohY / S).toFixed(1) + 'px');
+  box.style.setProperty('--skx', (ohX / z).toFixed(1) + 'px');   // 하늘 상쇄(부모 scale 보정)
+  box.style.setProperty('--sky', (ohY / z).toFixed(1) + 'px');
 };
 
 LR.village.bindParallax = function() {
@@ -1124,7 +1119,9 @@ LR.village.bindParallax = function() {
   stage.addEventListener('wheel', (e) => {
     e.preventDefault();
     const dz = (e.deltaY < 0 ? 0.12 : -0.12);
-    LR.village._zoom = Math.max(1, Math.min(2.4, (LR.village._zoom || 1) + dz));
+    const lo = LR.village._minZoom || 1;                 // contain(전체보기)
+    const hi = LR.village._maxZoom || 2.4;
+    LR.village._zoom = Math.max(lo, Math.min(hi, (LR.village._zoom || 1) + dz));
     LR.village._applyCamera();
   }, { passive: false });
 };
@@ -1181,33 +1178,40 @@ LR.village.renderScene = function() {
   }
 };
 
-// 이미지 무대를 컨테이너에 가득 채움(cover) — 핀치줌처럼 넘치는 가장자리는 잘라냄
+// 이미지 무대 크기 = contain(전체가 들어가게). 실제 확대/축소는 --zoom 으로.
+//  zoom=1 → 전체 보임(레터박스), zoom=coverZoom → 화면 꽉 참(기본값).
 function fitStage() {
   const host = document.getElementById('vhScene');
   if (!host) return;
   const box = host.querySelector('.vh-stagebox');
   if (!box) return;
   const cw = host.clientWidth, ch = host.clientHeight, ar = 3577 / 2419;
-  // cover: 너비를 채우되 높이가 모자라면 높이 기준으로 채움(가로 넘침은 좌우로 잘림)
+  // contain: 전체가 다 들어가게(가로/세로 중 작은 쪽 기준). 남는 가장자리는 어둡게.
   let w = cw, h = cw / ar;
-  if (h < ch) { h = ch; w = ch * ar; }
+  if (h > ch) { h = ch; w = ch * ar; }
   box.style.width = Math.round(w) + 'px';
   box.style.height = Math.round(h) + 'px';
 
-  // 카메라(줌·패닝) — 박스 치수 저장 후 현재 줌으로 패닝 폭 적용
+  // 카메라(줌·패닝) — 박스 치수 저장
   LR.village._cam = { w: w, h: h, cw: cw, ch: ch };
+  // 화면을 꽉 채우는 데 필요한 줌(cover). 기본값으로 사용.
+  const coverZoom = Math.max(cw / w, ch / h);
+  LR.village._minZoom = 1;                          // 전체 보기(레터박스)
+  LR.village._maxZoom = Math.max(coverZoom * 2.2, 2.4);
+  if (!LR.village._zoom) LR.village._zoom = coverZoom;   // 첫 진입은 꽉 찬 화면
+  LR.village._zoom = Math.max(LR.village._minZoom, Math.min(LR.village._maxZoom, LR.village._zoom));
   LR.village._applyCamera();
 
   // FX 레이어(비·안개·좀비·불씨)를 스테이지박스(이미지 영역)에 픽셀 정렬
   const fx = document.getElementById('vhFx');
   const stage = document.querySelector('.vh-stage');
   if (fx && stage) {
-    const offX = (cw - w) / 2, offY = (ch - h) / 2;
+    // 비·안개·불씨는 줌과 무관하게 화면(호스트) 전체를 덮음
     const hr = host.getBoundingClientRect(), sr = stage.getBoundingClientRect();
-    fx.style.left = Math.round((hr.left - sr.left) + offX) + 'px';
-    fx.style.top = Math.round((hr.top - sr.top) + offY) + 'px';
-    fx.style.width = Math.round(w) + 'px';
-    fx.style.height = Math.round(h) + 'px';
+    fx.style.left = Math.round(hr.left - sr.left) + 'px';
+    fx.style.top = Math.round(hr.top - sr.top) + 'px';
+    fx.style.width = Math.round(cw) + 'px';
+    fx.style.height = Math.round(ch) + 'px';
     if (LR.village._rainResize) LR.village._rainResize();
   }
   if (LR.village.positionZinfo) LR.village.positionZinfo();   // 구역 정보창도 재배치
@@ -1327,15 +1331,13 @@ function sceneCompound(s) {
   const gateZombies = `
     <img class="vh-gzombie" src="${OZ}" alt="" style="left:27%; top:69%; height:9.8%" onerror="this.remove()">
     <img class="vh-gzombie flip" src="${OZ}" alt="" style="left:53%; top:70%; height:8.4%; animation-duration:3.8s; animation-delay:-1.3s" onerror="this.remove()">`;
-  // 식수 회수통(빗물받이) — water.png는 배경/인물과 같은 풀캔버스(3577×2419)라
-  //  제자리에 그려져 있음 → 풀캔버스 레이어로 그대로 덮음. z2 = 인물(z5)·정문보다 뒤(키친 뒤쪽).
-  const waterTank = `<img class="vh-layer vh-water" src="${A}water.png" alt="" onerror="this.remove()">`;
+  // (식수 회수통은 이제 water_idle.png 스프라이트로 가이드 위치에 배치 — 옛 풀캔버스 water.png는 사용 안 함)
   // 건물 스프라이트 — 각 시설을 자리에 배치(잘라낸 스프라이트, 발끝 하단중앙 기준).
   //  gate는 gate_idle_guide.png 측정값, 나머지는 ZONES 박스. 파일 없으면 자동 생략.
   const BLD = 'assets/images/buildings/';
   // 건물 스프라이트 — 위치는 각 시설 ZONES 박스에서 산출(가이드 측정값이 박스에 반영됨 → 클릭영역과 동일).
   //  발끝(하단중앙) 기준 배치. 파일 없으면 onerror로 자동 생략.
-  const buildings = ZONES.filter(zn => zn.z !== 'water').map(zn => {  // water는 풀캔버스 water.png가 담당(중복 방지)
+  const buildings = ZONES.map(zn => {  // water_idle.png 포함(가이드 박스 위치). 파일 없으면 onerror로 생략
     const cx = zn.box[0] + zn.box[2] / 2, by = zn.box[1] + zn.box[3], h = zn.box[3];
     return `<img class="vh-bldg" src="${BLD}${zn.z}_idle.png" alt="" style="left:${cx}%;top:${by}%;height:${h}%" onerror="this.remove()">`;
   }).join('') +
@@ -1344,7 +1346,6 @@ function sceneCompound(s) {
     <img class="vh-layer vh-px vh-px-sky"    src="${A}bg_sky.png"    alt="" onerror="this.remove()">
     <img class="vh-layer vh-px vh-px-ground" src="${A}bg_ground.png" alt="" onerror="this.remove()">
     ${buildings}
-    ${waterTank}
     ${fire}
     ${people}
     ${pips}
