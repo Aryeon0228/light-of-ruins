@@ -689,10 +689,10 @@
   font-family: 'Galmuri11', monospace; letter-spacing: 0.02em;
 }
 .vd-textbox .vd-spk.dim { color: #9a9a6a; font-weight: 500; }
-.vd-line { margin: 0; font-size: 0.94rem; line-height: 1.62; color: #e8e2c4; font-family: 'Noto Sans KR', sans-serif; }
+.vd-line { margin: 0; font-size: 1.0rem; line-height: 1.7; color: #f5f0db; font-family: 'Noto Sans KR', sans-serif; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
 .vd-nm { font-weight: 700; }   /* 본문 속 인물 이름 강조(색은 인라인) */
-.vd-runner.narration .vd-line { font-style: italic; color: #cdd0a0; }
-.vd-runner.note .vd-line { font-size: 0.84rem; color: #a7a874; }
+.vd-runner.narration .vd-line { font-style: italic; color: #e0e1bb; }
+.vd-runner.note .vd-line { font-size: 0.88rem; color: #c6c79a; }
 .vd-runner.banner-danger .vd-line { color: #e08a8a; }
 /* 비컨 신호 — 사람 대사와 다르게: 픽셀(전송) 폰트 + 비컨 보라색 + 신호 글로우 */
 .vd-runner.banner-beacon .vd-spk {
