@@ -1035,17 +1035,23 @@ LR.village.startRain = function() {
 LR.village.stopRain = function() { if (LR.village._rainStop) LR.village._rainStop(); };
 
 LR.village._zoom = LR.village._zoom || 1;
-// 카메라 적용 — 현재 줌(_zoom)에 맞춰 패닝 폭(--panx/--pany)을 '실제 잘린 양' 전체로 설정.
-//  커서를 끝으로 가져가면 그쪽 끝까지 쭈르르 보임(턱 막힘 없음). 줌인할수록 더 멀리 패닝.
+// 카메라 적용 — 패닝 폭(--panx/--pany) 계산.
+//  기본 줌에선 살살(멀미 방지 damp), 줌인으로 늘어난 만큼은 거의 끝까지(탐색용).
 LR.village._applyCamera = function() {
   const cam = LR.village._cam;
   const box = document.querySelector('.vh-stagebox');
   const scr = document.getElementById('villageScreen');
   if (!cam || !box || !scr) return;
   const z = LR.village._zoom || 1;
-  const S = 1.12 * z;                         // ※ styles-village.css .vh-stagebox base scale(1.12)
-  const ohX = Math.max(0, (S * cam.w - cam.cw) / 2) * 0.97;
-  const ohY = Math.max(0, (S * cam.h - cam.ch) / 2) * 0.97;
+  const Sbase = 1.12, S = Sbase * z;
+  const DAMP = 0.3;                            // 기본 줌 패럴렉스 세기(작을수록 차분)
+  // 기본(줌1) 오버행은 살살, 줌으로 추가된 오버행은 거의 전부 패닝
+  const baseX = Math.max(0, (Sbase * cam.w - cam.cw) / 2);
+  const baseY = Math.max(0, (Sbase * cam.h - cam.ch) / 2);
+  const totX = Math.max(0, (S * cam.w - cam.cw) / 2);
+  const totY = Math.max(0, (S * cam.h - cam.ch) / 2);
+  const ohX = baseX * DAMP + Math.max(0, totX - baseX) * 0.95;
+  const ohY = baseY * DAMP + Math.max(0, totY - baseY) * 0.95;
   scr.style.setProperty('--zoom', z.toFixed(3));
   box.style.setProperty('--panx', ohX.toFixed(1) + 'px');
   box.style.setProperty('--pany', ohY.toFixed(1) + 'px');
