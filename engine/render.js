@@ -82,6 +82,7 @@ LR.render.leftPanel = function(state) {
     resolve_pre: '해소 전야', resolve: '해소'
   }[state.beacon.phase] || state.beacon.phase;
   document.getElementById('beaconInfo').innerHTML = `
+    <div class="beacon-port"><img src="assets/images/portraits/bc.png" alt="비컨 신호" onerror="this.closest('.beacon-port').style.display='none'"></div>
     <div class="row"><span class="lbl">타입</span><span class="val">${def.name}</span></div>
     <div class="row"><span class="lbl">단계</span><span class="val">D${LR.beaconDayInWeek(state)} · ${phaseLabel}</span></div>
     <div class="row"><span class="lbl">투입 식량</span><span class="val dim">${state.beacon.investedFood}</span></div>

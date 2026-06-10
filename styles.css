@@ -616,6 +616,22 @@ button {
 .toast.raid { border-left-color: var(--c-danger); }
 .toast.beacon { border-left-color: var(--c-beacon); }
 
+/* 비컨 포트레이트 (주간 비컨 패널) */
+.beacon-port {
+  display: flex; justify-content: center; margin: 0 0 0.6rem;
+}
+.beacon-port img {
+  width: 84px; height: 84px; object-fit: cover; object-position: top center;
+  border: 2px solid var(--c-beacon); border-radius: 4px;
+  background: #15131c; image-rendering: pixelated;
+  box-shadow: 0 0 10px rgba(139,122,176,.5), inset 0 1px 0 #ffffff14;
+  animation: beaconPortPulse 2s ease-in-out infinite;
+}
+@keyframes beaconPortPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(139,122,176,.4), inset 0 1px 0 #ffffff14; }
+  50%      { box-shadow: 0 0 16px rgba(139,122,176,.75), inset 0 1px 0 #ffffff14; }
+}
+
 @keyframes toast-in {
   from { opacity: 0; transform: translateX(20px); }
   to { opacity: 1; transform: translateX(0); }
