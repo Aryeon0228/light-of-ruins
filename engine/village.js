@@ -57,11 +57,11 @@ const COMPOUND = {
 const VILLAGE_ASSET = 'assets/images/village/';
 // 글로우 구역: box=[left,top,w,h] %, o=[cx,cy] % (확대 기준점). glow PNG 알파 bbox에서 산출.
 const ZONES = [
-  { z:'kitchen',    label:'요리시설',    box:[42.0, 43.0, 15.0, 12.0], o:[50.0, 52.0] },
-  { z:'field',      label:'밭',          box:[17.0, 44.0, 30.0, 17.0], o:[32.0, 55.0] },
-  { z:'barracks',   label:'숙소',        box:[63.0, 29.0, 22.0, 17.0], o:[74.0, 40.0] },
+  { z:'kitchen',    label:'요리시설',    box:[46.2, 32.2, 13.4, 17.5], o:[52.9, 49.7] },
+  { z:'field',      label:'밭',          box:[32.7, 42.7, 11.3, 10.4], o:[38.3, 53.1] },
+  { z:'barracks',   label:'숙소',        box:[61.4, 24.4, 38.6, 38.6], o:[80.7, 63.0] },
   { z:'workshop',   label:'작업장 · 통신', box:[77.0, 53.0, 19.0, 16.0], o:[86.0, 63.0] },
-  { z:'infirmary',  label:'의무실',      box:[82.0, 39.0, 16.0, 18.0], o:[90.0, 51.0] },
+  { z:'infirmary',  label:'의무실',      box:[78.2, 30.0, 15.7, 15.4], o:[86.0, 45.4] },
   { z:'watchtower', label:'망루',        box:[49.0, 21.0, 15.0, 24.0], o:[57.0, 35.0] },
   { z:'gate',       label:'정문',        box:[46.4, 60.7, 8.4, 11.7], o:[50.6, 72.0] },
   { z:'water',      label:'물 · 빗물받이', box:[2.0, 62.0, 13.0, 16.0], o:[8.0, 72.0] }
@@ -1286,10 +1286,11 @@ function sceneCompound(s) {
   // 건물 스프라이트 — 각 시설을 자리에 배치(잘라낸 스프라이트, 발끝 하단중앙 기준).
   //  gate는 gate_idle_guide.png 측정값, 나머지는 ZONES 박스. 파일 없으면 자동 생략.
   const BLD = 'assets/images/buildings/';
-  const BUILDING_POS = { gate: { cx: 50.6, by: 72.4, h: 11.7 } };   // gate_idle_guide.png 측정
+  // 건물 스프라이트 — 위치는 각 시설 ZONES 박스에서 산출(가이드 측정값이 박스에 반영됨 → 클릭영역과 동일).
+  //  발끝(하단중앙) 기준 배치. 파일 없으면 onerror로 자동 생략.
   const buildings = ZONES.map(zn => {
-    const p = BUILDING_POS[zn.z] || { cx: zn.box[0] + zn.box[2] / 2, by: zn.box[1] + zn.box[3], h: zn.box[3] };
-    return `<img class="vh-bldg" src="${BLD}${zn.z}_idle.png" alt="" style="left:${p.cx}%;top:${p.by}%;height:${p.h}%" onerror="this.remove()">`;
+    const cx = zn.box[0] + zn.box[2] / 2, by = zn.box[1] + zn.box[3], h = zn.box[3];
+    return `<img class="vh-bldg" src="${BLD}${zn.z}_idle.png" alt="" style="left:${cx}%;top:${by}%;height:${h}%" onerror="this.remove()">`;
   }).join('') +
     `<img class="vh-bldg" src="${BLD}fire_idle.png" alt="" style="left:53%;top:60%;height:5%" onerror="this.remove()">`;
   return `<div class="vh-stagebox">
