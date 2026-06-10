@@ -595,8 +595,8 @@ LR.village._renderDecisionView = function() {
   const atChoices = idx >= beats.length;
 
   const head = `<div class="vd-head">
-    <span class="vd-day">DAY ${s.day}</span>
-    <h3 class="vd-title">${node.title || '오늘의 결정'}</h3>
+    <span class="vd-day">Day ${s.day}</span>
+    <span class="vd-spacer"></span>
     <button class="vd-min" id="vdMin" title="접기">▾</button>
   </div>`;
 
