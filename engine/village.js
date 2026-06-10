@@ -78,7 +78,7 @@ const PEOPLE_FILES = [
   { file:'miyeon',         char:'miyeon',    inplace:true, box:[55.6,50.8,2.8,7.3], ox:57.0, oy:58.1 },
   { file:'dongho',         char:'dongho',    inplace:true, box:[74.4,56.1,4.1,9.3], ox:76.4, oy:65.4 },
   { file:'jonghyeok',      char:'jonghyeok', inplace:true, box:[84.3,60.4,3.7,8.1], ox:86.1, oy:68.5 },
-  { file:'hayeong',        char:'hayeong',   inplace:true, box:[59.0,29.9,2.0,8.1], ox:60.0, oy:38.0 },
+  { file:'hayeong',        char:'hayeong',   inplace:true, box:[59.0,37.9,2.0,8.1], ox:60.0, oy:46.0, dy:8.0 },
   { file:'jaehyeok',       char:'jaehyeok',  inplace:true, box:[45.0,50.7,3.2,6.8], ox:46.6, oy:57.5 },
   { file:'minsu',          char:'minsu',     inplace:true, box:[67.6,32.9,2.3,4.2], ox:68.7, oy:37.2 }
 ];
@@ -1277,7 +1277,8 @@ function sceneCompound(s) {
     if (p.inplace) {
       // 풀캔버스 제자리 — 무대에 그대로 포갬. dx/dy(%)는 인물만 미세 이동(나머지는 투명).
       const origin = (p.ox != null) ? `transform-origin:${p.ox}% ${p.oy}%;` : '';
-      const off = (p.dx || p.dy) ? `transform:translate(${p.dx || 0}%,${p.dy || 0}%);` : '';
+      // dx/dy 오프셋이 있으면 idle 애니메이션이 transform을 덮어쓰지 않게 끔
+      const off = (p.dx || p.dy) ? `transform:translate(${p.dx || 0}%,${p.dy || 0}%);animation:none;` : '';
       return `<img class="vh-layer vh-actorfull${isSel ? ' sel' : ''}" data-char="${p.char}" src="${A}${p.file}.png" alt="" style="${origin}${off}${idle}${dead}" onerror="this.style.display='none'">`;
     }
     const size = (p.h != null) ? `height:${p.h}%` : `width:${p.w}%`;

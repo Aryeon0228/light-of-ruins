@@ -842,3 +842,18 @@ button {
   margin-top: 1rem; padding-top: 0.8rem; border-top: 1px solid var(--c-border);
   font-size: 0.74rem; color: var(--c-text-faint); font-family: 'Noto Sans KR', sans-serif;
 }
+
+/* 선택 결과 변화량 칩 — 컷씬에 크게 표시 (초록=상승, 빨강=하락) */
+.cutscene-result { display: none; flex-wrap: wrap; gap: 0.55rem; justify-content: center; margin: 0.1rem 0 1.3rem; }
+.cs-rchip {
+  display: inline-flex; align-items: baseline; gap: 0.35rem;
+  padding: 0.4rem 0.95rem; border-radius: 9px; border: 1px solid;
+  font-size: 1.0rem; font-family: 'Galmuri11', monospace; letter-spacing: 0.02em;
+  animation: csChipPop .45s cubic-bezier(.2,1.5,.4,1) both;
+}
+.cs-rchip b { font-size: 1.35rem; font-weight: 700; }
+.cs-rchip.up   { color: #cbeabf; border-color: #4a7a3e; background: rgba(74,122,62,.2); }
+.cs-rchip.up b { color: #8fe070; }
+.cs-rchip.down { color: #ecbcbc; border-color: #7a3e3e; background: rgba(122,62,62,.2); }
+.cs-rchip.down b { color: #ff9090; }
+@keyframes csChipPop { 0% { opacity: 0; transform: scale(.7) translateY(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }

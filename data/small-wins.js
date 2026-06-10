@@ -35,7 +35,8 @@ LR.SMALL_WIN_DEFS = {
     text: '하영이 마당 한쪽에서 가볍게 몸을 푼다. 누가 시킨 것도 아니다. 한 사람, 두 사람 옆에 와서 따라 한다.',
     canFire: function(state) {
       const h = LR.charById(state, 'hayeong');
-      return h.alive && h.health >= 70;
+      // 너무 자주 뜨지 않게 — 하영이 건강하고 '마을 사기가 처질 때(<65)'만 활력 부여
+      return h.alive && h.health >= 70 && h.morale >= 55 && LR.avgMorale(state) < 65;
     },
     apply: function(state) {
       // 전원 +1, 하영 +2, 소음 +1

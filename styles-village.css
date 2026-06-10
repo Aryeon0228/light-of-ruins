@@ -235,7 +235,8 @@
 @keyframes vhIdle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-0.3%); } }
 .vh-actorfull.sel { filter: drop-shadow(0 0 13px rgba(255, 207, 134, .7)); }
 /* 호버/선택 시엔 idle 멈추고 발끝 기준 확대(origin은 인라인) */
-.vh-actorfull.hover, .vh-actorfull.sel.hover { animation: none; transform: scale(1.07); }
+/* 호버 인지 — 크게 키우지 않고 '밝아짐 + 앰버 글로우(외곽선)'로 (확대 대신) */
+.vh-actorfull.hover, .vh-actorfull.sel.hover { filter: brightness(1.22) drop-shadow(0 0 8px rgba(255, 231, 160, .9)); }
 
 /* 인물 핫스팟 (형상 위) */
 .vh-phot { position: absolute; z-index: 6; background: transparent; border: 0; padding: 0; margin: 0; cursor: pointer; }
