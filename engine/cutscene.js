@@ -61,6 +61,12 @@ LR.cutscene.play = function(cutsceneDef, onComplete, tone, badgeText, isNew, res
     }
   }
   overlay.classList.add('active');
+  // 나쁜 사건(습격·부상)은 화면이 한 번 크게 흔들린다 — 몸이 먼저 아는 피드백
+  const stage = overlay.querySelector('.cutscene-stage');
+  if (stage) {
+    stage.classList.remove('shake');
+    if (t === 'bad') { stage.offsetHeight; stage.classList.add('shake'); }
+  }
   LR.cutscene._renderFrame();
 };
 

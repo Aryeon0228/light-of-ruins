@@ -1290,3 +1290,14 @@
 }
 .vd-cf-stay:hover { background: linear-gradient(180deg, #41452f, #282a1d); }
 .vd-cf-go:active, .vd-cf-stay:active { transform: translateY(1px); }
+
+/* 선택지 위험 예고 칩 — 예상 소음 → 오늘 밤 습격 확률 */
+.vd-cnoise {
+  display: inline-block; margin-top: 5px;
+  font-size: 0.74rem; font-weight: 600; letter-spacing: .01em;
+  padding: 1px 7px; border-radius: 2px; border: 1px solid #2a2c1e;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.vd-cnoise.calm   { color: #8fbf8f; background: #182016; border-color: #2c3a26; }
+.vd-cnoise.warn   { color: #e0b060; background: #221d10; border-color: #4a3c1a; }
+.vd-cnoise.danger { color: #e08a7a; background: #221311; border-color: #5a2620; }

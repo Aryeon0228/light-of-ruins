@@ -562,7 +562,15 @@ function narrationPortrait(text) {
 }
 function buildDecisionBeats(node, s) {
   const beats = [];
-  if (s.raidLastNightSummary) beats.push({ kind: 'banner-danger', text: '🩸 ' + s.raidLastNightSummary });
+  // 간밤 판정 인과 — '소음 → 확률 → 결과'의 숫자 사슬을 보여줘 규칙을 추론·학습하게 한다
+  const judged = LR.raidProbability(s.noiseToday);
+  if (s.raidLastNightSummary) {
+    beats.push({ kind: 'banner-danger',
+      text: `🩸 ${s.raidLastNightSummary} (소음 ${s.noiseToday} → 습격 확률 ${Math.round(judged.p * 100)}%)` });
+  } else if (s.day > 1 && judged.p >= 0.25) {
+    beats.push({ kind: 'note',
+      text: `🔊 간밤 판정 — 소음 ${s.noiseToday} (${judged.scale}) → 습격 확률 ${Math.round(judged.p * 100)}% → 무리가 비껴갔다.` });
+  }
   if (s.pendingBeaconResolution) {
     const r = s.pendingBeaconResolution;
     beats.push({ kind: 'banner-beacon', pid: 'bc', text: `📡 ${LR.BEACON_TYPES[r.type].name} ${r.label} — ${r.text}` });
@@ -573,6 +581,13 @@ function buildDecisionBeats(node, s) {
     else if (part.kind === 'dialog') beats.push({ kind: 'dialog', speaker: part.speaker, text: part.text, pid: speakerPortrait(part.speaker) });
     else if (part.kind === 'systemNote') beats.push({ kind: 'note', text: part.text });
   });
+  // 어제의 전례가 만든 분화 반응 — 같은 사건, 다른 기울기 (감수성 표의 체감화)
+  if (s.pendingReactions && s.pendingReactions.length) {
+    for (const r of s.pendingReactions) {
+      beats.push({ kind: 'dialog', speaker: r.speaker, text: r.text, pid: speakerPortrait(r.speaker) });
+    }
+    s.pendingReactions = null;
+  }
   return beats;
 }
 
@@ -650,9 +665,16 @@ LR.village._renderDecisionView = function() {
       if (choice.enabled === false) return '';
       const risk = choice.risk === 'danger' ? ' danger' : choice.risk === 'warn' ? ' warn' : '';
       const sub = choice.body ? `<span class="vd-csub">${choice.body}</span>` : '';
+      // 위험 예고 칩 — 이 선택의 예상 소음 → 오늘 밤 습격 확률.
+      //  '사기를 올리면 위험이 커진다'는 핵심 모순을 결정을 누르기 전에 몸으로 느끼게 한다.
+      const projNoise = LR.computeNoise(s, choice.intentionalNoise || 0);
+      const pr = LR.raidProbability(projNoise);
+      const prPct = Math.round(pr.p * 100);
+      const prCls = pr.p >= 0.6 ? 'danger' : pr.p >= 0.25 ? 'warn' : 'calm';
+      const noiseChip = `<span class="vd-cnoise ${prCls}">🔊 소음 ${projNoise} → 밤 습격 ${prPct}%</span>`;
       return `<button class="vd-choice${risk}" data-cid="${choice.id}">
         <span class="vd-clet">${choice.id}</span>
-        <span class="vd-cbody"><b>${choice.label}</b>${sub}</span>
+        <span class="vd-cbody"><b>${choice.label}</b>${sub}${noiseChip}</span>
       </button>`;
     }).join('');
     const replay = beats.length ? `<button class="vd-replay" id="vdReplay">↻ 대화 다시</button>` : '';

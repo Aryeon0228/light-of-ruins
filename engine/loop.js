@@ -149,6 +149,8 @@ LR.engine.applyChoice = function(choiceId) {
     if (newPrec) {
       LR.render.toast(`${newPrec.id} 생성 — ${newPrec.name}`,
                       newPrec.type === 'neg' ? 'precedent-neg' : 'precedent-pos');
+      // 같은 결정도 인물마다 다르게 읽힌다 — 감수성 분화 반응을 다음 날 아침에 보여준다
+      state.pendingReactions = LR.buildPrecedentReactions(state, newPrec);
     }
   }
 
@@ -293,6 +295,47 @@ LR.buildRaidCutscene = function(state, victims, scale) {
   }
   return { id: 'raid_' + state.day, frames };
 };
+// 전례 분화 반응 — 같은 사건을 감수성 표가 다른 두 인물이 정반대로 읽는다.
+//  v1.2 감수성 표(negSens/posSens)가 수치가 아니라 '대사'로 드러나는 순간.
+//  가장 민감한 인물 + 가장 둔감한 인물의 한 마디씩, 다음 날 아침 비트로 표시.
+LR.buildPrecedentReactions = function(state, prec) {
+  const alive = LR.aliveChars(state).filter(c => !(prec.targets || []).includes(c.id));
+  if (alive.length < 2) return null;
+  const key = prec.type === 'neg' ? 'negSens' : 'posSens';
+  const sorted = alive.slice().sort((a, b) => b[key] - a[key]);
+  const most = sorted[0];                       // 가장 깊이 받아들이는 사람
+  const least = sorted[sorted.length - 1];      // 가장 건조하게 받아들이는 사람
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  let mostLine, leastLine;
+  if (prec.type === 'neg') {
+    mostLine = pick([
+      '"…다음은 누구죠. 그런 생각을 하게 되네요."',
+      '"어제의 결정을, 우리는 잊지 못할 거예요."',
+      '"이제 아프면 말하기가 무서워졌어요."'
+    ]);
+    leastLine = pick([
+      '"어쩔 수 없는 판단이었어. 누구라도 그랬을 거야."',
+      '"감상은 사치야. 마을은 숫자로 버티는 거니까."',
+      '"잘잘못을 따질 여유가 있으면 담장이나 한 번 더 봐."'
+    ]);
+  } else {
+    mostLine = pick([
+      '"이 마을은… 사람을 버리지 않는군요. 그게 어디예요."',
+      '"어제 일 말이에요. 그거 하나로 며칠은 버틸 수 있어요."',
+      '"고마워요. 누가 한 말이 아니라, 마을이 한 일이라서요."'
+    ]);
+    leastLine = pick([
+      '"나쁘지 않은 결정이었어." 그는 그렇게만 말했다.',
+      '"좋은 일이지. 자원 계산은 다시 해야겠지만."',
+      '"다행이군. 내일도 이럴 수 있을지는 모르겠지만."'
+    ]);
+  }
+  return [
+    { speaker: most.name, text: mostLine },
+    { speaker: least.name, text: leastLine }
+  ];
+};
+
 // 탐색(외출) 부상 컷씬 — 장소를 문장에 엮어 매번 다른 장면으로.
 //  1프레임: 전용 일러스트 슬롯(assets/images/cutscenes/explore_wound.png) → 마을 배경 폴백
 LR.EXPED_OPENERS = [

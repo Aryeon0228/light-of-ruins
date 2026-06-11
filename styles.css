@@ -969,3 +969,15 @@ button {
 .cs-rchip.down { color: #ecbcbc; border-color: #7a3e3e; background: rgba(122,62,62,.2); }
 .cs-rchip.down b { color: #ff9090; }
 @keyframes csChipPop { 0% { opacity: 0; transform: scale(.7) translateY(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+
+/* 나쁜 사건 컷씬 — 진입 시 화면 흔들림 (시스템1 즉각 피드백) */
+.cutscene-stage.shake { animation: cutsceneShake .5s cubic-bezier(.36,.07,.19,.97) 1; }
+@keyframes cutsceneShake {
+  0%, 100% { transform: translate(0, 0); }
+  15% { transform: translate(-9px, 2px); }
+  30% { transform: translate(8px, -3px); }
+  45% { transform: translate(-6px, 2px); }
+  60% { transform: translate(5px, -1px); }
+  75% { transform: translate(-3px, 1px); }
+  90% { transform: translate(2px, 0); }
+}
