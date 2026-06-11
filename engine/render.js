@@ -5,6 +5,12 @@ window.LR = window.LR || {};
 
 LR.render = LR.render || {};
 
+// 문장 끝(. ! ?)마다 줄바꿈해 읽기 편하게. 줄임표(…, ...)는 보호(앞 글자가 마침표가 아닐 때만 분리).
+LR.breakSentences = function(text) {
+  if (!text) return text;
+  return String(text).replace(/([^.])([.!?]["'\u00bb\u300d\u300f\u2019\u201d]?)\s+(?=\S)/g, function (m, a, b) { return a + b + '<br>'; });
+};
+
 LR.render.renderAll = function(state) {
   LR.render.topBar(state);
   LR.render.leftPanel(state);
@@ -169,10 +175,10 @@ LR.render.scenario = function(state) {
     const div = document.createElement('div');
     if (part.kind === 'narration') {
       div.className = 'narration';
-      div.textContent = part.text;
+      div.innerHTML = LR.breakSentences(part.text);
     } else if (part.kind === 'dialog') {
       div.className = 'dialog';
-      div.innerHTML = `<span class="speaker">${part.speaker}</span>${part.text}`;
+      div.innerHTML = `<span class="speaker">${part.speaker}</span>${LR.breakSentences(part.text)}`;
     } else if (part.kind === 'systemNote') {
       div.className = 'system-note';
       div.textContent = '※ ' + part.text;
