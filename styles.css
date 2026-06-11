@@ -279,15 +279,11 @@ button {
   padding: 22vh 6vw 0;
   background: #000;   /* 암전 막 */
 }
-/* 암전 등장: 검게 깔린 뒤 그대로 유지(클릭 전까지) */
+/* 암전 등장: 즉시 검게 깔림(게임 화면이 비치는 깜빡임 방지) → 그대로 유지(클릭 전까지) */
 #dayBanner.show {
   pointer-events: auto;                 /* 전환 중 오클릭 흡수 + 클릭 넘기기 */
   cursor: pointer;
-  animation: dayIn 0.5s ease forwards;
-}
-@keyframes dayIn {
-  from { opacity: 0; visibility: visible; }
-  to   { opacity: 1; visibility: visible; }
+  opacity: 1; visibility: visible;      /* 페이드인 없이 바로 암전 */
 }
 /* 클릭하면 다시 밝아지며 사라짐 */
 #dayBanner.show.out { animation: dayOut 0.55s ease forwards; }

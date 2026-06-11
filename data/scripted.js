@@ -17,7 +17,7 @@ LR.SCRIPTED_DAYS = {
     body: [
       { kind: 'narration', text: '폐공장 창고에 아침 햇빛이 들어온다. 식량 65. 오늘 10을 소비하면 55. 이대로면 6일 후 위기 구간이다.' },
       { kind: 'narration', text: '재혁이 탐색대를 보내야 한다고 판단한다. 그때 동호가 미연을 보며 투덜거린다.' },
-      { kind: 'dialog', speaker: '동호', text: '"배 속에 애가 있다고 식량 부족한데도 배급 예전과 똑같이 받는 거 아니겠지?"' },
+      { kind: 'dialog', speaker: '동호', text: '"다 같이 굶는 마당에… 배 속에 애 있다고 배급을 똑같이 받아야 하나?"' },
       { kind: 'narration', text: '가족을 잃은 동호의 사기는 절망 구간이다.' },
       { kind: 'narration', text: '그때 수진이 의무실 라디오 주파수를 돌리다 손을 멈춘다. 지지직. 잡음 사이로 사람의 목소리 같은 무언가가 섞였다가 사라진다.' },
       { kind: 'dialog', speaker: '수진', text: '"이게… 무슨 신호 같은데요."' },
