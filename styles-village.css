@@ -15,7 +15,7 @@
 /* ── 상단 바 ── */
 .vh-top {
   display: grid;
-  grid-template-columns: auto 1fr auto auto;   /* 시간 | 자원 | 음향 | 카메라 */
+  grid-template-columns: auto 1fr auto auto auto;   /* 시간 | 자원 | 음향 | 살림 | 카메라 */
   align-items: center;
   gap: 1.2rem;
   padding: 0.5rem 1.1rem;
@@ -56,6 +56,27 @@
 .vh-pill.danger { border-color: var(--c-danger); }
 .vh-pill.danger .vh-pill-val { color: var(--c-danger); }
 .vh-pill.dim .vh-pill-val { color: var(--c-text-dim); }
+
+/* 오늘의 살림 HUD — 물/밭/부엌 완료 체크 */
+.vh-tending { display: flex; align-items: center; gap: 0.4rem; }
+.vh-tend-h {
+  font-size: 0.66rem; letter-spacing: 0.08em; color: #8e9a6a;
+  font-family: 'Galmuri11', monospace; white-space: nowrap;
+}
+.vh-tend-h b { color: #cdd0a0; }
+.vh-tend-chip {
+  display: inline-flex; align-items: center; gap: 2px;
+  padding: 3px 7px; border-radius: 6px; cursor: pointer;
+  border: 1px solid #ffffff1c; background: #ffffff0a; font-size: 0.92rem; line-height: 1;
+  transition: transform .08s, background .15s, border-color .15s;
+}
+.vh-tend-chip i { font-style: normal; font-size: 0.74rem; color: #8a8c72; }
+.vh-tend-chip:hover { background: #ffffff14; border-color: #ffffff33; }
+.vh-tend-chip:active { transform: scale(0.94); }
+.vh-tend-chip.done { background: #2a3a1e; border-color: #5a7d38; }
+.vh-tend-chip.done i { color: #9bd36a; }
+.vh-tend-chip.locked { opacity: 0.6; }
+.vh-tend-chip.locked i { color: #d08a6a; }
 
 .vh-cam { display: flex; gap: 0.35rem; align-items: center; }
 .vh-cam-btn {

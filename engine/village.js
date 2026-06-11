@@ -298,10 +298,10 @@ function zonePanel(z, s) {
         `<div class="vz-note">비축 상태 · <b style="color:${foodT.tier === 'famine' ? '#e07070' : foodT.tier === 'crisis' ? '#d4a14f' : '#cdd0a0'}">${foodT.label}</b> · ${seasonDef.name}엔 신선 식량이 <b style="color:${decayCol}">${decayVerb}</b>. 잉여 신선분은 매일 조금씩 상한다 — 저장해두면 든든하다.</div>`,
       actions: (function () {
         const kDone = tdone('kitchen');
-        const canCook = !kDone && s.food >= P.cook.food && s.fuel >= P.cook.fuel && s.water >= P.cook.water;
+        const canCook = !kDone && !P.waterDry && s.food >= P.cook.food && s.fuel >= P.cook.fuel && s.water >= P.cook.water;
         const canPrev = !kDone && s.food >= P.preserve.food && s.fuel >= P.preserve.fuel;
-        const cookHint = kDone ? '오늘 완료' : (s.food < P.cook.food ? '신선 부족' : s.fuel < P.cook.fuel ? '연료 부족' : s.water < P.cook.water ? '물 부족' : `신선${P.cook.food}·연료${P.cook.fuel}·물${P.cook.water} → 사기+${P.cook.morale}`);
-        const prevHint = kDone ? '오늘 완료' : (s.food < P.preserve.food ? '신선 부족' : s.fuel < P.preserve.fuel ? '연료 부족' : `신선${P.preserve.food} → 말림+${P.preserve.dried}·절임+${P.preserve.pickled}`);
+        const cookHint = kDone ? '오늘 완료' : P.waterDry ? '물이 말랐다' : (s.food < P.cook.food ? '신선 부족' : s.fuel < P.cook.fuel ? '연료 부족' : s.water < P.cook.water ? '물 부족' : `신선${P.cook.food}·연료${P.cook.fuel}·물${P.cook.water} → 사기+${P.cook.morale}${P.jeong ? ' · 정훈의 솜씨' : ''}`);
+        const prevHint = kDone ? '오늘 완료' : (s.food < P.preserve.food ? '신선 부족' : s.fuel < P.preserve.fuel ? '연료 부족' : `신선${P.preserve.food} → 말림+${P.preserve.dried}·절임+${P.preserve.pickled}${P.jeong ? ' · 정훈의 솜씨' : ''}`);
         return actBtn('cook', '🍳 요리 (사기↑)', canCook, cookHint) + actBtn('preserve', '🫙 저장 가공', canPrev, prevHint);
       })()
     };
@@ -321,8 +321,9 @@ function zonePanel(z, s) {
             vzStat('부패 속도', decayLab, decayCol) +
           `</div>` +
           `<div class="vz-note">${note}</div>`,
-        actions: actBtn('harvest', '🌱 수확하기', !tdone('field'),
-          tdone('field') ? '오늘 완료' : (s.water >= 30 ? `신선 채소 +${P.harvest}` : `물 부족 — 수확 +${P.harvest}(절반)`))
+        actions: actBtn('harvest', '🌱 수확하기', !tdone('field') && !P.waterDry,
+          P.waterDry ? '물이 말랐다 — 물 먼저' : tdone('field') ? '오늘 완료'
+            : `신선 +${P.harvest}${P.eun ? ' · 은서의 솜씨' : ''}${s.water >= 30 ? '' : ' (관개 부족·절반)'}`)
       };
     }
     case 'barracks': {
@@ -416,13 +417,20 @@ LR.village.showZoneInfo = function(z) {
 };
 
 // 하루의 살림 — 행동별 효과량(패널 표시와 실제 적용이 같은 값을 쓰도록 한 곳에 정의)
+//  담당 인물 보너스: 정훈(요리·가공 솜씨) · 은서(수확 솜씨). 물이 마르면 밭·요리 잠금.
 LR.village._tendPlan = function(s) {
+  const able = id => { const c = s.characters[id]; return !!(c && c.alive && c.health >= 35); };
+  const jeong = able('jeonghun');   // 정훈 — 요리/가공
+  const eun = able('eunseo');       // 은서 — 수확
   const fieldBase = ({ spring_late: 8, rainy: 7, summer_heat: 5, autumn: 9, winter: 3 })[s.season] ?? 6;
+  const harvest = Math.round(fieldBase * (s.water >= 30 ? 1 : 0.5) * (eun ? 1.3 : 1));
   return {
+    waterDry: s.water <= 0,
+    jeong: jeong, eun: eun,
     waterDraw: s.season === 'rainy' ? 14 : 10,
-    harvest: Math.round(fieldBase * (s.water >= 30 ? 1 : 0.5)),
-    cook: { food: 4, fuel: 2, water: 3, morale: 4 },
-    preserve: { food: 6, fuel: 2, dried: 4, pickled: 2 }
+    harvest: harvest,
+    cook: { food: 4, fuel: 2, water: 3, morale: jeong ? 6 : 4 },
+    preserve: { food: 6, fuel: 2, dried: jeong ? 5 : 4, pickled: 2 }
   };
 };
 
@@ -439,9 +447,9 @@ LR.village.tend = function(action) {
     s.water = Math.min(100, s.water + P.waterDraw);
     s.tending.water = today; msg = `물 뜨기 — 식수 +${P.waterDraw}`;
   } else if (action === 'harvest') {
-    if (s.tending.field === today) return;
+    if (s.tending.field === today || P.waterDry) return;   // 물이 마르면 수확 불가
     s.food = Math.min(100, s.food + P.harvest);
-    s.tending.field = today; msg = `수확 — 신선 채소 +${P.harvest}`;
+    s.tending.field = today; msg = `수확 — 신선 채소 +${P.harvest}${P.eun ? ' (은서)' : ''}`;
   } else if (action === 'cook') {
     if (s.tending.kitchen === today) return;
     if (s.food < P.cook.food || s.fuel < P.cook.fuel || s.water < P.cook.water) return;
@@ -937,6 +945,7 @@ LR.village.render = function() {
   const s = LR.village.state;
   if (!s) return;
   renderTopbar(s);
+  renderTendingHud(s);
   renderRoster(s);
   renderSystems(s);
   updateScopeReadout(s);
@@ -946,6 +955,31 @@ LR.village.render = function() {
   if (LR.village._syncPause) LR.village._syncPause();
   if (LR.ambience) LR.ambience.update(s);   // 환경음 — 날씨·위협과 동기화
 };
+
+// 오늘의 살림 HUD — 물/밭/부엌 돌봄 완료 여부(✓), 클릭하면 해당 구역 정보창 열기
+function renderTendingHud(s) {
+  const el = document.getElementById('vhTending');
+  if (!el) return;
+  const t = s.tending || {};
+  const P = LR.village._tendPlan(s);
+  const items = [
+    ['water', '🪣', '물 뜨기', false],
+    ['field', '🌱', '수확', P.waterDry],
+    ['kitchen', '🍳', '부엌', false]
+  ];
+  const doneN = items.filter(it => t[it[0]] === s.day).length;
+  el.innerHTML = `<span class="vh-tend-h">오늘의 살림 <b>${doneN}/3</b></span>` +
+    items.map(([zone, ic, lab, locked]) => {
+      const done = t[zone] === s.day;
+      const cls = done ? ' done' : locked ? ' locked' : '';
+      const mark = done ? '✓' : locked ? '✕' : '○';
+      return `<button class="vh-tend-chip${cls}" data-tendzone="${zone}" title="${lab} — ${done ? '완료' : locked ? '잠김(물 부족)' : '아직'}">${ic}<i>${mark}</i></button>`;
+    }).join('');
+  el.querySelectorAll('[data-tendzone]').forEach(b => b.addEventListener('click', (e) => {
+    e.stopPropagation();
+    LR.village.showZoneInfo(b.dataset.tendzone);
+  }));
+}
 
 function renderTopbar(s) {
   const seasonName = LR.SEASONS[s.season].name;
@@ -1930,6 +1964,7 @@ function ensureDom() {
           소음 <b id="vhScopeVal">0</b> · <span id="vhScopeState">—</span>
         </span>
       </div>
+      <div class="vh-tending" id="vhTending"></div>
       <div class="vh-cam">
         <button class="vh-cam-btn" id="vhSound" title="환경음 켜기/끄기">🔊</button>
         <button class="vh-cam-btn vh-info-toggle" id="vhPanelToggle" title="생존자 명단 · 시스템 정보 펼치기">정보</button>
