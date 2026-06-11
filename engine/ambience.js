@@ -13,6 +13,9 @@ LR.ambience = {
   _fire: null,
   _crackleTimer: null,
   _heartTimer: null,
+  _bgm: null,
+  _bgmStarted: false,
+  _bgmFailed: false,
 
   // ─── 초기화 (첫 사용자 입력 후) ───
   _ensure: function() {
@@ -117,11 +120,64 @@ LR.ambience = {
   },
 
   _silenceAll: function() {
+    if (this._heartTimer) { clearInterval(this._heartTimer); this._heartTimer = null; }
+    this._stopBgm();
     if (!this._ctx) return;
     const t = this._ctx.currentTime;
     this._rain.gain.gain.setTargetAtTime(0, t, 0.1);
     this._fire.gain.gain.setTargetAtTime(0, t, 0.1);
-    if (this._heartTimer) { clearInterval(this._heartTimer); this._heartTimer = null; }
+  },
+
+  // ─── 배경음악 (assets/audio/bgm.mp3 가 있으면 루프 재생, 없으면 조용히 무시) ───
+  _startBgm: function() {
+    if (!this.enabled || this._bgmStarted || this._bgmFailed) return;
+    if (!this._bgm) {
+      this._bgm = new Audio('assets/audio/bgm.mp3');
+      this._bgm.loop = true; this._bgm.preload = 'auto'; this._bgm.volume = 0;
+      this._bgm.addEventListener('error', () => { this._bgmFailed = true; this._bgm = null; });
+    }
+    const el = this._bgm; if (!el) return;
+    const p = el.play();
+    if (p && p.catch) p.catch(() => {});   // 자동재생 차단 시 다음 제스처에서 재시도됨
+    this._bgmStarted = true;
+    let v = 0; el.volume = 0;
+    clearInterval(this._bgmFade);
+    this._bgmFade = setInterval(() => {
+      v = Math.min(0.3, v + 0.03);
+      if (this._bgm) this._bgm.volume = v;
+      if (v >= 0.3) clearInterval(this._bgmFade);
+    }, 120);
+  },
+  _stopBgm: function() {
+    this._bgmStarted = false;
+    clearInterval(this._bgmFade);
+    if (this._bgm) { try { this._bgm.pause(); } catch (e) {} }
+  },
+
+  // ─── UI 클릭음 (버튼·선택지) — 짧은 절차적 블립 ───
+  clickUI: function() {
+    if (!this.enabled || !this._ensure()) return;
+    const ctx = this._ctx;
+    if (ctx.state === 'suspended') ctx.resume();
+    const mk = (freq, dur, type, vol) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = type; o.frequency.value = freq;
+      const t = ctx.currentTime;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(vol, t + 0.006);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(t); o.stop(t + dur + 0.02);
+    };
+    mk(520, 0.07, 'triangle', 0.05);
+    mk(780, 0.05, 'sine', 0.02);
+  },
+
+  _updateButtons: function() {
+    const ic = this.enabled ? '🔊' : '🔇';
+    document.querySelectorAll('.sound-toggle, #vhSound').forEach(b => {
+      b.textContent = ic; b.classList.toggle('muted', !this.enabled);
+    });
   },
 
   toggle: function() {
@@ -129,19 +185,33 @@ LR.ambience = {
     try { localStorage.setItem('lr_ambience', this.enabled ? 'on' : 'off'); } catch (e) {}
     if (this.enabled) {
       if (this._ensure() && this._ctx.state === 'suspended') this._ctx.resume();
+      this._startBgm();
       this.update(LR.state || (LR.village && LR.village.state));
     } else {
       this._silenceAll();
     }
+    this._updateButtons();
     return this.enabled;
   }
 };
 
-// 첫 사용자 입력에서 오디오 컨텍스트 기동 (브라우저 자동재생 정책)
+// 첫 사용자 입력에서 오디오 컨텍스트 기동 + 배경음악 시작 (브라우저 자동재생 정책)
 document.addEventListener('pointerdown', function bootAmbience() {
-  if (LR.ambience.enabled && LR.ambience._ensure()) {
-    if (LR.ambience._ctx.state === 'suspended') LR.ambience._ctx.resume();
+  if (LR.ambience.enabled) {
+    if (LR.ambience._ensure() && LR.ambience._ctx.state === 'suspended') LR.ambience._ctx.resume();
+    LR.ambience._startBgm();
     LR.ambience.update(LR.state || (LR.village && LR.village.state));
   }
   document.removeEventListener('pointerdown', bootAmbience);
+});
+
+// 버튼·선택지 클릭음(델리게이트) + 사운드 토글 버튼 와이어링
+document.addEventListener('DOMContentLoaded', () => {
+  LR.ambience._updateButtons();
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('.sound-toggle, #vhSound')) return;   // 토글 자체는 클릭음 제외
+    if (e.target.closest('button, .vd-choice, .vh-pill, .collection-card, .vh-hot')) LR.ambience.clickUI();
+  }, true);
+  document.querySelectorAll('.sound-toggle').forEach(b =>
+    b.addEventListener('click', (e) => { e.stopPropagation(); LR.ambience.toggle(); }));
 });

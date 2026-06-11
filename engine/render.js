@@ -386,11 +386,22 @@ LR.render.dayBanner = function(text, state) {
     ).join('');
   }
 
-  const dismiss = () => { el.classList.remove('show'); clearTimeout(LR.render._bannerTimer); };
-  el.onclick = dismiss;                // 클릭하면 즉시 넘어가기
-  el.classList.remove('show');
+  // 클릭할 때까지 암전 유지 → 클릭하면 밝아지며 사라짐
+  const dismiss = () => {
+    if (!el.classList.contains('show') || el.classList.contains('out')) return;
+    el.classList.add('out');
+  };
+  el.onclick = dismiss;
+  if (!el._bannerEndBound) {
+    el._bannerEndBound = true;
+    el.addEventListener('animationend', (e) => {
+      if (e.target === el && e.animationName === 'dayOut') el.classList.remove('show', 'out');
+    });
+  }
+  el.classList.remove('show', 'out');
   void el.offsetWidth;                 // 리플로우 → 애니메이션 재시작
   el.classList.add('show');
+  // 안전장치: 혹시 클릭이 막혀도 영구 정지되지 않도록 넉넉한 자동 해제
   clearTimeout(LR.render._bannerTimer);
-  LR.render._bannerTimer = setTimeout(dismiss, 2600);
+  LR.render._bannerTimer = setTimeout(dismiss, 12000);
 };
