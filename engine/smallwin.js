@@ -47,6 +47,8 @@ LR.trySmallWins = function(state) {
   pick.cd.lastFired = state.day;
   pick.cd.weekCount += 1;
   state.swMeta.weekTotal += 1;
+  // 2인 스몰윈 — 함께한 작은 순간이 유대로 쌓인다
+  if (pick.def.bond && LR.addBond) LR.addBond(state, pick.def.bond[0], pick.def.bond[1]);
   return [{
     id: pick.id,
     name: pick.def.name,

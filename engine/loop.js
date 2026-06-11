@@ -5,6 +5,12 @@ window.LR = window.LR || {};
 
 LR.engine = LR.engine || {};
 
+// ─── 마을 연대기 — 이 판에서 실제로 일어난 일들의 기록 (엔딩에서 연표로) ───
+LR.chron = function(state, text, kind) {
+  if (!state.chronicle) state.chronicle = [];
+  state.chronicle.push({ day: state.day, text: text, kind: kind || 'event' });
+};
+
 // ─── 게임 시작 ───
 LR.engine.startNewGame = function() {
   LR.state = LR.createInitialState();
@@ -124,7 +130,10 @@ LR.engine.applyChoice = function(choiceId) {
   // 6.5 아기 이름 — 이름 짓기 이벤트의 선택 결과
   if (choice.babyName !== undefined && state.baby.exists) {
     state.baby.name = choice.babyName;
-    if (choice.babyName) LR.render.toast(`아기의 이름 — ${choice.babyName}`, 'smallwin');
+    if (choice.babyName) {
+      LR.render.toast(`아기의 이름 — ${choice.babyName}`, 'smallwin');
+      LR.chron(state, `아기의 이름을 지었다 — ${choice.babyName}`, 'pos');
+    }
   }
 
   // 3. 마을 전체 사기
@@ -156,6 +165,7 @@ LR.engine.applyChoice = function(choiceId) {
     if (newPrec) {
       LR.render.toast(`${newPrec.id} 생성 — ${newPrec.name}`,
                       newPrec.type === 'neg' ? 'precedent-neg' : 'precedent-pos');
+      LR.chron(state, `전례 ${newPrec.id} 『${newPrec.name}』 — ${newPrec.label}`, newPrec.type === 'neg' ? 'neg' : 'pos');
       // 같은 결정도 인물마다 다르게 읽힌다 — 감수성 분화 반응을 다음 날 아침에 보여준다
       state.pendingReactions = LR.buildPrecedentReactions(state, newPrec);
     }
@@ -174,6 +184,7 @@ LR.engine.applyChoice = function(choiceId) {
       miyeon.hasBaby = true;
       miyeon.health = Math.max(1, miyeon.health - 22);
       LR.render.toast('아기 출생 — 의약품 없이. 미연이 깊이 소모되었다', 'beacon');
+      LR.chron(state, '아기가 태어났다 — 의약품 없이, 어둠 속에서', 'pos');
     } else {
       // 실패 — 아기를 잃는다. 절제된 연출, 그러나 마을의 도덕적 좌표계에 새겨진다
       birthOutcome = 'fail';
@@ -190,11 +201,13 @@ LR.engine.applyChoice = function(choiceId) {
       });
       if (p) {
         LR.render.toast(`${p.id} 생성 — ${p.name}`, 'precedent-neg');
+        LR.chron(state, `전례 ${p.id} 『${p.name}』 — ${p.label}`, 'neg');
         state.pendingReactions = LR.buildPrecedentReactions(state, p);
       }
       state.pendingBabyLoss = true;
       birthLossCut = LR.buildBirthLossCutscene(state);
       LR.render.toast('출산 실패 — 아기를 잃었다', 'raid');
+      LR.chron(state, '아기를 잃었다 — 첫 울음 대신 침묵', 'death');
     }
   }
 
@@ -210,6 +223,7 @@ LR.engine.applyChoice = function(choiceId) {
       y.deathDay = state.day;
       y.deathCause = '사흘의 방치';
       LR.render.toast('영수 사망 — Day ' + state.day, 'raid');
+      LR.chron(state, '영수가 떠났다 — 사흘의 방치', 'death');
       // 마을 사기 -15 전체
       for (const c of LR.aliveChars(state)) c.morale = Math.max(0, c.morale - 5);
       // 죽음의 의례 — 작별 컷씬 + 다음 날 추모 예약. 출산과 같은 밤이면 한 프레임에 겹친다.
@@ -222,6 +236,7 @@ LR.engine.applyChoice = function(choiceId) {
     state.baby.bornDay = state.day;
     state.characters.miyeon.hasBaby = true;
     LR.render.toast('아기 출생 — 통제 불가 소음원 +10/일', 'beacon');
+    LR.chron(state, '아기가 태어났다', 'pos');
   }
 
   // 9. 비컨 D7 자동 해소 — 결과는 다음날 시나리오 상단에 표시되도록 저장
@@ -230,6 +245,7 @@ LR.engine.applyChoice = function(choiceId) {
     const result = LR.resolveBeacon(state);
     const label = { full:'완전 성공', partial:'부분 성공', fail:'실패', frustration:'좌절' }[result.result];
     LR.render.toast(`비컨 ${label} — ${LR.BEACON_TYPES[result.type].name}`, 'beacon');
+    LR.chron(state, `${LR.BEACON_TYPES[result.type].name} — ${label}`, 'beacon');
     // 다음 일자 시나리오 상단에 표시할 비컨 결과
     state.pendingBeaconResolution = {
       type: result.type,
@@ -550,6 +566,7 @@ LR.engine.endOfDay = function() {
       deadToday.push(c);
       for (const o of LR.aliveChars(state)) o.morale = Math.max(0, o.morale - 5);
       LR.render.toast(`${c.name} 사망 — Day ${state.day}`, 'raid');
+      LR.chron(state, `${LR.nameGa(c.name)} 떠났다 — ${c.deathCause}`, 'death');
     } else if (c.alive) {
       const ht = LR.healthTier(c.health);
       c.status = ht.tier;
@@ -564,6 +581,7 @@ LR.engine.endOfDay = function() {
   if (spChange.changed) {
     if (spChange.next !== 'none') {
       LR.render.toast(`상승 나선 진입: ${LR.SPIRAL_LABELS[spChange.next]}`, 'spiral');
+      LR.chron(state, `상승 나선 — ${LR.SPIRAL_LABELS[spChange.next]} 진입`, 'pos');
     }
   }
 
@@ -601,6 +619,7 @@ LR.engine.endOfDay = function() {
       LR.render.toast(`습격 — ${v.name} 부상`, 'raid');
     }
     state.raidLastNightSummary = `${raidProb.scale} 습격. ${parts.join(', ')}.`;
+    LR.chron(state, state.raidLastNightSummary, 'raid');
     if (victims.length) {
       // 부상은 큰 사건 → 컷씬 + 체력 변화 표시(스몰윈처럼)
       raidCut = LR.buildRaidCutscene(state, victims, raidProb.scale);

@@ -98,6 +98,45 @@ LR.nameYa = function(name) {
   return name + '아';
 };
 
+// 공동격 조사 — 받침 있으면 '과'(민수과 X→민수와... 받침 기준), 없으면 '와'
+LR.nameWa = function(name) {
+  if (!name) return '';
+  const code = name.charCodeAt(name.length - 1);
+  if (code >= 0xAC00 && code <= 0xD7A3) {
+    return name + (((code - 0xAC00) % 28) ? '과' : '와');
+  }
+  return name + '와';
+};
+
+// ─── 유대(bond) — 함께한 작은 순간의 누적 ───
+// 2인 스몰윈이 발동할 때마다 그 짝의 유대가 1 쌓인다.
+// 3회에 도달하면 다음 날 아침 비트로 한 번 드러나고, 엔딩에 '가장 가까워진 두 사람'으로 남는다.
+LR.addBond = function(state, a, b) {
+  if (!a || !b || a === b) return;
+  if (!state.bonds) state.bonds = {};
+  const key = [a, b].sort().join('|');
+  state.bonds[key] = (state.bonds[key] || 0) + 1;
+  if (state.bonds[key] === 3) {
+    if (!state.bondsAnnounced) state.bondsAnnounced = {};
+    if (!state.bondsAnnounced[key]) {
+      state.bondsAnnounced[key] = true;
+      state.pendingBondBeat = { a: a, b: b };
+    }
+  }
+};
+
+// 가장 깊은 유대 짝 — 엔딩용
+LR.topBond = function(state) {
+  if (!state.bonds) return null;
+  let best = null, bestN = 0;
+  for (const key in state.bonds) {
+    if (state.bonds[key] > bestN) { bestN = state.bonds[key]; best = key; }
+  }
+  if (!best || bestN < 2) return null;
+  const ids = best.split('|');
+  return { a: ids[0], b: ids[1], n: bestN };
+};
+
 // ─── 일일 소음 (sec 4.2) ───
 LR.computeNoise = function(state, intentionalNoise) {
   let physiological = 0;

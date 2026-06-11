@@ -607,6 +607,15 @@ function buildDecisionBeats(node, s) {
     }
     s.pendingBabyLoss = null;
   }
+  // 유대의 아침 — 함께한 작은 순간이 3번 쌓인 두 사람 (한 번만 드러난다)
+  if (s.pendingBondBeat) {
+    const ba = s.characters[s.pendingBondBeat.a], bb = s.characters[s.pendingBondBeat.b];
+    if (ba && bb && ba.alive && bb.alive) {
+      beats.push({ kind: 'narration',
+        text: `요즘 ${LR.nameWa(ba.name)} ${LR.nameGa(bb.name)} 함께 있는 시간이 늘었다. 누가 먼저랄 것도 없이, 하루의 끝이 서로의 곁이 된다.` });
+    }
+    s.pendingBondBeat = null;
+  }
   // 빈사자의 목소리 — 죽어가는 사람은 수치가 아니라 말로 존재해야 한다 (경고이자 애착)
   const dying = LR.aliveChars(s).find(c => c.health < 20);
   if (dying) {
@@ -862,6 +871,7 @@ LR.village.render = function() {
   LR.village.renderDecision();
   LR.village.fillDossier();
   if (LR.village._syncPause) LR.village._syncPause();
+  if (LR.ambience) LR.ambience.update(s);   // 환경음 — 날씨·위협과 동기화
 };
 
 function renderTopbar(s) {
@@ -1848,6 +1858,7 @@ function ensureDom() {
         </span>
       </div>
       <div class="vh-cam">
+        <button class="vh-cam-btn" id="vhSound" title="환경음 켜기/끄기">🔊</button>
         <button class="vh-cam-btn vh-info-toggle" id="vhPanelToggle" title="생존자 명단 · 시스템 정보 펼치기">정보</button>
         <button class="vh-cam-x" id="vhClose">닫기 ✕</button>
       </div>
@@ -1898,6 +1909,16 @@ function ensureDom() {
     b.addEventListener('click', () => LR.village.setMode(b.dataset.mode));
   });
   document.getElementById('vhClose').addEventListener('click', () => LR.village.close());
+
+  // 환경음 토글 — 🔊/🔇
+  const snd = document.getElementById('vhSound');
+  if (snd) {
+    if (LR.ambience && !LR.ambience.enabled) snd.textContent = '🔇';
+    snd.addEventListener('click', () => {
+      if (!LR.ambience) return;
+      snd.textContent = LR.ambience.toggle() ? '🔊' : '🔇';
+    });
+  }
 
   // 통합 딤(일시정지) — 창이 열리면 씬을 반투명 검은색으로 가리고 패럴렉스 정지.
   //  딤 클릭 → 정보 창(건물·기록·망루) 닫기. (오늘의 결정은 진행 필요 → 닫지 않음)

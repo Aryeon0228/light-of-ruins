@@ -314,6 +314,17 @@ LR.render.showEnding = function(state) {
     ? `<div class="row dead"><span>태어나지 못한 아기</span><span>Day ${state.baby.lostDay || 7} · 첫 울음 대신 침묵이 남았다</span></div>`
     : '');
 
+  // 가장 깊은 유대 — 함께한 작은 순간이 가장 많이 쌓인 두 사람
+  const tb = LR.topBond ? LR.topBond(state) : null;
+  if (tb && !isDarkEnd) {
+    const an = state.characters[tb.a] ? state.characters[tb.a].name : tb.a;
+    const bn = state.characters[tb.b] ? state.characters[tb.b].name : tb.b;
+    roster.innerHTML += `<div class="row" style="margin-top:0.6rem;border-top:1px solid var(--c-border);padding-top:0.5rem">
+      <span>가장 가까워진 두 사람</span>
+      <span>${LR.nameWa(an)} ${bn} — 함께한 작은 순간 ${tb.n}번</span>
+    </div>`;
+  }
+
   // 전례 원장
   const ledger = document.getElementById('endingLedger');
   if (state.precedents.length === 0 && state.counters.posPrecedents === 0 && state.counters.negPrecedents === 0) {
@@ -329,9 +340,15 @@ LR.render.showEnding = function(state) {
     ledger.innerHTML += `<div style="margin-top:0.8rem;color:var(--c-text-dim);font-size:0.85rem">긍정 전례 ${state.counters.posPrecedents}회 · 부정 전례 ${state.counters.negPrecedents}회</div>`;
   }
 
-  // 30일 타임라인
+  // 30일 타임라인 — 위에는 이 판의 연대기(사건), 아래에는 수치 표
   const tl = document.getElementById('endingTimeline');
-  tl.innerHTML = '<table style="width:100%;font-size:0.78rem;border-collapse:collapse">' +
+  const chron = state.chronicle || [];
+  const chronHtml = chron.length
+    ? '<div class="ending-chronicle">' + chron.map(c =>
+        `<div class="chron-row ${c.kind || ''}"><b>D${c.day}</b><span>${c.text}</span></div>`
+      ).join('') + '</div>'
+    : '';
+  tl.innerHTML = chronHtml + '<table style="width:100%;font-size:0.78rem;border-collapse:collapse">' +
     '<thead><tr style="color:var(--c-text-dim);text-align:left;border-bottom:1px solid var(--c-border)">' +
     '<th>일자</th><th>식량</th><th>사기</th><th>소음</th><th>나선</th><th>전례</th><th>생존</th></tr></thead>' +
     '<tbody>' +

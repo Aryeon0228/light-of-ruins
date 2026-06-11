@@ -238,6 +238,7 @@ LR.SMALL_WIN_DEFS = {
 
   SW12: {
     id: 'SW12',
+    bond: ['jonghyeok', 'sujin'],
     name: '종혁의 라디오 손질',
     actor: 'jonghyeok',
     cardImage: 'assets/images/cards/sw12_jonghyeok.png',
@@ -258,6 +259,7 @@ LR.SMALL_WIN_DEFS = {
 
   SW13: {
     id: 'SW13',
+    bond: ['minsu', 'miyeon'],
     name: '민수와 아기',
     actor: 'minsu',
     cardImage: 'assets/images/cards/sw13_minsu_baby.png',
@@ -295,6 +297,7 @@ LR.SMALL_WIN_DEFS = {
 
   SW15: {
     id: 'SW15',
+    bond: ['eunseo', 'minsu'],
     name: '은서와 민수의 그림자놀이',
     actor: 'eunseo',
     cardImage: 'assets/images/cards/sw15_shadowplay.png',
@@ -334,6 +337,7 @@ LR.SMALL_WIN_DEFS = {
 
   SW18: {
     id: 'SW18',
+    bond: ['dongho', 'jaehyeok'],
     name: '분필로 그린 장기판',
     actor: 'dongho',
     cardImage: 'assets/images/cards/sw18_janggi.png',
