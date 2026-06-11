@@ -518,6 +518,16 @@ LR.engine.endOfDay = function() {
     state.fuel = Math.max(0, state.fuel - 2);  // 겨울 추가 소비
   }
 
+  // ─── 신선식품 부패 — 쌓아둔 잉여만 상한다(저장식으로 가공할 이유) ───
+  //  팬트리 한도(SHELF) 이하는 안 상함 → 결핍 상황을 더 악화시키지 않음.
+  //  한도를 넘는 신선식량만 계절 부패율(장마·폭염 ×2)로 줄어든다.
+  const SHELF = 55;
+  const decayMul = LR.SEASONS[state.season].foodDecay || 1;
+  const surplus = Math.max(0, state.food - SHELF);
+  const spoiled = Math.floor(surplus * 0.10 * decayMul);
+  if (spoiled > 0) state.food = Math.max(0, state.food - spoiled);
+  if (state.dailyProduce) state.dailyProduce.spoiled = spoiled;
+
   // 식량 부족 효과 — 모든 보유 식량(신선+비축) 합산 기준
   const totalFood = state.food + state.driedFood + state.pickledFood;
   const foodTier = LR.foodTier(totalFood);
