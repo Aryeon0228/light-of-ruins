@@ -571,6 +571,29 @@ function buildDecisionBeats(node, s) {
     beats.push({ kind: 'note',
       text: `🔊 간밤 판정 — 소음 ${s.noiseToday} (${judged.scale}) → 습격 확률 ${Math.round(judged.p * 100)}% → 무리가 비껴갔다.` });
   }
+  // 추모의 아침 — 어제 떠난 사람의 빈자리를, 남은 사람들의 말로 한 번 더 짚는다
+  if (s.pendingMourning) {
+    const m = s.pendingMourning;
+    beats.push({ kind: 'narration',
+      text: `${m.name}의 자리가 비어 있다. 침상 위의 담요는 아무도 개지 않았다 — 개는 순간, 정말로 떠난 것이 되니까.` });
+    const sujin = s.characters.sujin, jaehyeok = s.characters.jaehyeok;
+    if (sujin && sujin.alive && m.id !== 'sujin') {
+      beats.push({ kind: 'dialog', speaker: '수진', pid: 'sujin',
+        text: '"마지막에 해줄 수 있는 게 더 있었을 거예요. 그 생각이 머리에서 떠나질 않아요."' });
+    }
+    if (jaehyeok && jaehyeok.alive && m.id !== 'jaehyeok') {
+      beats.push({ kind: 'dialog', speaker: '재혁', pid: 'jaehyeok',
+        text: '"기억해 두자. 우리가 어떤 마을이었는지는, 떠난 사람이 증명하니까."' });
+    }
+    s.pendingMourning = null;
+  }
+  // 빈사자의 목소리 — 죽어가는 사람은 수치가 아니라 말로 존재해야 한다 (경고이자 애착)
+  const dying = LR.aliveChars(s).find(c => c.health < 20);
+  if (dying) {
+    beats.push({ kind: 'note', text: `🩸 ${dying.name} 빈사 (체력 ${dying.health}) — 치료 없이는 오래 버티지 못한다.` });
+    const line = LR.DYING_LINES && LR.DYING_LINES[dying.id];
+    if (line) beats.push({ kind: 'dialog', speaker: dying.name, pid: dying.id, text: line });
+  }
   if (s.pendingBeaconResolution) {
     const r = s.pendingBeaconResolution;
     beats.push({ kind: 'banner-beacon', pid: 'bc', text: `📡 ${LR.BEACON_TYPES[r.type].name} ${r.label} — ${r.text}` });

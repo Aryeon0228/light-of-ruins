@@ -283,15 +283,29 @@ LR.render.showEnding = function(state) {
   document.getElementById('endingNarration').innerHTML =
     lines.map(l => `<p>${l.replace(/\n/g, '<br>')}</p>`).join('');
 
-  // 생존자
+  // 생존자 — 수치 대신 '그 후'의 한 줄. 죽은 이는 언제, 무엇으로 떠났는지 기록.
+  const isDarkEnd = ending.id === 'totalDeath' || ending.id === 'collapse' || ending.id === 'contagion';
   const roster = document.getElementById('endingRoster');
   roster.innerHTML = LR.CHARACTER_ORDER.map(id => {
     const c = state.characters[id];
-    return `<div class="row ${c.alive ? '' : 'dead'}">
+    if (!c.alive) {
+      const when = c.deathDay ? `Day ${c.deathDay}` : '어느 날';
+      const cause = c.deathCause || '폐허 속에서';
+      return `<div class="row dead">
+        <span>${c.name}</span>
+        <span>${when} · ${cause} — 잠들다</span>
+      </div>`;
+    }
+    const epi = (!isDarkEnd && LR.EPILOGUE_LINES && LR.EPILOGUE_LINES[id])
+      ? LR.EPILOGUE_LINES[id]
+      : `체력 ${c.health} · 사기 ${c.morale}`;
+    return `<div class="row">
       <span>${c.name}</span>
-      <span>${c.alive ? `체력 ${c.health} · 사기 ${c.morale}` : '사망'}</span>
+      <span>${epi}</span>
     </div>`;
-  }).join('');
+  }).join('') + (state.baby.exists
+    ? `<div class="row"><span>${state.baby.name || '이름 없는 아기'}</span><span>폐허에서 태어나, 마을의 가장 작은 이유가 되었다.</span></div>`
+    : '');
 
   // 전례 원장
   const ledger = document.getElementById('endingLedger');

@@ -115,9 +115,16 @@ LR.engine.applyChoice = function(choiceId) {
       const lo = ex.injuryMin || 6, hi = ex.injuryMax || 16;
       const dmg = Math.floor(lo + Math.random() * (hi - lo + 1));
       lead.health = Math.max(0, lead.health - dmg);
+      lead.flags.expedHurtDay = state.day;            // 사인(死因) 추적용
       expedWound = { lead: lead, dmg: dmg, spot: ex.spot || '폐허' };
       LR.render.toast(`탐색 부상 — ${lead.name} 체력 -${dmg}`, 'raid');
     }
+  }
+
+  // 6.5 아기 이름 — 이름 짓기 이벤트의 선택 결과
+  if (choice.babyName !== undefined && state.baby.exists) {
+    state.baby.name = choice.babyName;
+    if (choice.babyName) LR.render.toast(`아기의 이름 — ${choice.babyName}`, 'smallwin');
   }
 
   // 3. 마을 전체 사기
@@ -155,6 +162,7 @@ LR.engine.applyChoice = function(choiceId) {
   }
 
   // 8. 스크립트 데이 특수 효과
+  let yeongsuDeathCut = null;
   if (node.yeongsuDies) {
     const y = state.characters.yeongsu;
     if (y.alive) {
@@ -162,9 +170,14 @@ LR.engine.applyChoice = function(choiceId) {
       y.health = 0;
       y.morale = 0;
       y.status = 'dead';
+      y.deathDay = state.day;
+      y.deathCause = '사흘의 방치';
       LR.render.toast('영수 사망 — Day ' + state.day, 'raid');
       // 마을 사기 -15 전체
       for (const c of LR.aliveChars(state)) c.morale = Math.max(0, c.morale - 5);
+      // 죽음의 의례 — 작별 컷씬 + 다음 날 추모 예약. 출산과 같은 밤이면 한 프레임에 겹친다.
+      yeongsuDeathCut = LR.buildDeathCutscene(state, [y], choice.babyBorn);
+      state.pendingMourning = { id: 'yeongsu', name: y.name };
     }
   }
   if (choice.babyBorn) {
@@ -218,6 +231,9 @@ LR.engine.applyChoice = function(choiceId) {
   if (expedWound) {
     cuts.push({ cut: LR.buildExpeditionWoundCutscene(state, expedWound),
                 tone: 'bad', badge: '탐색 부상', isNew: false, deltas: { health: -expedWound.dmg } });
+  }
+  if (yeongsuDeathCut) {
+    cuts.push({ cut: yeongsuDeathCut, tone: 'bad', badge: '상실', isNew: false, deltas: null });
   }
   if (!cuts.length) {
     if (choice.cutscene) {
@@ -295,6 +311,26 @@ LR.buildRaidCutscene = function(state, victims, scale) {
   }
   return { id: 'raid_' + state.day, frames };
 };
+// 죽음의 의례 — 토스트 한 줄로 지나가던 죽음을, 그 사람만의 작별 문장으로 보낸다.
+//  withBirth: 출산과 같은 밤의 죽음(D7 영수)이면 탄생과 상실을 한 호흡에 겹친다.
+LR.buildDeathCutscene = function(state, deads, withBirth) {
+  const bg = LR.villageCutsceneBg(state.season);
+  const frames = [];
+  for (const c of deads) {
+    const port = 'assets/images/portraits/' + c.id + '.png';
+    frames.push({ image: port, fallback: bg,
+      text: (LR.DEATH_LINES && LR.DEATH_LINES[c.id]) || `${LR.nameGa(c.name)} 떠났다.` });
+  }
+  if (withBirth) {
+    frames.push({ image: bg,
+      text: '같은 새벽, 아기가 태어났다. 죽음과 탄생이 한 밤에 다녀갔다. 폐공장의 어둠 속에서, 작은 울음이 빈자리를 채우려는 듯 길게 울렸다.' });
+  } else {
+    frames.push({ image: bg,
+      text: '아무도 오래 말하지 못했다. 해야 할 일들이 남아 있었고, 그것이 남은 사람들의 애도 방식이었다.' });
+  }
+  return { id: 'death_' + state.day, frames };
+};
+
 // 전례 분화 반응 — 같은 사건을 감수성 표가 다른 두 인물이 정반대로 읽는다.
 //  v1.2 감수성 표(negSens/posSens)가 수치가 아니라 '대사'로 드러나는 순간.
 //  가장 민감한 인물 + 가장 둔감한 인물의 한 마디씩, 다음 날 아침 비트로 표시.
@@ -438,18 +474,29 @@ LR.engine.endOfDay = function() {
     c.morale = Math.max(0, Math.min(100, Math.round(c.morale + drift)));
   }
   // 사망 처리 (별도 패스 — 회복 후 체력 0이면 사망)
+  const deadToday = [];
   for (const id of LR.CHARACTER_ORDER) {
     const c = state.characters[id];
     if (c.alive && c.health <= 0) {
       c.alive = false;
       c.health = 0;
       c.status = 'dead';
+      c.deathDay = state.day;
+      // 사인 추론 — 최근 이틀의 상처가 우선, 다음은 굶주림
+      c.deathCause = (c.flags.raidHurtDay >= state.day - 2) ? '습격에서 입은 상처'
+        : (c.flags.expedHurtDay >= state.day - 2) ? '탐색에서 입은 부상'
+        : (foodTier.tier === 'famine') ? '굶주림'
+        : '부상 악화';
+      deadToday.push(c);
       for (const o of LR.aliveChars(state)) o.morale = Math.max(0, o.morale - 5);
       LR.render.toast(`${c.name} 사망 — Day ${state.day}`, 'raid');
     } else if (c.alive) {
       const ht = LR.healthTier(c.health);
       c.status = ht.tier;
     }
+  }
+  if (deadToday.length) {
+    state.pendingMourning = { id: deadToday[0].id, name: deadToday[0].name };
   }
 
   // 상승 나선 갱신
@@ -488,6 +535,7 @@ LR.engine.endOfDay = function() {
     for (const v of victims) {
       const dmg = Math.floor(dmgBand[0] + Math.random() * (dmgBand[1] - dmgBand[0]));
       v.health = Math.max(0, v.health - dmg);
+      v.flags.raidHurtDay = state.day;               // 사인(死因) 추적용
       totalDmg += dmg;
       parts.push(`${v.name} 체력 -${dmg}`);
       LR.render.toast(`습격 — ${v.name} 부상`, 'raid');
@@ -537,9 +585,17 @@ LR.engine.endOfDay = function() {
     setTimeout(() => LR.engine.beginDay(), 350);
   };
 
-  if (raidCut && LR.cutscene && LR.cutscene.play) {
-    LR.cutscene.play(raidCut, proceed, 'bad', '간밤의 습격', false, raidDeltas);
-  } else {
-    proceed();
+  // 밤의 컷씬 체인: [습격 부상] → [죽음의 작별] → 다음 날 (또는 엔딩)
+  const nightCuts = [];
+  if (raidCut) nightCuts.push({ cut: raidCut, tone: 'bad', badge: '간밤의 습격', deltas: raidDeltas });
+  if (deadToday.length) {
+    nightCuts.push({ cut: LR.buildDeathCutscene(state, deadToday.slice(0, 3), false),
+                     tone: 'bad', badge: '상실', deltas: null });
   }
+  const playNight = function(list) {
+    if (!list.length || !LR.cutscene || !LR.cutscene.play) { proceed(); return; }
+    const head = list[0];
+    LR.cutscene.play(head.cut, () => playNight(list.slice(1)), head.tone, head.badge, false, head.deltas);
+  };
+  playNight(nightCuts);
 };

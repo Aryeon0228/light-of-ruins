@@ -18,6 +18,12 @@ LR.selectScenarioNode = function(state) {
     return LR.beaconScenarioNode(state);
   }
 
+  // ── Tier 2.7: 우선 마을 비트 (아기 이름 짓기 등 감정 이벤트) — 교차 이벤트보다 먼저 ──
+  if (LR.pickPriorityVillageDay) {
+    const pv = LR.pickPriorityVillageDay(state);
+    if (pv) return pv;
+  }
+
   // ── Tier 3: 교차 이벤트 5.1~5.6 (조건 충족 시) ──
   const eligible = LR.eligibleCrossEvents(state)
     .filter(e => !state.recentScenarios.includes(e.id));

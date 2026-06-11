@@ -179,8 +179,43 @@ LR.VILLAGE_DAYS = [
       { id: 'B', label: '한 방에 모여 체온 공유', body: '연료 절약. 비좁지만 견딘다.', deltas: { fuel: -1 } },
       { id: 'C', label: '각자 버틴다', body: '연료 아낌. 약한 이들이 앓는다.', perCharDeltas: { yeongsu: { health: -6 }, minsu: { health: -5 } } }
     ]
+  },
+  {
+    id: 'VD_baby_name',
+    title: '이름 없는 아기',
+    priority: true,    // 감정 비트 — 조건이 차면 다른 마을 이벤트보다 먼저
+    canFire: function (s) { return s.baby.exists && s.baby.name === undefined && s.day >= (s.baby.bornDay || 7) + 1; },
+    body: [
+      { kind: 'narration', text: '아기는 아직 이름이 없다. 다들 "아기"라고만 부른다. 이름을 붙인다는 것은, 이 아이가 여기서 자랄 거라고 마을이 믿기 시작한다는 뜻이다.' },
+      { kind: 'dialog', speaker: '미연', text: '"이름을… 지어줘야 할 것 같아요. 불러줄 이름이 있어야, 이 아이도 버틸 테니까."' },
+      { kind: 'dialog', speaker: '민수', text: '"내가 그림에 이름 써줄 거야. 그러니까 빨리 정해줘."' }
+    ],
+    choices: [
+      { id: 'A', label: '새벽 — 그 밤이 끝나고 온 시간',
+        body: '아기가 태어난 새벽에서 가져온 이름. 마을 전체 사기 +3.',
+        babyName: '새벽',
+        moraleAll: +3 },
+      { id: 'B', label: '영수 — 떠난 사람의 이름을 물려준다',
+        body: '같은 밤에 떠난 장로의 이름. 죽음이 이름이 되어 돌아온다. 감수성 높은 이들에게 더 깊게.',
+        babyName: '영수',
+        moraleAll: +2,
+        perCharDeltas: { jonghyeok: { morale: +4 }, miyeon: { morale: +3 }, minsu: { morale: +3 } } },
+      { id: 'C', label: '아직 부르지 못한다',
+        body: '이름은 살아남은 다음에 짓기로 한다. 아기는 이번 겨울을 이름 없이 난다.',
+        babyName: '',
+        moraleAll: -1 }
+    ],
+    keyLine: '이름을 붙이는 순간, 미래가 책임이 된다.'
   }
 ];
+
+// 우선 마을 비트 — priority 표시된 감정 이벤트(이름 짓기 등)는 교차 이벤트보다 먼저 (drama.js Tier 2.7)
+LR.pickPriorityVillageDay = function (state) {
+  const e = LR.VILLAGE_DAYS.find(ev => ev.priority &&
+    !state.recentScenarios.includes(ev.id) &&
+    (typeof ev.canFire !== 'function' || ev.canFire(state)));
+  return e ? Object.assign({ source: 'villageDay' }, e) : null;
+};
 
 // 발동 가능한 마을 하루 이벤트 (최근 표시 제외 + canFire 통과) 중 하나
 LR.pickVillageDay = function (state) {
@@ -189,6 +224,9 @@ LR.pickVillageDay = function (state) {
     (typeof e.canFire !== 'function' || e.canFire(state))
   );
   if (pool.length === 0) return null;
+  // 감정 비트(이름 짓기 등)는 조건이 차면 가장 먼저
+  const prio = pool.find(e => e.priority);
+  if (prio) return Object.assign({ source: 'villageDay' }, prio);
   // 가벼운 의사난수 (day 기반) — 같은 날 재현 가능
   const idx = (state.day * 7 + state.noiseToday * 3) % pool.length;
   const node = pool[idx];
