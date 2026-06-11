@@ -203,22 +203,16 @@ LR.village.fillDossier = function() {
 
 LR.village.positionPopover = function() {
   const pop = document.getElementById('vhPop');
-  const stage = document.querySelector('.vh-stage');
   const host = document.getElementById('vhScene');
-  if (!pop || !stage || !host || !pop.classList.contains('open')) return;
+  if (!pop || !host || !pop.classList.contains('open')) return;
   const hot = host.querySelector('.vh-phot[data-pchar="' + LR.village.popChar + '"]');
   if (!hot) { pop.classList.remove('open'); return; }
-  const sr = stage.getBoundingClientRect(), hr = hot.getBoundingClientRect();
-  const cx = hr.left + hr.width / 2 - sr.left;       // 인물 중앙 x (스테이지 기준)
-  const headTop = hr.top - sr.top;
-  const pw = pop.offsetWidth, ph = pop.offsetHeight;
-  let left = Math.max(6, Math.min(sr.width - pw - 6, cx - pw / 2));
-  let top = headTop - ph - 12, below = false;
-  if (top < 4) { top = (hr.bottom - sr.top) + 12; below = true; }   // 위 공간 부족 → 아래로
-  pop.style.left = Math.round(left) + 'px';
-  pop.style.top = Math.round(top) + 'px';
-  pop.classList.toggle('below', below);
-  pop.style.setProperty('--arrow', Math.round(cx - left) + 'px');   // 말풍선 꼬리 위치
+  // 대사창(하단)에 가리지 않도록 좌측 상단 고정
+  pop.classList.add('corner');
+  pop.classList.remove('below');
+  pop.style.left = '12px';
+  pop.style.top = '12px';
+  pop.style.removeProperty('--arrow');
 };
 
 LR.village.closePopover = function() {
