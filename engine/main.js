@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     LR.save.clear();
     document.getElementById('titleScreen').style.display = 'none';
     document.getElementById('gameRoot').classList.add('active');
+    if (LR.render.coverForDay) LR.render.coverForDay();   // 즉시 암전 → 게임 화면 깜빡임 방지
     LR.engine.startNewGame();
     // 마을을 메인 플레이 표면으로 — 오늘의 결정이 마을 안에서 진행
     if (LR.village && LR.village.openAsPlay) LR.village.openAsPlay();
@@ -34,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (state.ending) {
       LR.render.showEnding(state);
     } else {
+      if (LR.render.coverForDay) LR.render.coverForDay();   // 즉시 암전 → 깜빡임 방지
       LR.engine.beginDay();
       if (LR.village && LR.village.openAsPlay) LR.village.openAsPlay();
     }
@@ -71,6 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnRestart').addEventListener('click', () => {
     LR.save.clear();
     document.getElementById('endingOverlay').classList.remove('active');
+    if (LR.render.coverForDay) LR.render.coverForDay();   // 즉시 암전 → 깜빡임 방지
     LR.engine.startNewGame();
   });
 

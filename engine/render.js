@@ -382,6 +382,14 @@ LR.render.hideEnding = function() {
 };
 
 // ─── 하루 전환 (암전 → 타이틀 + 매일 상태 → 다시 밝아짐) ───
+// 게임 진입 직후 깜빡임 방지 — 첫 렌더 전에 암전을 먼저 깔아둔다.
+//  곧이어 beginDay→dayBanner()가 같은 작업(task) 안에서 내용(Day N)을 채우므로 끊김 없이 이어진다.
+LR.render.coverForDay = function() {
+  LR.render._lastBannerDay = null;     // 새 판이면 dayBanner가 반드시 발동되도록
+  const el = document.getElementById('dayBanner');
+  if (el) { el.classList.remove('out'); el.classList.add('show'); }
+};
+
 LR.render.dayBanner = function(text, state) {
   const el = document.getElementById('dayBanner');
   const txt = document.getElementById('dayBannerText');
