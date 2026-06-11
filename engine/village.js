@@ -936,6 +936,35 @@ LR.village.syncFromGame = function(state) {
 LR.village.openAsPlay = function() {
   LR.village.playMode = true;
   LR.village.open(LR.state);
+  LR.village._maybeTutorial();
+};
+
+// 하루의 살림 — 첫 진입 시 한 번만 뜨는 가벼운 안내(localStorage 기억)
+LR.village._maybeTutorial = function() {
+  let seen = false;
+  try { seen = localStorage.getItem('lr_tend_tut') === '1'; } catch (e) {}
+  if (seen) return;
+  const scr = document.getElementById('villageScreen');
+  if (!scr || scr.querySelector('.vh-tut')) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'vh-tut';
+  wrap.innerHTML = `
+    <div class="vh-tut-card">
+      <div class="vh-tut-kick">처음 오셨네요</div>
+      <h3>오늘의 살림</h3>
+      <p>마을 시설을 눌러 <b>매일 한 번씩</b> 돌보세요.</p>
+      <ul>
+        <li><span>🪣</span><b>물 뜨기</b> — 빗물받이에서 식수를 확보</li>
+        <li><span>🌱</span><b>수확</b> — 밭에서 신선 채소를 (물이 있어야 함)</li>
+        <li><span>🍳</span><b>부엌</b> — 요리(사기↑) 또는 저장 가공(말림·절임)</li>
+      </ul>
+      <p class="vh-tut-sub">신선식품은 쌓아두면 상해요 — 풍족할 때 <b>저장</b>해두면 위기에 든든해요. 상단 <b>오늘의 살림 N/3</b>으로 확인할 수 있어요.</p>
+      <button class="vh-tut-ok">알겠어요</button>
+    </div>`;
+  scr.appendChild(wrap);
+  const close = () => { wrap.remove(); try { localStorage.setItem('lr_tend_tut', '1'); } catch (e) {} };
+  wrap.querySelector('.vh-tut-ok').addEventListener('click', close);
+  wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); });
 };
 
 // ═══════════════════════════════════════════════════════
@@ -968,6 +997,8 @@ function renderTendingHud(s) {
     ['kitchen', '🍳', '부엌', false]
   ];
   const doneN = items.filter(it => t[it[0]] === s.day).length;
+  const hasTodo = items.some(it => t[it[0]] !== s.day && !it[3]);   // 잠기지 않은 미완료가 있으면 널지
+  el.classList.toggle('nudge', hasTodo);
   el.innerHTML = `<span class="vh-tend-h">오늘의 살림 <b>${doneN}/3</b></span>` +
     items.map(([zone, ic, lab, locked]) => {
       const done = t[zone] === s.day;
@@ -1567,9 +1598,18 @@ function sceneCompound(s) {
     const size = (p.h != null) ? `height:${p.h}%` : `width:${p.w}%`;
     return `<img class="vh-actor${isSel ? ' sel' : ''}" data-char="${p.char}" src="${A}${p.file}.png" alt="" style="left:${p.cx}%;top:${p.cy}%;${size};${dead}" onerror="this.style.display='none'">`;
   }).join('');
-  const hots = ZONES.map(zn =>
-    `<button class="vh-hot" data-zone="${zn.z}" style="left:${zn.box[0]}%;top:${zn.box[1]}%;width:${zn.box[2]}%;height:${zn.box[3]}%"><span class="vh-hotlab">${zn.label}</span></button>`
-  ).join('');
+  const tendIcon = { water: '🪣', field: '🌱', kitchen: '🍳' };
+  const tendP = LR.village._tendPlan(s);
+  const hots = ZONES.map(zn => {
+    let mark = '';
+    if (tendIcon[zn.z]) {
+      const done = s.tending && s.tending[zn.z] === s.day;
+      const locked = zn.z !== 'water' && tendP.waterDry;
+      const cls = done ? 'done' : locked ? 'locked' : 'todo';
+      mark = `<span class="vh-hot-mark ${cls}">${done ? '✓' : locked ? '✕' : '●'}</span>`;
+    }
+    return `<button class="vh-hot" data-zone="${zn.z}" style="left:${zn.box[0]}%;top:${zn.box[1]}%;width:${zn.box[2]}%;height:${zn.box[3]}%">${mark}<span class="vh-hotlab">${zn.label}</span></button>`;
+  }).join('');
   // 인물 핫스팟 (형상 위) — 호버 시 확대, 클릭 시 선택
   const phots = PEOPLE_FILES.map(p => {
     const c = s.characters[p.char];

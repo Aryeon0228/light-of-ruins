@@ -178,6 +178,18 @@ button {
 .panel .row .lbl { color: var(--c-text-dim); }
 .panel .row .val { color: var(--c-text); font-weight: 500; }
 .panel .row .val.dim { color: var(--c-text-faint); }
+
+/* 자원 패널 — 그룹 헤더 + 추세 화살표 */
+.res-group {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin: 0.5rem 0 0.15rem; font-size: 0.68rem; letter-spacing: 0.08em;
+  color: var(--c-spiral); text-transform: uppercase;
+}
+.res-group:first-child { margin-top: 0; }
+.res-group span { font-size: 0.62rem; color: var(--c-text-faint); letter-spacing: 0; text-transform: none; }
+.res-tr { font-style: normal; font-size: 0.72rem; margin-left: 0.25rem; }
+.res-tr.up { color: var(--c-precedent-pos); }
+.res-tr.down { color: var(--c-precedent); }
 .panel .row .val.warn { color: var(--c-warn); }
 .panel .row .val.danger { color: var(--c-danger); }
 .panel .row .val.good { color: var(--c-spiral); }

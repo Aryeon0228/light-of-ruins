@@ -66,13 +66,22 @@ LR.render.leftPanel = function(state) {
     </div>
   `;
 
-  // 자원
+  // 자원 — 식량(신선/저장) · 물자로 묶고, 어젯밤 생산/소모를 추세(▲▼)로 표시
+  const dp = state.dailyProduce || {};
+  const tr = (v, invert) => {
+    if (v == null || v === 0) return '';
+    const up = invert ? v < 0 : v > 0;
+    return ` <i class="res-tr ${up ? 'up' : 'down'}">${up ? '▲' : '▼'}${Math.abs(v)}</i>`;
+  };
   document.getElementById('resourceList').innerHTML = `
-    <div class="row"><span class="lbl">물</span><span class="val">${state.water}</span></div>
+    <div class="res-group">식량 <span>신선은 잉여분이 상함</span></div>
+    <div class="row"><span class="lbl">신선</span><span class="val">${state.food}${dp.farm ? tr(dp.farm) : ''}${dp.spoiled ? tr(-dp.spoiled) : ''}</span></div>
+    <div class="row"><span class="lbl">말림</span><span class="val dim">${state.driedFood}</span></div>
+    <div class="row"><span class="lbl">절임</span><span class="val dim">${state.pickledFood}</span></div>
+    <div class="res-group">물자</div>
+    <div class="row"><span class="lbl">물</span><span class="val">${state.water}${tr(dp.water)}</span></div>
     <div class="row"><span class="lbl">연료</span><span class="val ${state.fuel < 10 ? 'warn' : ''}">${state.fuel}</span></div>
     <div class="row"><span class="lbl">의약품</span><span class="val ${state.medicine === 0 ? 'danger' : ''}">${state.medicine}</span></div>
-    <div class="row"><span class="lbl">건조식품</span><span class="val dim">${state.driedFood}</span></div>
-    <div class="row"><span class="lbl">절임식품</span><span class="val dim">${state.pickledFood}</span></div>
   `;
 
   // 비컨
