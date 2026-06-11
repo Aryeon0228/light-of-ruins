@@ -777,7 +777,7 @@ LR.village._renderDecisionView = function() {
         ${b.pid ? `<div class="vd-portrait"${((b.kind === 'dialog' || b.kind === 'narration') && b.pid !== 'bc') ? ` style="border-color:${nameColor(b.pid)}"` : ''}>${portrait}</div>` : ''}
         <div class="vd-textbox">
           <span class="vd-spk${spkCls}"${spkStyle}>${spkLabel}</span>
-          <p class="vd-line">${colorizeNames(b.text)}</p>
+          <p class="vd-line">${colorizeNames(LR.breakSentences ? LR.breakSentences(b.text) : b.text)}</p>
           <div class="vd-runfoot">
             <span class="vd-progress">${idx + 1} / ${beats.length}</span>
             <span class="vd-next">${isLast ? '▸ 선택지' : '▸ 계속 (클릭)'}</span>
