@@ -88,6 +88,16 @@ LR.nameGa = function(name) {
   return name + '이(가)';
 };
 
+// 호격 조사 — 받침 있으면 '아'(새벽아), 없으면 '야'(영수야)
+LR.nameYa = function(name) {
+  if (!name) return '';
+  const code = name.charCodeAt(name.length - 1);
+  if (code >= 0xAC00 && code <= 0xD7A3) {
+    return name + (((code - 0xAC00) % 28) ? '아' : '야');
+  }
+  return name + '아';
+};
+
 // ─── 일일 소음 (sec 4.2) ───
 LR.computeNoise = function(state, intentionalNoise) {
   let physiological = 0;

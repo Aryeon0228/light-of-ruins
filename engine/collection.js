@@ -43,7 +43,7 @@ LR.collection.renderGallery = function() {
     return '<div class="coll-card">'
       + '<div class="coll-art"><img src="' + art + '" alt="" onerror="this.onerror=null;this.src=\'' + portrait + '\'"></div>'
       + '<div class="coll-name">' + def.name + '</div>'
-      + '<div class="coll-desc">' + def.text + '</div></div>';
+      + '<div class="coll-desc">' + (typeof def.text === 'function' ? def.text(LR.state) : def.text) + '</div></div>';
   }).join('');
   const cnt = document.getElementById('collectionCount');
   if (cnt) cnt.textContent = got.length + ' / ' + ids.length;

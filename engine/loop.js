@@ -262,7 +262,7 @@ LR.engine.applyChoice = function(choiceId) {
   const cuts = [];
   if (cardSW) {
     const def = LR.SMALL_WIN_DEFS[cardSW.id];
-    cuts.push({ cut: def.cutscene || LR.buildSmallWinCutscene(def),   // 전용 아트 없으면 인물 포트레이트 카드
+    cuts.push({ cut: def.cutscene || LR.buildSmallWinCutscene(def, cardSW.text),   // 전용 아트 없으면 인물 포트레이트 카드
                 tone: 'reward', badge: def.name, isNew: cardIsNew, deltas: resultDeltas });
   }
   if (expedWound) {
@@ -302,10 +302,12 @@ LR.villageCutsceneBg = function(season) {
   return 'assets/images/village/' + (map[season] || 'bg_village') + '.png';
 };
 // 스몰윈 카드 컷씬(전용 아트가 없을 때) — 인물 포트레이트를 카드 아트로, 스몰윈 텍스트를 캡션으로.
-LR.buildSmallWinCutscene = function(def) {
+//  textOverride: 상태 반영 텍스트(함수형 text가 만든 문장)를 우선 사용
+LR.buildSmallWinCutscene = function(def, textOverride) {
   const portrait = 'assets/images/portraits/' + (def.actor || 'bc') + '.png';
   const img = def.cardImage || portrait;
-  return { id: 'swcard_' + def.id, frames: [{ image: img, fallback: portrait, text: def.text }] };
+  const text = textOverride || (typeof def.text === 'function' ? def.text(LR.state) : def.text);
+  return { id: 'swcard_' + def.id, frames: [{ image: img, fallback: portrait, text: text }] };
 };
 // 습격(부상) 컷씬 — 다침은 큰 사건이므로 스몰윈처럼 컷씬 + 체력 변화 표시.
 //  텍스트는 규모별 풀에서 랜덤 — 매번 같은 문장이 반복되지 않게.
@@ -362,10 +364,12 @@ LR.buildDeathCutscene = function(state, deads, withBirth) {
       text: (LR.DEATH_LINES && LR.DEATH_LINES[c.id]) || `${LR.nameGa(c.name)} 떠났다.` });
   }
   if (withBirth) {
-    frames.push({ image: bg,
+    const slot = 'assets/images/cutscenes/birth_light.png';
+    frames.push({ image: slot, fallback: bg, slot: slot,
       text: '같은 새벽, 아기가 태어났다. 죽음과 탄생이 한 밤에 다녀갔다. 폐공장의 어둠 속에서, 작은 울음이 빈자리를 채우려는 듯 길게 울렸다.' });
   } else {
-    frames.push({ image: bg,
+    const slot = 'assets/images/cutscenes/death_still.png';
+    frames.push({ image: slot, fallback: bg, slot: slot,
       text: '아무도 오래 말하지 못했다. 해야 할 일들이 남아 있었고, 그것이 남은 사람들의 애도 방식이었다.' });
   }
   return { id: 'death_' + state.day, frames };
@@ -376,10 +380,11 @@ LR.buildDeathCutscene = function(state, deads, withBirth) {
 LR.buildBirthLossCutscene = function(state) {
   const bg = LR.villageCutsceneBg(state.season);
   const port = 'assets/images/portraits/miyeon.png';
+  const slot = 'assets/images/cutscenes/birth_loss.png';
   return {
     id: 'birthloss_' + state.day,
     frames: [
-      { image: bg, text: '새벽까지 이어진 진통. 의약품 없이, 수진이 할 수 있는 일은 많지 않았다.' },
+      { image: slot, fallback: bg, slot: slot, text: '새벽까지 이어진 진통. 의약품 없이, 수진이 할 수 있는 일은 많지 않았다.' },
       { image: port, fallback: bg, text: '아기는 끝내 첫 울음을 울지 못했다. 미연은 새벽빛이 들 때까지 아무 말도 하지 않았다.' },
       { image: bg, text: '그날 이후 마을은 이상할 만큼 조용하다. 그 조용함이 무엇의 부재인지, 모두가 알고 있다.' }
     ]

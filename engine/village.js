@@ -562,6 +562,15 @@ function narrationPortrait(text) {
 }
 function buildDecisionBeats(node, s) {
   const beats = [];
+  // 계절 전환의 아침 — 분위기와 규칙(소음 보정 등)이 함께 바뀌는 순간을 한 번 짚는다
+  if (s.day > 1 && LR.seasonOnDay(s.day) !== LR.seasonOnDay(s.day - 1)) {
+    const seasonLine = {
+      rainy:  '🌧 장마가 시작됐다. 빗소리가 마을의 소음을 덮는다 (소음 ×0.5) — 대신 습기가 식량과 상처를 노린다.',
+      autumn: '🍂 비가 걷히고 가을이 왔다. 마른 공기가 소리를 멀리 보낸다 (소음 ×1.3) — 낙엽이 모든 발걸음을 외친다.',
+      winter: '❄ 첫눈. 겨울부터는 연료가 식량만큼 무겁다. 추위는 약한 사람부터 시험한다.'
+    }[s.season];
+    if (seasonLine) beats.push({ kind: 'note', text: seasonLine });
+  }
   // 간밤 판정 인과 — '소음 → 확률 → 결과'의 숫자 사슬을 보여줘 규칙을 추론·학습하게 한다
   const judged = LR.raidProbability(s.noiseToday);
   if (s.raidLastNightSummary) {

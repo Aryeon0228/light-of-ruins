@@ -9,7 +9,18 @@ LR.SMALL_WIN_DEFS = {
     name: '민수의 그림',
     actor: 'minsu',
     cardImage: 'assets/images/cards/sw1_minsu.png',
-    text: '민수가 종이 위에 색연필로 무언가를 그린다. 한참 뒤 한 사람의 무릎 옆에 슬며시 놓고 간다. 그림 속에는 불빛이 켜진 작은 집이 있다.',
+    // 그림은 마을의 어제를 비춘다 — 같은 SW도 판마다 다른 그림 (창발)
+    text: function(state) {
+      const head = '민수가 종이 위에 색연필로 무언가를 그린다. 한참 뒤 한 사람의 무릎 옆에 슬며시 놓고 간다. ';
+      if (!state) return head + '그림 속에는 불빛이 켜진 작은 집이 있다.';
+      if (state.baby && state.baby.exists) {
+        const nm = state.baby.name ? `아기 ${state.baby.name}` : '아기';
+        return head + `그림 속에는 ${nm}를 안은 사람들이 빙 둘러서 있다. 모두 웃는 얼굴이다.`;
+      }
+      if (state.raidedLastNight) return head + '그림 속 담장은 실제보다 두 배쯤 높고, 그 위에 커다란 해가 떠 있다.';
+      if ((state.precedents || []).some(p => p.type === 'neg')) return head + '그림 속 집들은 서로 조금 떨어져 있다. 그래도 굴뚝의 연기는 한 방향으로 흐른다.';
+      return head + '그림 속에는 불빛이 켜진 작은 집이 있다.';
+    },
     canFire: function(state) {
       const minsu = LR.charById(state, 'minsu');
       if (!minsu.alive || minsu.morale < 60) return false;
@@ -318,6 +329,45 @@ LR.SMALL_WIN_DEFS = {
       const target = sorted.find(c => c.id !== 'hayeong');
       if (target) target.morale = Math.min(100, target.morale + 2);
       return { noise: 0, targetName: target ? target.name : null };
+    }
+  },
+
+  SW18: {
+    id: 'SW18',
+    name: '분필로 그린 장기판',
+    actor: 'dongho',
+    cardImage: 'assets/images/cards/sw18_janggi.png',
+    text: '폐자재 합판 위에 분필로 그린 장기판. 동호가 말없이 병뚜껑 말을 옮긴다. 재혁이 맞은편에 앉는다. 대화는 없다 — 그래도 한 판이 끝날 때까지, 둘 다 자리를 뜨지 않는다.',
+    canFire: function(state) {
+      const d = LR.charById(state, 'dongho'), j = LR.charById(state, 'jaehyeok');
+      return d.alive && j.alive && d.morale <= 55 && j.health >= 50;
+    },
+    apply: function(state) {
+      // 동호 +4(말없는 동석), 재혁 +2, 소음 0
+      LR.charById(state, 'dongho').morale = Math.min(100, LR.charById(state, 'dongho').morale + 4);
+      LR.charById(state, 'jaehyeok').morale = Math.min(100, LR.charById(state, 'jaehyeok').morale + 2);
+      return { noise: 0 };
+    }
+  },
+
+  SW19: {
+    id: 'SW19',
+    name: '첫 옹알이',
+    actor: 'miyeon',
+    cardImage: 'assets/images/cards/sw19_first_babble.png',
+    // 지어준 이름이 처음으로 불리는 순간 — 이름 짓기 이벤트와 이어지는 창발
+    text: function(state) {
+      const nm = (state && state.baby && state.baby.name) || '아가';
+      return `아기가 처음으로 울음이 아닌 소리를 냈다. 미연이 "${LR.nameYa(nm)}" 하고 부르자, 일하던 사람들이 하나둘 손을 멈추고 모여들었다. 이름은 부를수록 진짜가 된다.`;
+    },
+    canFire: function(state) {
+      return state.baby.exists && !!state.baby.name && state.day >= (state.baby.bornDay || 7) + 3;
+    },
+    apply: function(state) {
+      // 전원 +2, 미연 +3, 소음 +2 (모여든 웅성임)
+      for (const c of LR.aliveChars(state)) c.morale = Math.min(100, c.morale + 2);
+      LR.charById(state, 'miyeon').morale = Math.min(100, LR.charById(state, 'miyeon').morale + 1);
+      return { noise: 2 };
     }
   },
 

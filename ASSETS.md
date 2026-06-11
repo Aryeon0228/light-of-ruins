@@ -80,6 +80,8 @@
 | `sw15_shadowplay.png` | 은서와 민수의 그림자놀이 |
 | `sw16_hayeong_sunset.png` | 하영의 망루 일몰 |
 | `sw17_jeonghun_soup.png` | 정훈의 남은 국물 |
+| `sw18_janggi.png` | 분필로 그린 장기판 |
+| `sw19_first_babble.png` | 첫 옹알이 |
 
 - **정사각(1:1)** 으로! (갤러리 카드 1:1, 컷씬 16:9는 위아래만 살짝 크롭 → 인물 가운데)
 - 없으면 **인물 포트레이트로 자동 폴백** → 안 깨짐.
@@ -95,6 +97,9 @@
 | `raid_mid.png` | 경계 · 중규모 (6~10마리) | 1280 × 720 |
 | `raid_large.png` | 위험 · 대규모 (11+마리) | 1280 × 720 |
 | `explore_wound.png` | 탐색(외출) 중 좀비 조우·부상 | 1280 × 720 |
+| `death_still.png` | 작별의 정물 (사망 컷씬 마무리) | 1280 × 720 |
+| `birth_light.png` | 어둠 속의 탄생 (출산 성공) | 1280 × 720 |
+| `birth_loss.png` | 새벽까지 이어진 진통 (출산 실패, 절제) | 1280 × 720 |
 
 ## 6. 외부 정찰 (망루 뷰)
 `assets/images/outside/`

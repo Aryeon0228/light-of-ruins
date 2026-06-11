@@ -50,7 +50,8 @@ LR.trySmallWins = function(state) {
   return [{
     id: pick.id,
     name: pick.def.name,
-    text: pick.def.text,
+    // 텍스트가 함수면 마을 상태를 반영해 생성 — 같은 SW도 판마다 다른 문장 (창발)
+    text: typeof pick.def.text === 'function' ? pick.def.text(state) : pick.def.text,
     noise: result.noise || 0,
     targetName: result.targetName,
     dampening: dampening
