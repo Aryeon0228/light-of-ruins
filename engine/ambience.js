@@ -55,7 +55,7 @@ LR.ambience = {
     return { gain: gain };
   },
 
-  // 모닥불 크래클 — 무작위 간격의 아주 짧은 고역 틱
+  // 모닥불 크래클 — 가끔, 부드럽게(둔한 톤·작은 음량). 너무 잦으면 '탁탁' 거슬려서 절제.
   _scheduleCrackle: function() {
     const self = this;
     function tick() {
@@ -64,16 +64,16 @@ LR.ambience = {
         const src = ctx.createBufferSource();
         src.buffer = self._noiseBuf;
         const bp = ctx.createBiquadFilter();
-        bp.type = 'bandpass'; bp.frequency.value = 1800 + Math.random() * 2500;
+        bp.type = 'bandpass'; bp.frequency.value = 700 + Math.random() * 900;   // 둔하게(고역↓)
         const g = ctx.createGain();
         const t = ctx.currentTime;
         g.gain.setValueAtTime(0.0001, t);
-        g.gain.exponentialRampToValueAtTime(0.02 + Math.random() * 0.025, t + 0.005);
-        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.04 + Math.random() * 0.05);
+        g.gain.exponentialRampToValueAtTime(0.006 + Math.random() * 0.008, t + 0.006);   // 음량↓
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05 + Math.random() * 0.06);
         src.connect(bp); bp.connect(g); g.connect(ctx.destination);
-        src.start(t); src.stop(t + 0.12);
+        src.start(t); src.stop(t + 0.14);
       }
-      self._crackleTimer = setTimeout(tick, 120 + Math.random() * 700);
+      self._crackleTimer = setTimeout(tick, 900 + Math.random() * 2600);   // 빈도↓(가끔)
     }
     tick();
   },
