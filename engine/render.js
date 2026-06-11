@@ -296,15 +296,22 @@ LR.render.showEnding = function(state) {
         <span>${when} · ${cause} — 잠들다</span>
       </div>`;
     }
-    const epi = (!isDarkEnd && LR.EPILOGUE_LINES && LR.EPILOGUE_LINES[id])
+    let epi = (!isDarkEnd && LR.EPILOGUE_LINES && LR.EPILOGUE_LINES[id])
       ? LR.EPILOGUE_LINES[id]
       : `체력 ${c.health} · 사기 ${c.morale}`;
+    // 아기를 잃은 판 — 아기와 닿아 있던 에필로그들이 달라진다
+    if (state.baby.lost && !isDarkEnd) {
+      if (id === 'miyeon') epi = '봄이 오면 말해주려던 이름을, 아직 가지고 있다.';
+      if (id === 'jonghyeok') epi = '방음 칸막이는 완성되었다. 덮을 울음이 없다는 사실은, 아무도 입에 올리지 않는다.';
+    }
     return `<div class="row">
       <span>${c.name}</span>
       <span>${epi}</span>
     </div>`;
   }).join('') + (state.baby.exists
     ? `<div class="row"><span>${state.baby.name || '이름 없는 아기'}</span><span>폐허에서 태어나, 마을의 가장 작은 이유가 되었다.</span></div>`
+    : state.baby.lost
+    ? `<div class="row dead"><span>태어나지 못한 아기</span><span>Day ${state.baby.lostDay || 7} · 첫 울음 대신 침묵이 남았다</span></div>`
     : '');
 
   // 전례 원장

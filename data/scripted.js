@@ -193,10 +193,12 @@ LR.SCRIPTED_DAYS = {
       { kind: 'narration', text: '저녁, 아기 울음소리가 폐공장에 울려 퍼진다. 화재로 좀비를 막는 선택의 시간.' }
     ],
     choices: [
-      { id: 'A', label: '조용한 출산 + 침묵 방어',
-        body: '연료를 아끼고 어둠 속에서 버틴다. 위험하다.',
+      { id: 'A', label: '의약품 없이 조용한 출산 (위험)',
+        body: '의약품과 연료를 아낀다. 어둠 속의 출산 — 실패 위험 35%. 실패하면 아기를 잃는다.',
         moraleAll: -3,
-        intentionalNoise: 5 },
+        intentionalNoise: 5,
+        birthAttempt: { failChance: 0.35 },
+        risk: 'danger' },
       { id: 'B', label: '의약품 + 화재 방어',
         body: '의약품 1로 산모 회복, 연료 5로 화재 방어. 균형.',
         deltas: { medicine: -1, fuel: -5 },

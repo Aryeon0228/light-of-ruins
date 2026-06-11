@@ -587,6 +587,17 @@ function buildDecisionBeats(node, s) {
     }
     s.pendingMourning = null;
   }
+  // 잃어버린 울음의 아침 — 절제된 두 줄. 더 말하지 않는다.
+  if (s.pendingBabyLoss) {
+    beats.push({ kind: 'narration',
+      text: '미연의 곁에 강보가 하나 놓여 있다. 한 번도 쓰이지 못한 채로.' });
+    const mi = s.characters.miyeon;
+    if (mi && mi.alive) {
+      beats.push({ kind: 'dialog', speaker: '미연', pid: 'miyeon',
+        text: '"이름을… 지어뒀었어요. 봄이 오면 말해주려고 했는데."' });
+    }
+    s.pendingBabyLoss = null;
+  }
   // 빈사자의 목소리 — 죽어가는 사람은 수치가 아니라 말로 존재해야 한다 (경고이자 애착)
   const dying = LR.aliveChars(s).find(c => c.health < 20);
   if (dying) {

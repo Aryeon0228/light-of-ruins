@@ -161,6 +161,43 @@ LR.engine.applyChoice = function(choiceId) {
     }
   }
 
+  // 7.5 의약품 없는 출산 시도 — 실패는 주사위의 잔인함이 아니라 '아낀 의약품 1회분'의 결과다
+  let birthOutcome = null, birthLossCut = null;
+  if (choice.birthAttempt && !state.baby.exists) {
+    const fail = Math.random() < (choice.birthAttempt.failChance || 0.35);
+    const miyeon = state.characters.miyeon;
+    if (!fail) {
+      // 성공 — 그러나 의약품 없이 버틴 출산은 산모를 깊이 소모시킨다
+      birthOutcome = 'success';
+      state.baby.exists = true;
+      state.baby.bornDay = state.day;
+      miyeon.hasBaby = true;
+      miyeon.health = Math.max(1, miyeon.health - 22);
+      LR.render.toast('아기 출생 — 의약품 없이. 미연이 깊이 소모되었다', 'beacon');
+    } else {
+      // 실패 — 아기를 잃는다. 절제된 연출, 그러나 마을의 도덕적 좌표계에 새겨진다
+      birthOutcome = 'fail';
+      state.baby.lost = true;
+      state.baby.lostDay = state.day;
+      miyeon.health = Math.max(1, miyeon.health - 25);
+      miyeon.morale = Math.max(0, miyeon.morale - 35);
+      const minsu = state.characters.minsu;
+      if (minsu.alive) minsu.morale = Math.max(0, minsu.morale - 12);
+      for (const c of LR.aliveChars(state)) c.morale = Math.max(0, c.morale - 8);
+      // 부정 전례 — 기획서 트리거 '의약품 박탈': 약을 아낀 결정이 좌표계가 된다
+      const p = LR.tryGeneratePrecedent(state, {
+        triggerKey: 'medicine_withheld', scriptedOverride: true, targets: ['miyeon']
+      });
+      if (p) {
+        LR.render.toast(`${p.id} 생성 — ${p.name}`, 'precedent-neg');
+        state.pendingReactions = LR.buildPrecedentReactions(state, p);
+      }
+      state.pendingBabyLoss = true;
+      birthLossCut = LR.buildBirthLossCutscene(state);
+      LR.render.toast('출산 실패 — 아기를 잃었다', 'raid');
+    }
+  }
+
   // 8. 스크립트 데이 특수 효과
   let yeongsuDeathCut = null;
   if (node.yeongsuDies) {
@@ -176,7 +213,7 @@ LR.engine.applyChoice = function(choiceId) {
       // 마을 사기 -15 전체
       for (const c of LR.aliveChars(state)) c.morale = Math.max(0, c.morale - 5);
       // 죽음의 의례 — 작별 컷씬 + 다음 날 추모 예약. 출산과 같은 밤이면 한 프레임에 겹친다.
-      yeongsuDeathCut = LR.buildDeathCutscene(state, [y], choice.babyBorn);
+      yeongsuDeathCut = LR.buildDeathCutscene(state, [y], choice.babyBorn || birthOutcome === 'success');
       state.pendingMourning = { id: 'yeongsu', name: y.name };
     }
   }
@@ -234,6 +271,9 @@ LR.engine.applyChoice = function(choiceId) {
   }
   if (yeongsuDeathCut) {
     cuts.push({ cut: yeongsuDeathCut, tone: 'bad', badge: '상실', isNew: false, deltas: null });
+  }
+  if (birthLossCut) {
+    cuts.push({ cut: birthLossCut, tone: 'bad', badge: '잃어버린 울음', isNew: false, deltas: null });
   }
   if (!cuts.length) {
     if (choice.cutscene) {
@@ -329,6 +369,21 @@ LR.buildDeathCutscene = function(state, deads, withBirth) {
       text: '아무도 오래 말하지 못했다. 해야 할 일들이 남아 있었고, 그것이 남은 사람들의 애도 방식이었다.' });
   }
   return { id: 'death_' + state.day, frames };
+};
+
+// 출산 실패 — 절제된 연출: 첫 울음의 부재와 침묵으로만 말한다.
+//  마지막 프레임은 시스템의 아이러니 — 아기 울음(+10 소음)이 없는 마을은 더 안전하고, 그 사실이 무겁다.
+LR.buildBirthLossCutscene = function(state) {
+  const bg = LR.villageCutsceneBg(state.season);
+  const port = 'assets/images/portraits/miyeon.png';
+  return {
+    id: 'birthloss_' + state.day,
+    frames: [
+      { image: bg, text: '새벽까지 이어진 진통. 의약품 없이, 수진이 할 수 있는 일은 많지 않았다.' },
+      { image: port, fallback: bg, text: '아기는 끝내 첫 울음을 울지 못했다. 미연은 새벽빛이 들 때까지 아무 말도 하지 않았다.' },
+      { image: bg, text: '그날 이후 마을은 이상할 만큼 조용하다. 그 조용함이 무엇의 부재인지, 모두가 알고 있다.' }
+    ]
+  };
 };
 
 // 전례 분화 반응 — 같은 사건을 감수성 표가 다른 두 인물이 정반대로 읽는다.
