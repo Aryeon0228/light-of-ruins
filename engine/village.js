@@ -766,7 +766,7 @@ LR.village._renderDecisionView = function() {
       ? `<img class="vd-port" src="assets/images/busts/${b.pid}.png" alt="" onerror="if(!this.dataset.fb){this.dataset.fb=1;this.src='assets/images/portraits/${b.pid}.png';}else{const p=this.closest('.vd-portrait'); if(p) p.style.display='none';}">`
       : '';
     const spkLabel = b.kind === 'dialog' ? b.speaker
-      : b.kind === 'note' ? '기록'
+      : b.kind === 'note' ? '✎ 기록'
       : b.kind === 'banner-danger' ? '간밤'
       : b.kind === 'banner-beacon' ? '신호'
       : '상황';
