@@ -5,6 +5,12 @@ window.LR = window.LR || {};
 
 LR.render = LR.render || {};
 
+// 문장 끝(. ! ?)마다 줄바꿈해 읽기 편하게. 줄임표(…, ...)는 보호(앞 글자가 마침표가 아닐 때만 분리).
+LR.breakSentences = function(text) {
+  if (!text) return text;
+  return String(text).replace(/([^.])([.!?]["'\u00bb\u300d\u300f\u2019\u201d]?)\s+(?=\S)/g, function (m, a, b) { return a + b + '<br>'; });
+};
+
 LR.render.renderAll = function(state) {
   LR.render.topBar(state);
   LR.render.leftPanel(state);
@@ -66,13 +72,22 @@ LR.render.leftPanel = function(state) {
     </div>
   `;
 
-  // 자원
+  // 자원 — 식량(신선/저장) · 물자로 묶고, 어젯밤 생산/소모를 추세(▲▼)로 표시
+  const dp = state.dailyProduce || {};
+  const tr = (v, invert) => {
+    if (v == null || v === 0) return '';
+    const up = invert ? v < 0 : v > 0;
+    return ` <i class="res-tr ${up ? 'up' : 'down'}">${up ? '▲' : '▼'}${Math.abs(v)}</i>`;
+  };
   document.getElementById('resourceList').innerHTML = `
-    <div class="row"><span class="lbl">물</span><span class="val">${state.water}</span></div>
+    <div class="res-group">식량 <span>신선은 잉여분이 상함</span></div>
+    <div class="row"><span class="lbl">신선</span><span class="val">${state.food}${dp.farm ? tr(dp.farm) : ''}${dp.spoiled ? tr(-dp.spoiled) : ''}</span></div>
+    <div class="row"><span class="lbl">말림</span><span class="val dim">${state.driedFood}</span></div>
+    <div class="row"><span class="lbl">절임</span><span class="val dim">${state.pickledFood}</span></div>
+    <div class="res-group">물자</div>
+    <div class="row"><span class="lbl">물</span><span class="val">${state.water}${tr(dp.water)}</span></div>
     <div class="row"><span class="lbl">연료</span><span class="val ${state.fuel < 10 ? 'warn' : ''}">${state.fuel}</span></div>
     <div class="row"><span class="lbl">의약품</span><span class="val ${state.medicine === 0 ? 'danger' : ''}">${state.medicine}</span></div>
-    <div class="row"><span class="lbl">건조식품</span><span class="val dim">${state.driedFood}</span></div>
-    <div class="row"><span class="lbl">절임식품</span><span class="val dim">${state.pickledFood}</span></div>
   `;
 
   // 비컨
@@ -160,10 +175,10 @@ LR.render.scenario = function(state) {
     const div = document.createElement('div');
     if (part.kind === 'narration') {
       div.className = 'narration';
-      div.textContent = part.text;
+      div.innerHTML = LR.breakSentences(part.text);
     } else if (part.kind === 'dialog') {
       div.className = 'dialog';
-      div.innerHTML = `<span class="speaker">${part.speaker}</span>${part.text}`;
+      div.innerHTML = `<span class="speaker">${part.speaker}</span>${LR.breakSentences(part.text)}`;
     } else if (part.kind === 'systemNote') {
       div.className = 'system-note';
       div.textContent = '※ ' + part.text;
@@ -384,6 +399,14 @@ LR.render.hideEnding = function() {
 };
 
 // ─── 하루 전환 (암전 → 타이틀 + 매일 상태 → 다시 밝아짐) ───
+// 게임 진입 직후 깜빡임 방지 — 첫 렌더 전에 암전을 먼저 깔아둔다.
+//  곧이어 beginDay→dayBanner()가 같은 작업(task) 안에서 내용(Day N)을 채우므로 끊김 없이 이어진다.
+LR.render.coverForDay = function() {
+  LR.render._lastBannerDay = null;     // 새 판이면 dayBanner가 반드시 발동되도록
+  const el = document.getElementById('dayBanner');
+  if (el) { el.classList.remove('out'); el.classList.add('show'); }
+};
+
 LR.render.dayBanner = function(text, state) {
   const el = document.getElementById('dayBanner');
   const txt = document.getElementById('dayBannerText');
@@ -403,11 +426,22 @@ LR.render.dayBanner = function(text, state) {
     ).join('');
   }
 
-  const dismiss = () => { el.classList.remove('show'); clearTimeout(LR.render._bannerTimer); };
-  el.onclick = dismiss;                // 클릭하면 즉시 넘어가기
-  el.classList.remove('show');
+  // 클릭할 때까지 암전 유지 → 클릭하면 밝아지며 사라짐
+  const dismiss = () => {
+    if (!el.classList.contains('show') || el.classList.contains('out')) return;
+    el.classList.add('out');
+  };
+  el.onclick = dismiss;
+  if (!el._bannerEndBound) {
+    el._bannerEndBound = true;
+    el.addEventListener('animationend', (e) => {
+      if (e.target === el && e.animationName === 'dayOut') el.classList.remove('show', 'out');
+    });
+  }
+  el.classList.remove('show', 'out');
   void el.offsetWidth;                 // 리플로우 → 애니메이션 재시작
   el.classList.add('show');
+  // 안전장치: 혹시 클릭이 막혀도 영구 정지되지 않도록 넉넉한 자동 해제
   clearTimeout(LR.render._bannerTimer);
-  LR.render._bannerTimer = setTimeout(dismiss, 2600);
+  LR.render._bannerTimer = setTimeout(dismiss, 12000);
 };

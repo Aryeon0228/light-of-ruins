@@ -17,7 +17,7 @@ LR.SCRIPTED_DAYS = {
     body: [
       { kind: 'narration', text: '폐공장 창고에 아침 햇빛이 들어온다. 식량 65. 오늘 10을 소비하면 55. 이대로면 6일 후 위기 구간이다.' },
       { kind: 'dialog', speaker: '재혁', emotion: 'neutral', text: '"이대로면 엿새 뒤엔 곳간이 빈다. 탐색대를 내보내야 해."' },
-      { kind: 'dialog', speaker: '동호', emotion: 'angry', with: 'jaehyeok', stance: 'face', text: '"배 속에 애가 있다고 식량 부족한데도 배급 예전과 똑같이 받는 거 아니겠지?"' },
+      { kind: 'dialog', speaker: '동호', emotion: 'angry', with: 'jaehyeok', stance: 'face', text: '"다 같이 굶는 마당에… 배 속에 애 있다고 배급을 똑같이 받아야 하나?"' },
       { kind: 'narration', text: '가족을 잃은 동호의 사기는 절망 구간이다.' },
       { kind: 'narration', text: '그때 수진이 의무실 라디오 주파수를 돌리다 손을 멈춘다. 지지직. 잡음 사이로 사람의 목소리 같은 무언가가 섞였다가 사라진다.' },
       { kind: 'dialog', speaker: '수진', text: '"이게… 무슨 신호 같은데요."' },
@@ -70,29 +70,29 @@ LR.SCRIPTED_DAYS = {
   3: {
     id: 'D3_jaehyeok_injury',
     day: 3,
-    title: 'Day 3 — 부상의 대가, 계속되는 지지직',
+    title: 'Day 3 — 편의점, 누구를 보낼까',
     body: [
-      { kind: 'narration', text: '어젯밤 주변 좀비를 보고 긴장한 마을. 재혁이 다시 탐색을 결정한다.' },
-      { kind: 'narration', text: '편의점에서 식량을 회수하다 좀비를 만난다. 재혁이 은서를 먼저 안전한 쪽으로 밀어내다가, 무너지는 선반에 다리가 깔린다.' },
-      { kind: 'narration', text: '해질 무렵, 재혁이 한쪽 다리를 끌며 돌아왔다. 등에 진 식량 자루는 묵직하다 — 그 무게만큼, 그의 다리는 성치 않다. 뒤따라 들어온 은서는 내내 고개를 들지 못한다.' },
-      { kind: 'systemNote', text: '탐색 결과 — 식량 +18 확보. 재혁 체력 90→55 · 은서 사기 -15. 치료에는 의약품 1회분과 수진의 간병이 필요하다.' }
+      { kind: 'narration', text: '어젯밤 주변 좀비를 보고 긴장한 마을. 그러나 식량은 빠르게 줄고 있다.' },
+      { kind: 'dialog', speaker: '재혁', text: '"무너진 편의점에 아직 식량이 남아 있을 거야. 내가 다녀올게." 위험을 알면서도 그는 먼저 손을 든다.' },
+      { kind: 'systemNote', text: '탐색은 식량을 얻지만 바깥엔 좀비가 있다 — 부상 위험. 내보낼지는 당신의 결정이다.' }
     ],
     choices: [
-      { id: 'A', label: '수진을 간병에 투입 (추천)',
-        body: '리더를 빨리 복귀시킨다. 의약품 -1. 탐색 인력 감소.',
-        deltas: { food: +18, medicine: -1 },
-        perCharDeltas: { jaehyeok: { health: +15 }, eunseo: { health: -5, morale: -15 } },
-        flags: { sujinNursing: true } },
-      { id: 'B', label: '의약품 절약, 휴식만',
-        body: '의약품 보존. 회복은 느리다.',
+      { id: 'A', label: '재혁을 보낸다 — 편의점 탐색 (추천)',
+        body: '식량 +18 기대 · 부상 위험. 다치면 회복에 시간이 든다.',
         deltas: { food: +18 },
-        perCharDeltas: { jaehyeok: { health: +5 }, eunseo: { health: -5, morale: -15 } } },
-      { id: 'C', label: '수진+의약품 투입, 하영을 탐색으로 전환',
-        body: '빠른 회복. 방어 인력 감소 위험.',
-        deltas: { food: +18, medicine: -1 },
-        perCharDeltas: { jaehyeok: { health: +15 }, hayeong: { health: -3 }, eunseo: { health: -5, morale: -15 } } }
+        expedition: { leadId: 'jaehyeok', leadName: '재혁', spot: '무너진 편의점',
+          foodGain: 18, injuryChance: 0.45, injuryMin: 18, injuryMax: 35 } },
+      { id: 'B', label: '재혁과 은서를 함께 보낸다 — 더 빨리, 더 위험',
+        body: '둘이 움직여 식량 +24. 더 깊이 들어가는 만큼 위험도 크다.',
+        deltas: { food: +24 },
+        perCharDeltas: { eunseo: { morale: -10 } },
+        expedition: { leadId: 'jaehyeok', leadName: '재혁', spot: '무너진 편의점 안쪽',
+          foodGain: 24, injuryChance: 0.6, injuryMin: 20, injuryMax: 40 } },
+      { id: 'C', label: '오늘은 아무도 내보내지 않는다',
+        body: '바깥의 위험을 피한다. 그러나 식량을 얻지 못하고 불안이 남는다.',
+        moraleAll: -2 }
     ],
-    keyLine: '하루의 반짝임으로는 마을의 대사가 바뀌지 않는다 — 상승 나선의 연속 일수 조건.'
+    keyLine: '누구를 어둠 밖으로 내보낼지는 — 늘 당신의 손에 있다.'
   },
 
   4: {

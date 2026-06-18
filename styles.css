@@ -178,6 +178,18 @@ button {
 .panel .row .lbl { color: var(--c-text-dim); }
 .panel .row .val { color: var(--c-text); font-weight: 500; }
 .panel .row .val.dim { color: var(--c-text-faint); }
+
+/* 자원 패널 — 그룹 헤더 + 추세 화살표 */
+.res-group {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin: 0.5rem 0 0.15rem; font-size: 0.68rem; letter-spacing: 0.08em;
+  color: var(--c-spiral); text-transform: uppercase;
+}
+.res-group:first-child { margin-top: 0; }
+.res-group span { font-size: 0.62rem; color: var(--c-text-faint); letter-spacing: 0; text-transform: none; }
+.res-tr { font-style: normal; font-size: 0.72rem; margin-left: 0.25rem; }
+.res-tr.up { color: var(--c-precedent-pos); }
+.res-tr.down { color: var(--c-precedent); }
 .panel .row .val.warn { color: var(--c-warn); }
 .panel .row .val.danger { color: var(--c-danger); }
 .panel .row .val.good { color: var(--c-spiral); }
@@ -245,7 +257,21 @@ button {
   from { opacity: 0; transform: scale(1.03); }
   to { opacity: 1; transform: scale(1); }
 }
-/* 하루 전환 — 암전(검은 막) → 타이틀 등장 → 다시 밝아짐 */
+/* 사운드 토글 — 항상 화면 위에 떠 있는 작은 버튼 */
+.sound-toggle {
+  position: fixed; right: 14px; bottom: 14px; z-index: 500;
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 1px solid #ffffff24; background: #1b1d24cc; color: #ffcf86;
+  font-size: 1.05rem; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 3px 12px #0007; backdrop-filter: blur(3px);
+  transition: transform .08s, background .15s, border-color .15s;
+}
+.sound-toggle:hover { background: #262a34ee; border-color: #ffffff40; }
+.sound-toggle:active { transform: scale(0.92); }
+.sound-toggle.muted { color: #7c7e88; }
+
+/* 하루 전환 — 암전(검은 막) → 타이틀 등장 → 클릭하면 다시 밝아짐 */
 #dayBanner {
   position: fixed; inset: 0; z-index: 300;
   display: flex; align-items: flex-start; justify-content: center;
@@ -253,17 +279,17 @@ button {
   padding: 22vh 6vw 0;
   background: #000;   /* 암전 막 */
 }
+/* 암전 등장: 즉시 검게 깔림(게임 화면이 비치는 깜빡임 방지) → 그대로 유지(클릭 전까지) */
 #dayBanner.show {
   pointer-events: auto;                 /* 전환 중 오클릭 흡수 + 클릭 넘기기 */
   cursor: pointer;
-  animation: dayFade 2.6s ease both;
+  opacity: 1; visibility: visible;      /* 페이드인 없이 바로 암전 */
 }
-/* 검은 막: 빠르게 암전 → 유지 → 다시 밝아짐 */
-@keyframes dayFade {
-  0%   { opacity: 0; visibility: visible; }
-  15%  { opacity: 1; }
-  78%  { opacity: 1; }
-  100% { opacity: 0; visibility: visible; }
+/* 클릭하면 다시 밝아지며 사라짐 */
+#dayBanner.show.out { animation: dayOut 0.55s ease forwards; }
+@keyframes dayOut {
+  from { opacity: 1; visibility: visible; }
+  to   { opacity: 0; visibility: visible; }
 }
 .day-banner-inner {
   display: flex; flex-direction: column; align-items: center; gap: 1.3rem;
@@ -294,13 +320,11 @@ button {
   font-size: 0.74rem; letter-spacing: 0.1em; color: #6f6d63;
   font-family: 'Galmuri11', monospace;
 }
-/* 내용(타이틀+스탯): 암전이 깔린 뒤 등장 → 밝아지기 직전 사라짐 */
-#dayBanner.show .day-banner-inner { animation: dayTitleIn 2.6s ease both; }
-@keyframes dayTitleIn {
-  0%, 12%   { opacity: 0; transform: translateY(10px); letter-spacing: 0.14em; }
-  24%       { opacity: 1; transform: translateY(0); letter-spacing: 0.01em; }
-  70%       { opacity: 1; }
-  82%, 100% { opacity: 0; transform: translateY(-4px); }
+/* 내용(타이틀+스탯): 암전이 깔린 뒤 등장 → 클릭 전까지 유지 */
+#dayBanner.show .day-banner-inner { animation: dayContentIn 0.7s ease 0.35s both; }
+@keyframes dayContentIn {
+  from { opacity: 0; transform: translateY(10px); letter-spacing: 0.12em; }
+  to   { opacity: 1; transform: translateY(0); letter-spacing: 0.01em; }
 }
 
 #sceneTitle {
@@ -856,6 +880,10 @@ button {
 #cutsceneOverlay.tone-reward .cb-name { font-size: 1rem; font-weight: 700; letter-spacing: 0.01em; text-shadow: 0 1px 0 #ffe9b099; }
 @keyframes cutBadgePop { 0% { opacity: 0; transform: scale(.6) translateY(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
 #cutsceneOverlay.tone-reward .cutscene-image {
+  /* 스몰윈 카드는 1:1 → 정사각 박스로 띄워 안 잘리게 */
+  aspect-ratio: 1 / 1;
+  width: min(54vh, 88vw);
+  max-height: 54vh;
   border: 2px solid #e0b85a;
   box-shadow: 0 18px 54px #000c, inset 0 0 70px #0007, 0 0 38px rgba(224,176,74,.32);
   animation: cutGoldGlow 2.4s ease-in-out infinite;

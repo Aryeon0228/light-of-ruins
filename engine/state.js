@@ -62,6 +62,9 @@ LR.createInitialState = function() {
     driedFood: 0,
     pickledFood: 0,
 
+    // 하루의 살림 — 구역별 오늘 돌봄 여부(마지막 돌본 날 기록, day와 같으면 오늘 완료)
+    tending: { water: 0, field: 0, kitchen: 0 },
+
     characters: characters,
     baby: { exists: false, bornDay: null, ageMonths: 0 },
 

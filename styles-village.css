@@ -15,7 +15,7 @@
 /* ── 상단 바 ── */
 .vh-top {
   display: grid;
-  grid-template-columns: auto 1fr auto auto;   /* 시간 | 자원 | 음향 | 카메라 */
+  grid-template-columns: auto 1fr auto auto auto;   /* 시간 | 자원 | 음향 | 살림 | 카메라 */
   align-items: center;
   gap: 1.2rem;
   padding: 0.5rem 1.1rem;
@@ -56,6 +56,44 @@
 .vh-pill.danger { border-color: var(--c-danger); }
 .vh-pill.danger .vh-pill-val { color: var(--c-danger); }
 .vh-pill.dim .vh-pill-val { color: var(--c-text-dim); }
+
+/* 오늘의 살림 HUD — 물/밭/부엌 완료 체크 */
+.vh-tending { display: flex; align-items: center; gap: 0.4rem; }
+.vh-tend-h {
+  font-size: 0.66rem; letter-spacing: 0.08em; color: #8e9a6a;
+  font-family: 'Galmuri11', monospace; white-space: nowrap;
+}
+.vh-tend-h b { color: #cdd0a0; }
+.vh-tend-chip {
+  display: inline-flex; align-items: center; gap: 2px;
+  padding: 3px 7px; border-radius: 6px; cursor: pointer;
+  border: 1px solid #ffffff1c; background: #ffffff0a; font-size: 0.92rem; line-height: 1;
+  transition: transform .08s, background .15s, border-color .15s;
+}
+.vh-tend-chip i { font-style: normal; font-size: 0.74rem; color: #8a8c72; }
+.vh-tend-chip:hover { background: #ffffff14; border-color: #ffffff33; }
+.vh-tend-chip:active { transform: scale(0.94); }
+.vh-tend-chip.done { background: #2a3a1e; border-color: #5a7d38; }
+.vh-tend-chip.done i { color: #9bd36a; }
+.vh-tend-chip.locked { opacity: 0.6; }
+.vh-tend-chip.locked i { color: #d08a6a; }
+/* 미완료가 있으면 살림 HUD가 은은하게 깜빡여 시선을 끈다 */
+.vh-tending.nudge .vh-tend-h b { animation: tendNudge 1.6s ease-in-out infinite; }
+@keyframes tendNudge {
+  0%, 100% { color: #cdd0a0; text-shadow: none; }
+  50%      { color: #ffe9a6; text-shadow: 0 0 8px rgba(255,207,134,.6); }
+}
+
+/* 구역 핫스팟 살림 표시 (●아직 / ✓완료 / ✕물부족) */
+.vh-hot-mark {
+  position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
+  font-size: 0.66rem; line-height: 1; padding: 2px 5px; border-radius: 8px;
+  background: #14130dcc; border: 1px solid #ffffff22; pointer-events: none;
+  z-index: 13; white-space: nowrap;
+}
+.vh-hot-mark.todo { color: #ffd98a; border-color: #d4a14f88; animation: tendNudge 1.6s ease-in-out infinite; }
+.vh-hot-mark.done { color: #9bd36a; border-color: #5a7d3899; }
+.vh-hot-mark.locked { color: #d08a6a; }
 
 .vh-cam { display: flex; gap: 0.35rem; align-items: center; }
 .vh-cam-btn {
@@ -707,7 +745,26 @@
 .vd-line { margin: 0; font-size: 1.0rem; line-height: 1.7; color: #f5f0db; font-family: 'Noto Sans KR', sans-serif; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
 .vd-nm { font-weight: 700; }   /* 본문 속 인물 이름 강조(색은 인라인) */
 .vd-runner.narration .vd-line { font-style: italic; color: #e0e1bb; }
-.vd-runner.note .vd-line { font-size: 0.88rem; color: #c6c79a; }
+/* '기록' 비트 — 낡은 노트에 적은 느낌(괘선지 + 잉크 펜) */
+.vd-runner.note .vd-textbox {
+  background: linear-gradient(180deg, #2b2820, #221f17);
+  border: 1px solid #4a4530; border-left: 3px solid #b89548;
+  border-radius: 3px; padding: 9px 12px 10px;
+  box-shadow: inset 0 0 0 1px #0000002a, 0 2px 7px #0006;
+}
+.vd-runner.note .vd-spk {
+  color: #c8a85c; font-family: 'Galmuri11', monospace; font-weight: 700;
+  border-bottom: 1px dashed #5a512e; padding-bottom: 4px; margin-bottom: 7px;
+  letter-spacing: 0.08em;
+}
+.vd-runner.note .vd-line {
+  font-family: 'Galmuri11', 'Galmuri14', monospace; font-size: 0.92rem;
+  color: #e2d099; line-height: 1.95; font-style: normal;
+  text-shadow: 0 1px 0 #0007;
+  background-image: repeating-linear-gradient(to bottom,
+    transparent 0, transparent calc(1.95em - 1px),
+    #6a5f3340 calc(1.95em - 1px), #6a5f3340 1.95em);
+}
 .vd-runner.banner-danger .vd-line { color: #e08a8a; }
 /* 비컨 신호 — 사람 대사와 다르게: 픽셀(전송) 폰트 + 비컨 보라색 + 신호 글로우 */
 .vd-runner.banner-beacon .vd-spk {
@@ -817,6 +874,8 @@
   border: 7px solid transparent; border-top-color: #1a1c13; margin-top: -1px;
 }
 .vh-pop.below::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: #2e3022; margin: 0 0 -1px; }
+/* 좌측 상단 고정 모드 — 말풍선 꼬리 숨김 */
+.vh-pop.corner::after { display: none; }
 .vh-pop-x {
   position: absolute; top: 3px; right: 4px; z-index: 2; width: 18px; height: 18px;
   border: none; background: none; color: #8e8f5e; font-size: 0.78rem; line-height: 1; cursor: pointer;
@@ -933,6 +992,77 @@
   padding: 8px 14px; border-top: 1px solid #2a2c1e; font-size: .72rem; color: #a98f5a;
   font-family: 'Noto Sans KR', sans-serif;
 }
+
+/* 하루의 살림 — 구역 행동버튼 */
+.vz-actions {
+  padding: 9px 14px 11px; border-top: 1px solid #2a2c1e;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.vz-actions-h {
+  font-size: .68rem; letter-spacing: .12em; color: #8e9a6a; text-transform: uppercase;
+  font-family: 'Galmuri11', monospace; margin-bottom: 2px;
+}
+.vz-act {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  width: 100%; text-align: left; padding: 8px 11px; border-radius: 3px;
+  border: 2px solid #14130d; cursor: pointer;
+  background: linear-gradient(180deg, #38502f, #223218);
+  box-shadow: inset 0 1px 0 #6e8a4f55, inset 0 -2px 0 #0008;
+  transition: transform .08s, background .12s, border-color .12s;
+}
+.vz-act:hover { background: linear-gradient(180deg, #44612f, #2a3d1d); border-color: #5a7d38; }
+.vz-act:active { transform: translateY(1px); box-shadow: inset 0 2px 5px #000a; }
+.vz-act-l { font-size: .9rem; font-weight: 600; color: #eef3da; font-family: 'Noto Sans KR', sans-serif; }
+.vz-act-h { font-size: .72rem; color: #bcd29a; font-family: 'Noto Sans KR', sans-serif; }
+.vz-act.off {
+  background: #1c1d16; border-color: #14130d; cursor: not-allowed;
+  box-shadow: none; opacity: .7;
+}
+.vz-act.off .vz-act-l { color: #8a8c72; }
+.vz-act.off .vz-act-h { color: #71735c; }
+
+/* 하루의 살림 — 첫 진입 튜토리얼 */
+.vh-tut {
+  position: absolute; inset: 0; z-index: 60;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(8, 9, 12, 0.72); backdrop-filter: blur(2px);
+  animation: vhTutIn .25s ease;
+}
+@keyframes vhTutIn { from { opacity: 0; } to { opacity: 1; } }
+.vh-tut-card {
+  width: min(460px, 88vw); padding: 22px 24px 20px;
+  background: linear-gradient(180deg, #23271c, #181b14);
+  border: 2px solid #14130d; border-radius: 8px;
+  box-shadow: 0 18px 50px #000a, inset 0 1px 0 #5a5e4355;
+  color: #eef3da; font-family: 'Noto Sans KR', sans-serif;
+}
+.vh-tut-kick {
+  font-size: .7rem; letter-spacing: .14em; color: #8e9a6a;
+  font-family: 'Galmuri11', monospace; text-transform: uppercase; margin-bottom: 4px;
+}
+.vh-tut-card h3 {
+  margin: 0 0 10px; font-size: 1.4rem; color: #ffcf86;
+  font-family: 'Galmuri14', 'Galmuri11', monospace; font-weight: 400;
+}
+.vh-tut-card p { margin: 0 0 12px; font-size: .92rem; line-height: 1.6; color: #dfe2cb; }
+.vh-tut-card ul { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.vh-tut-card li {
+  display: flex; align-items: baseline; gap: 8px; font-size: .9rem; line-height: 1.5;
+  padding: 7px 10px; border-radius: 4px; background: #ffffff08; border: 1px solid #ffffff12;
+}
+.vh-tut-card li span { font-size: 1.05rem; }
+.vh-tut-card li b { color: #eef3da; }
+.vh-tut-sub { font-size: .82rem !important; color: #b9b6a4 !important; }
+.vh-tut-sub b { color: #d4a14f; }
+.vh-tut-ok {
+  display: block; width: 100%; margin-top: 4px; padding: 10px;
+  border: 2px solid #14130d; border-radius: 3px; cursor: pointer;
+  background: linear-gradient(180deg, #44612f, #2a3d1d); color: #eef3da;
+  font-size: .95rem; font-weight: 600; font-family: 'Noto Sans KR', sans-serif;
+  box-shadow: inset 0 1px 0 #6e8a4f55, inset 0 -2px 0 #0008;
+}
+.vh-tut-ok:hover { background: linear-gradient(180deg, #50703a, #324923); }
+.vh-tut-ok:active { transform: translateY(1px); }
 
 /* 클릭 가능한 구역(망루·보강문) */
 .vh-hot-act { cursor: pointer; }
