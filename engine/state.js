@@ -43,6 +43,7 @@ LR.createInitialState = function() {
       negSens: def.negSens,
       posSens: def.posSens,
       alive: true,
+      strain: 0,                     // 누적 마음의 상처(C) — 임계 넘으면 위축→이탈
       flags: {}                      // 인물별 스토리 플래그
     };
     if (def.hasBaby !== undefined) characters[id].hasBaby = def.hasBaby;

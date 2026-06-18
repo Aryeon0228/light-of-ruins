@@ -18,6 +18,12 @@ LR.selectScenarioNode = function(state) {
     return LR.beaconScenarioNode(state);
   }
 
+  // ── Tier 2.5: 이탈 위기 (C: 누적 여파의 정점) — 한 사람이 마을을 떠나려 한다 ──
+  if (LR.checkDepartureEvent) {
+    const dep = LR.checkDepartureEvent(state);
+    if (dep) return dep;
+  }
+
   // ── Tier 2.7: 우선 마을 비트 (아기 이름 짓기 등 감정 이벤트) — 교차 이벤트보다 먼저 ──
   if (LR.pickPriorityVillageDay) {
     const pv = LR.pickPriorityVillageDay(state);

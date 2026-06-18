@@ -59,7 +59,9 @@ const VILLAGE_ASSET = 'assets/images/village/';
 const ZONES = [
   { z:'kitchen',    label:'요리시설',    box:[46.2, 32.2, 13.4, 17.5], o:[52.9, 49.7] },
   { z:'field',      label:'밭',          box:[32.7, 42.7, 11.3, 10.4], o:[38.3, 53.1] },
-  { z:'barracks',   label:'숙소',        box:[61.4, 24.4, 38.6, 38.6], o:[80.7, 63.0] },
+  // rh: 스프라이트 렌더 높이(%). 지붕 리빌용으로 캔버스를 위로 늘린 경우(투명 헤드룸) 건물 footprint(box[3])보다 크게.
+  //  barracks 캔버스 1379×1192, 건물은 아래 933px → 38.6×1192/933 ≈ 49.3 (건물이 예전 크기로 렌더되도록)
+  { z:'barracks',   label:'숙소',        box:[61.4, 24.4, 38.6, 38.6], o:[80.7, 63.0], rh:49.3 },
   { z:'workshop',   label:'작업장 · 통신', box:[77.0, 53.0, 19.0, 16.0], o:[86.0, 63.0] },
   { z:'infirmary',  label:'의무실',      box:[78.2, 30.0, 15.7, 15.4], o:[86.0, 45.4] },
   // watchtower_idle_guide.png 알파 bbox 측정값
@@ -68,6 +70,9 @@ const ZONES = [
   // water_idle_guide.png 알파 bbox 측정값 (좌중앙)
   { z:'water',      label:'물 · 빗물받이', box:[21.6, 38.6, 12.3, 13.3], o:[27.8, 45.3] }
 ];
+// 지붕 덮개 — 평소엔 지붕이 덮여 있고, 커서를 대거나 클릭하면 지붕이 날아가며 내부가 드러난다(인형의 집).
+//  buildings/<z>_roof.png 가 있으면 적용, 없으면 자동 생략(현재 모습 유지). 다른 시설도 여기 추가하면 됨.
+const ROOF_ZONES = { barracks: true };
 // 인물 스프라이트 — 전원 풀캔버스(2896×2172) 제자리. 0,0에 그대로 겹침(작가가 맞춘 위치/크기 유지).
 //  (개별 크롭으로 줄 경우엔 inplace 빼고 cx/cy + h|w(%)로 배치 가능)
 //  box=[l,t,w,h]% 형상 영역(호버 핫스팟), ox/oy=확대 기준점(형상 중심x·발끝y) — 인물 PNG 알파 bbox에서 산출
@@ -127,50 +132,12 @@ LR.village.setMode = function(mode) {
 LR.village.select = function(id) {
   LR.village.selected = id;
   LR.village.picked = true;   // 클릭 이후부터 씬에 선택 글로우 표시
-  LR.village.popChar = id;    // 그 인물 위에 상태 팝오버
+  LR.village.popChar = id;    // 그 인물 위에 상태 팝오버(dossier)
   LR.village.closeZoneInfo();  // 인물 선택 시 건물 정보창은 닫기
-  LR.village.render();
-};
-
-// ─── 캐릭터 상태 팝오버 (씬에서 그 인물 바로 옆에) ───
-LR.village.fillPopover = function() {
-  const pop = document.getElementById('vhPop');
-  if (!pop) return;
-  const s = LR.village.state;
-  const id = LR.village.popChar;
-  if (!s || !id || LR.village.mode !== 'compound') { pop.classList.remove('open'); return; }
-  const c = s.characters[id], def = LR.CHARACTER_DEFS[id];
-  if (!c || !def) { pop.classList.remove('open'); return; }
-  const ht = LR.healthTier(c.health), mt = LR.moraleTier(c.morale);
-  pop.innerHTML = `
-    <button class="vh-pop-x" id="vhPopX">✕</button>
-    <div class="vh-pop-head">
-      <span class="vh-pop-port" style="--cc:${def.color}">${portraitInner(id, c, def)}</span>
-      <div class="vh-pop-id">
-        <div class="vh-pop-name">${c.name}<em>${c.role} · ${def.age}세</em></div>
-        <div class="vh-pop-act">${activityOf(c)}</div>
-      </div>
-    </div>
-    <div class="vh-pop-stat">
-      <div class="vh-pop-row">
-        <span class="vh-pop-ic" style="color:${hpColor(c.health)}">${HPIC}</span>
-        <span class="vh-pop-bar"><i style="width:${c.health}%;background:${hpColor(c.health)}"></i></span>
-        <b style="color:${hpColor(c.health)}">${c.alive ? c.health : '—'}</b>
-        <em>${c.alive ? ht.label : '사망'}</em>
-      </div>
-      <div class="vh-pop-row">
-        <span class="vh-pop-ic" style="color:${moColor(c.morale)}">${MOIC}</span>
-        <span class="vh-pop-bar"><i style="width:${c.morale}%;background:${moColor(c.morale)}"></i></span>
-        <b style="color:${moColor(c.morale)}">${c.alive ? c.morale : '—'}</b>
-        <em>${c.alive ? mt.label : ''}</em>
-      </div>
-    </div>
-    <div class="vh-pop-foot">전례 감수성 · 부정 ×${def.negSens} / 긍정 ×${def.posSens}</div>
-  `;
-  pop.classList.add('open');
-  const x = document.getElementById('vhPopX');
-  if (x) x.addEventListener('click', (e) => { e.stopPropagation(); LR.village.closePopover(); });
-  LR.village.positionPopover();
+  // 씬 구조는 그대로 — 글로우만 옮기고 가벼운 패널만 갱신(전체 render/이미지 리로드 회피)
+  applySelectionGlow();
+  renderRoster(LR.village.state);   // 명단 선택 하이라이트(이미지 없음)
+  LR.village.fillDossier();
 };
 
 // ─── 인물 상세 카드 (좌하단) — 찢어진 노트 + 폴라로이드 (아트는 사용자 제작) ───
@@ -192,7 +159,7 @@ LR.village.fillDossier = function() {
     <div class="vh-dossier-text">
       <div class="vh-dossier-name">${c.name}<em>${c.role} · ${def.age}세</em></div>
       <div class="vh-dossier-act">${activityOf(c)}</div>
-      <div class="vh-dossier-line"><span>체력</span><b style="color:${hpColor(c.health)}">${c.alive ? c.health : '—'}</b><i>${c.alive ? ht.label : '사망'}</i></div>
+      <div class="vh-dossier-line"><span>체력</span><b style="color:${hpColor(c.health)}">${c.alive ? c.health : '—'}</b><i>${c.alive ? ht.label : (c.left ? '떠남' : '사망')}</i></div>
       <div class="vh-dossier-line"><span>사기</span><b style="color:${moColor(c.morale)}">${c.alive ? c.morale : '—'}</b><i>${c.alive ? mt.label : ''}</i></div>
       <div class="vh-dossier-foot">전례 감수성 · 부정 ×${def.negSens} / 긍정 ×${def.posSens}</div>
     </div>`;
@@ -201,30 +168,8 @@ LR.village.fillDossier = function() {
   if (x) x.addEventListener('click', (e) => { e.stopPropagation(); LR.village.closePopover(); });
 };
 
-LR.village.positionPopover = function() {
-  const pop = document.getElementById('vhPop');
-  const stage = document.querySelector('.vh-stage');
-  const host = document.getElementById('vhScene');
-  if (!pop || !stage || !host || !pop.classList.contains('open')) return;
-  const hot = host.querySelector('.vh-phot[data-pchar="' + LR.village.popChar + '"]');
-  if (!hot) { pop.classList.remove('open'); return; }
-  const sr = stage.getBoundingClientRect(), hr = hot.getBoundingClientRect();
-  const cx = hr.left + hr.width / 2 - sr.left;       // 인물 중앙 x (스테이지 기준)
-  const headTop = hr.top - sr.top;
-  const pw = pop.offsetWidth, ph = pop.offsetHeight;
-  let left = Math.max(6, Math.min(sr.width - pw - 6, cx - pw / 2));
-  let top = headTop - ph - 12, below = false;
-  if (top < 4) { top = (hr.bottom - sr.top) + 12; below = true; }   // 위 공간 부족 → 아래로
-  pop.style.left = Math.round(left) + 'px';
-  pop.style.top = Math.round(top) + 'px';
-  pop.classList.toggle('below', below);
-  pop.style.setProperty('--arrow', Math.round(cx - left) + 'px');   // 말풍선 꼬리 위치
-};
-
 LR.village.closePopover = function() {
   LR.village.popChar = null;
-  const pop = document.getElementById('vhPop');
-  if (pop) pop.classList.remove('open');
   const dos = document.getElementById('vhDossier');
   if (dos) dos.classList.remove('open');
 };
@@ -398,6 +343,11 @@ LR.village.closeZoneInfo = function() {
   LR.village._zinfoZone = null;
   const el = document.getElementById('vhZinfo');
   if (el) el.classList.remove('open');
+  // 지붕 고정 해제 — 정보창을 닫으면 지붕이 다시 덮인다
+  if (LR.village._roofOff) {
+    LR.village._roofOff = {};
+    document.querySelectorAll('.vh-roof.off').forEach(r => r.classList.remove('off'));
+  }
 };
 
 // ─── 지난 기록 창 (모달) ───
@@ -431,6 +381,98 @@ LR.village.showLog = function() {
 };
 LR.village.closeLog = function() {
   const win = document.getElementById('vhLogWin');
+  if (win) win.classList.remove('open');
+};
+
+// ═══════════════════════════════════════════════════════
+//  30일 달력 (페르소나식) — 지나간 매일에 '내 선택이 만든 사건'이 글리프로 쌓인다
+//   교수 피드백: 선택의 영향이 시간 위에 가시적으로 누적되도록.
+// ═══════════════════════════════════════════════════════
+const VC_GLYPH = { raid: '🩸', death: '✝', beacon: '📡', pos: '✦', neg: '⚖' };
+const VC_KIND_LABEL = { raid: '습격', death: '상실', beacon: '비컨', pos: '빛(긍정)', neg: '그림자(부정)' };
+
+function buildCalendarHtml(s) {
+  const CYCLE = 30;
+  const byDay = {};
+  for (const c of (s.chronicle || [])) (byDay[c.day] = byDay[c.day] || []).push(c);
+  const logByDay = {};
+  for (const l of (s.log || [])) logByDay[l.day] = l;
+
+  let weeksHtml = '';
+  for (let w = 0; w < 5; w++) {
+    const start = w * 7 + 1;
+    if (start > CYCLE) break;
+    let cells = '';
+    for (let i = 0; i < 7; i++) {
+      const day = start + i;
+      if (day > CYCLE) { cells += '<div class="vc-cell void"></div>'; continue; }
+      const ev = byDay[day] || [];
+      const lg = logByDay[day];
+      const cellState = day < s.day ? 'past' : day === s.day ? 'today' : 'future';
+      const kinds = ev.map(e => e.kind).filter((k, idx, a) => VC_GLYPH[k] && a.indexOf(k) === idx);
+      const glyphs = kinds.map(k => `<i class="vc-g ${k}">${VC_GLYPH[k]}</i>`).join('');
+      let moodCls = '';
+      if (lg) { const m = lg.avgMorale; moodCls = m >= 70 ? 'm-hi' : m >= 50 ? 'm-mid' : m >= 30 ? 'm-lo' : 'm-crit'; }
+      const raidedCls = (lg && lg.raided) ? ' raided' : '';
+      cells += `<div class="vc-cell ${cellState} ${moodCls}${raidedCls}" data-day="${day}">
+        <span class="vc-dnum">${day}</span>
+        ${cellState === 'today' ? '<span class="vc-tod">오늘</span>' : ''}
+        <span class="vc-glyphs">${glyphs}</span>
+      </div>`;
+    }
+    // 주말(7일째)에 비컨이 해소된다 — 주차 라벨에 표시
+    weeksHtml += `<div class="vc-week"><span class="vc-wk">주 ${w + 1}<i>D${start}–${Math.min(start + 6, CYCLE)}</i></span><div class="vc-row">${cells}</div></div>`;
+  }
+
+  const legend = Object.keys(VC_GLYPH).map(k =>
+    `<span class="vc-leg"><i class="vc-g ${k}">${VC_GLYPH[k]}</i>${VC_KIND_LABEL[k]}</span>`).join('');
+
+  return `
+    <button class="vh-pop-x" id="vhCalX">✕</button>
+    <div class="vz-head"><span class="vz-icon">🗓</span><span class="vz-title">30일의 기록</span>
+      <span class="vc-prog">Day ${s.day} / ${CYCLE}</span></div>
+    <div class="vz-body vc-body">
+      <div class="vc-cal">${weeksHtml}</div>
+      <div class="vc-legend">${legend}<span class="vc-leg dim">칸 색 = 그날의 사기 · 클릭하면 그날의 기록</span></div>
+      <div class="vc-detail" id="vcDetail"></div>
+    </div>`;
+}
+
+function showCalDetail(s, day) {
+  const det = document.getElementById('vcDetail');
+  if (!det) return;
+  const ev = (s.chronicle || []).filter(c => c.day === day);
+  const lg = (s.log || []).find(l => l.day === day);
+  const lines = ev.length
+    ? ev.map(e => `<div class="vc-det-row ${e.kind || ''}"><i class="vc-g ${e.kind || ''}">${VC_GLYPH[e.kind] || '·'}</i><span>${e.text}</span></div>`).join('')
+    : (day > s.day ? '<div class="vc-det-empty">아직 오지 않은 날.</div>'
+                   : '<div class="vc-det-empty">큰 사건 없이 지나간 하루. 그 평온도 선택의 결과다.</div>');
+  const stat = lg ? `식량 ${lg.food} · 사기 ${lg.avgMorale} · 소음 ${lg.noise}${lg.raided ? ' 🩸 습격' : ''} · 생존 ${lg.survivors}/10` : '';
+  det.innerHTML = `<div class="vc-det-h">Day ${day}${day === s.day ? ' · 오늘' : ''}</div>${lines}${stat ? `<div class="vc-det-stat">${stat}</div>` : ''}`;
+}
+
+LR.village.showCalendar = function() {
+  const win = document.getElementById('vhCalWin');
+  const s = LR.village.state;
+  if (!win || !s) return;
+  win.innerHTML = buildCalendarHtml(s);
+  win.classList.add('open');
+  const x = document.getElementById('vhCalX');
+  if (x) x.addEventListener('click', () => LR.village.closeCalendar());
+  win.querySelectorAll('.vc-cell.past, .vc-cell.today').forEach(c => {
+    c.addEventListener('click', () => {
+      win.querySelectorAll('.vc-cell').forEach(o => o.classList.remove('sel'));
+      c.classList.add('sel');
+      showCalDetail(s, +c.dataset.day);
+    });
+  });
+  // 기본 선택 — 오늘
+  const todayCell = win.querySelector('.vc-cell.today');
+  if (todayCell) todayCell.classList.add('sel');
+  showCalDetail(s, s.day);
+};
+LR.village.closeCalendar = function() {
+  const win = document.getElementById('vhCalWin');
   if (win) win.classList.remove('open');
 };
 
@@ -545,21 +587,93 @@ function speakerPortrait(name) {
   if (/라디오|무전|신호|수신기|스피커|비컨/.test(name || '')) return 'bc';
   return null;
 }
-// 내레이션 본문에서 가장 먼저 등장하는 인물 → 포트레이트 id
-//  (예: "하영이 제안한다. …" → 하영). 라디오/신호류면 비컨(bc).
-function narrationPortrait(text) {
-  if (!text) return null;
-  let best = null, bestIdx = Infinity;
-  for (const id of LR.CHARACTER_ORDER) {
-    const nm = LR.CHARACTER_DEFS[id] && LR.CHARACTER_DEFS[id].name;
-    if (!nm) continue;
-    const i = text.indexOf(nm);
-    if (i >= 0 && i < bestIdx) { bestIdx = i; best = id; }
-  }
-  if (best) return best;
-  if (/라디오|무전|신호|수신기|스피커|비컨/.test(text)) return 'bc';
-  return null;
+// (narrationPortrait 제거 — narration 비트는 얼굴 없이 서술자 목소리로만 표시)
+// ═══════════════════════════════════════════════════════
+//  표정 차분 (expression diffs) — 대사 화자의 얼굴이 감정에 따라 바뀐다
+//   네이밍: assets/images/portraits/<id>_<emotion>.png  (베이스 <id>.png = neutral)
+//   점진 도입: 표정 PNG가 없으면 베이스로, 베이스도 없으면 초상 영역을 숨긴다.
+// ═══════════════════════════════════════════════════════
+LR.EMOTIONS = ['neutral', 'smile', 'sad', 'angry', 'surprise', 'worry', 'closed', 'pain'];
+
+// 화자 초상 <img> HTML — onerror 체인으로 표정→베이스→숨김
+LR.bustImg = function(pid, emotion, cls) {
+  if (!pid) return '';
+  const dir = 'assets/images/portraits/';
+  const base = dir + pid + '.png';
+  const useEmo = emotion && emotion !== 'neutral';
+  const first = useEmo ? dir + pid + '_' + emotion + '.png' : base;
+  const onerr = "if(this.dataset.step==='emo'){this.dataset.step='base';this.src='" + base
+    + "';}else{var p=this.closest('.vd-portrait');if(p)p.style.display='none';}";
+  return '<img class="' + (cls || 'vd-port') + '" data-step="' + (useEmo ? 'emo' : 'base')
+    + '" data-emo="' + (emotion || 'neutral') + '" src="' + first + '" alt="" onerror="' + onerr + '">';
+};
+
+// 명시 emotion이 없을 때 대사 텍스트로 감정 추론 (한국어 키워드 — best effort)
+function inferEmotion(text, kind) {
+  if (!text || kind === 'note') return 'neutral';
+  const t = String(text);
+  if (/(웃|미소|다행|고마|기뻐|괜찮|좋다|좋아|반가|살았|해냈)/.test(t)) return 'smile';
+  if (/(미안|죄송|잃|눈물|울었|울며|슬프|못 했|못했|빈자리|비어|떠났|떠난|애도|묻었)/.test(t)) return 'sad';
+  if (/(무서|두려|불안|걱정|위험|어쩌|떨려|떨린|버틸 수|괜찮을까)/.test(t)) return 'worry';
+  if (/(그만|닥쳐|멍청|짜증|쓸데|헛소리|화가|화났|건방|어리석)/.test(t)) return 'angry';
+  if (/(설마|어떻게|갑자기|!\?|\?!|뭐\?|정말\?)/.test(t)) return 'surprise';
+  if (/(…["'』」]?\s*$|체념|어쩔 수 없)/.test(t.trim())) return 'closed';   // 말끝 흐림 → 차분/체념
+  return 'neutral';
 }
+
+// ─── 2인 대화 무대(stage) — 화자/상대를 좌우로 세우고, 말하는 사람을 밝게 ───
+//  stance: 'face'(대립=마주봄, 오른쪽 반전) / 'with'(동조=같은 방향)
+//  배치 신호가 메인(좌/우 + active/idle), 반전은 보조(정면 흉상에선 미묘).
+function resolveBeatEmo(b) {
+  if (!b) return 'neutral';
+  return (b.pid === 'bc') ? 'neutral' : (b.emotion || inferEmotion(b.text, b.kind));
+}
+function computeStage(beats, idx) {
+  const cur = beats[idx];
+  const activePid = (cur && cur.kind === 'dialog' && cur.pid && cur.pid !== 'bc') ? cur.pid : null;
+  if (!activePid) return { mode: 'noface' };
+
+  // 이 노드에 등장하는 대사 화자(고유, 등장순)
+  const order = [];
+  for (const b of beats) {
+    if (b.kind === 'dialog' && b.pid && b.pid !== 'bc' && order.indexOf(b.pid) === -1) order.push(b.pid);
+  }
+
+  // 상대(partner) 결정: ①명시 with ②(고유 화자 2명 이하) 직전 다른 화자 자동
+  let partner = null;
+  let stance = cur.stance || 'face';
+  if (cur.with) {
+    partner = cur.with;
+  } else if (order.length <= 2) {
+    for (let j = idx - 1; j >= 0; j--) {
+      const b = beats[j];
+      if (b.kind === 'dialog' && b.pid && b.pid !== 'bc') { if (b.pid !== activePid) partner = b.pid; break; }
+    }
+  }
+  if (!partner) return { mode: 'one', L: { pid: activePid, emo: resolveBeatEmo(cur) }, activePid };
+
+  // 좌/우 배치 — 등장순(짝=왼쪽), 충돌 시 상대를 반대편으로
+  const sideOf = {};
+  order.forEach((p, i) => { sideOf[p] = (i % 2 === 0) ? 'L' : 'R'; });
+  let aSide = sideOf[activePid] || 'L';
+  let pSide = sideOf[partner] || 'R';
+  if (aSide === pSide) pSide = (aSide === 'L') ? 'R' : 'L';
+
+  // 상대의 표정 = 그가 마지막으로 말한 비트(≤idx)의 감정, 없으면 neutral
+  let pEmo = 'neutral';
+  for (let j = Math.min(idx, beats.length - 1); j >= 0; j--) {
+    const b = beats[j];
+    if (b.kind === 'dialog' && b.pid === partner) { pEmo = resolveBeatEmo(b); break; }
+  }
+  const aSlot = { pid: activePid, emo: resolveBeatEmo(cur) };
+  const pSlot = { pid: partner, emo: pEmo };
+  return {
+    mode: 'two', stance, activePid,
+    L: aSide === 'L' ? aSlot : pSlot,
+    R: aSide === 'L' ? pSlot : aSlot
+  };
+}
+
 function buildDecisionBeats(node, s) {
   const beats = [];
   // 계절 전환의 아침 — 분위기와 규칙(소음 보정 등)이 함께 바뀌는 순간을 한 번 짚는다
@@ -586,12 +700,16 @@ function buildDecisionBeats(node, s) {
     beats.push({ kind: 'narration',
       text: `${m.name}의 자리가 비어 있다. 침상 위의 담요는 아무도 개지 않았다 — 개는 순간, 정말로 떠난 것이 되니까.` });
     const sujin = s.characters.sujin, jaehyeok = s.characters.jaehyeok;
+    // 둘 다 애도 — 동조(나란히, 같은 방향)로 마주 세운다
+    const bothMourn = sujin && sujin.alive && jaehyeok && jaehyeok.alive && m.id !== 'sujin' && m.id !== 'jaehyeok';
     if (sujin && sujin.alive && m.id !== 'sujin') {
-      beats.push({ kind: 'dialog', speaker: '수진', pid: 'sujin',
+      beats.push({ kind: 'dialog', speaker: '수진', pid: 'sujin', emotion: 'sad',
+        with: bothMourn ? 'jaehyeok' : undefined, stance: 'with',
         text: '"마지막에 해줄 수 있는 게 더 있었을 거예요. 그 생각이 머리에서 떠나질 않아요."' });
     }
     if (jaehyeok && jaehyeok.alive && m.id !== 'jaehyeok') {
-      beats.push({ kind: 'dialog', speaker: '재혁', pid: 'jaehyeok',
+      beats.push({ kind: 'dialog', speaker: '재혁', pid: 'jaehyeok', emotion: 'closed',
+        with: bothMourn ? 'sujin' : undefined, stance: 'with',
         text: '"기억해 두자. 우리가 어떤 마을이었는지는, 떠난 사람이 증명하니까."' });
     }
     s.pendingMourning = null;
@@ -602,7 +720,7 @@ function buildDecisionBeats(node, s) {
       text: '미연의 곁에 강보가 하나 놓여 있다. 한 번도 쓰이지 못한 채로.' });
     const mi = s.characters.miyeon;
     if (mi && mi.alive) {
-      beats.push({ kind: 'dialog', speaker: '미연', pid: 'miyeon',
+      beats.push({ kind: 'dialog', speaker: '미연', pid: 'miyeon', emotion: 'sad',
         text: '"이름을… 지어뒀었어요. 봄이 오면 말해주려고 했는데."' });
     }
     s.pendingBabyLoss = null;
@@ -621,7 +739,7 @@ function buildDecisionBeats(node, s) {
   if (dying) {
     beats.push({ kind: 'note', text: `🩸 ${dying.name} 빈사 (체력 ${dying.health}) — 치료 없이는 오래 버티지 못한다.` });
     const line = LR.DYING_LINES && LR.DYING_LINES[dying.id];
-    if (line) beats.push({ kind: 'dialog', speaker: dying.name, pid: dying.id, text: line });
+    if (line) beats.push({ kind: 'dialog', speaker: dying.name, pid: dying.id, emotion: 'pain', text: line });
   }
   if (s.pendingBeaconResolution) {
     const r = s.pendingBeaconResolution;
@@ -629,18 +747,72 @@ function buildDecisionBeats(node, s) {
     s.pendingBeaconResolution = null;
   }
   (node.body || []).forEach(part => {
-    if (part.kind === 'narration') beats.push({ kind: 'narration', text: part.text, pid: narrationPortrait(part.text) });
-    else if (part.kind === 'dialog') beats.push({ kind: 'dialog', speaker: part.speaker, text: part.text, pid: speakerPortrait(part.speaker) });
+    // narration = 서술자 목소리 → 얼굴 없음(특정 인물 대사로 오해되지 않게). 실제 대사만 화자 얼굴.
+    if (part.kind === 'narration') beats.push({ kind: 'narration', text: part.text });
+    else if (part.kind === 'dialog') beats.push({ kind: 'dialog', speaker: part.speaker, text: part.text, pid: speakerPortrait(part.speaker), emotion: part.emotion, with: part.with, stance: part.stance });
     else if (part.kind === 'systemNote') beats.push({ kind: 'note', text: part.text });
   });
+  // 위축의 아침 (C) — 누군가 마음을 닫기 시작했다. 한 번만 짚는다.
+  if (s.pendingWithdrawn && s.pendingWithdrawn.length) {
+    const w = s.pendingWithdrawn.shift();
+    const wc = s.characters[w.id];
+    if (wc && wc.alive) {
+      beats.push({ kind: 'narration', text: `${LR.nameEun ? LR.nameEun(wc.name) : wc.name + '는'} 요즘 부쩍 말이 없다. 묻는 말엔 짧게만 답하고, 식사도 구석에서 혼자 한다.` });
+      beats.push({ kind: 'dialog', speaker: wc.name, pid: wc.id, emotion: 'closed',
+        text: (LR.WITHDRAWN_LINES && LR.WITHDRAWN_LINES[wc.id]) || '"…괜찮아요. 그냥 좀 피곤해서."' });
+    }
+    if (!s.pendingWithdrawn.length) s.pendingWithdrawn = null;
+  }
   // 어제의 전례가 만든 분화 반응 — 같은 사건, 다른 기울기 (감수성 표의 체감화)
+  let reactedToday = false;
   if (s.pendingReactions && s.pendingReactions.length) {
     for (const r of s.pendingReactions) {
-      beats.push({ kind: 'dialog', speaker: r.speaker, text: r.text, pid: speakerPortrait(r.speaker) });
+      beats.push({ kind: 'dialog', speaker: r.speaker, text: r.text, pid: speakerPortrait(r.speaker), emotion: r.emotion, with: r.with, stance: r.stance });
     }
     s.pendingReactions = null;
+    reactedToday = true;
+  }
+  // 기억 콜백 — 며칠 지난 결정을 한 인물이 다시 꺼낸다 (신선한 반응이 없는 아침에만)
+  if (!reactedToday && LR.pickPrecedentCallback) {
+    const cb = LR.pickPrecedentCallback(s);
+    if (cb) beats.push(cb);
   }
   return beats;
+}
+
+// 선택의 예상 영향을 칩으로 — 클릭 전에 '무엇이 얼마나 바뀌나'를 눈에 보이게.
+//  교수 피드백: 내 선택이 어떤 영향을 미치는지 확실히 보이도록.
+function choiceImpactChips(choice, s) {
+  // 외출(탐색)은 확률적 보상·위험 → 전용 확인 패널에서 자세히. 여기선 한 줄 마커만.
+  if (choice.expedition) {
+    const ex = choice.expedition;
+    return `<span class="vd-imp expd">⚑ 외출 · 식량 +${ex.foodGain || '?'} · 부상 위험</span>`;
+  }
+  const chips = [];
+  const d = choice.deltas || {};
+  const add = (label, v) => {     // 자원·사기·체력은 오를수록 좋음(초록), 내릴수록 나쁨(빨강)
+    if (!v) return;
+    chips.push(`<span class="vd-imp ${v > 0 ? 'good' : 'bad'}">${label} ${v > 0 ? '+' : ''}${v}</span>`);
+  };
+  add('식량', d.food);
+  add('물', d.water);
+  add('연료', d.fuel);
+  add('의약품', d.medicine);
+  // 인물별 효과 합산 (체력/사기)
+  let perChar = choice.perCharDeltas;
+  if (typeof perChar === 'function') { try { perChar = perChar(s); } catch (e) { perChar = null; } }
+  let hpSum = 0, moPer = 0;
+  if (perChar) for (const id in perChar) {
+    const dd = perChar[id] || {};
+    if (dd.health) hpSum += dd.health;
+    if (dd.morale) moPer += dd.morale;
+  }
+  if (choice.moraleAll) add('사기(전체)', choice.moraleAll);
+  if (moPer) add('사기', moPer);
+  if (hpSum) add('체력', hpSum);
+  if (choice.babyBorn) chips.push(`<span class="vd-imp warn">아기 출생 · 밤 소음 +10</span>`);
+  if (choice.precedentCandidate) chips.push(`<span class="vd-imp prec">⚖ 전례가 새겨질 수 있음</span>`);
+  return chips.join('');
 }
 
 LR.village.renderDecision = function() {
@@ -687,9 +859,6 @@ LR.village._renderDecisionView = function() {
   if (!atChoices) {
     const b = beats[idx];
     const isLast = idx === beats.length - 1;
-    const portrait = b.pid
-      ? `<img class="vd-port" src="assets/images/busts/${b.pid}.png" alt="" onerror="if(!this.dataset.fb){this.dataset.fb=1;this.src='assets/images/portraits/${b.pid}.png';}else{const p=this.closest('.vd-portrait'); if(p) p.style.display='none';}">`
-      : '';
     const spkLabel = b.kind === 'dialog' ? b.speaker
       : b.kind === 'note' ? '기록'
       : b.kind === 'banner-danger' ? '간밤'
@@ -697,9 +866,27 @@ LR.village._renderDecisionView = function() {
       : '상황';
     const spkCls = b.kind === 'dialog' ? '' : ' dim';
     const spkStyle = (b.kind === 'dialog' && b.pid) ? ` style="color:${nameColor(b.pid)}"` : '';
+
+    // 무대 구성 — 비컨(bc)은 장치라 단독 표시, 그 외는 computeStage로 1인/2인/무표정
+    let leftHtml = '', rightHtml = '', runnerMode = 'noface';
+    const slot = (sl, side, active) => sl
+      ? `<div class="vd-portrait side-${side} ${active ? 'active' : 'idle'}" style="border-color:${nameColor(sl.pid)}">${LR.bustImg(sl.pid, sl.emo, 'vd-port')}</div>`
+      : '';
+    if (b.pid === 'bc') {
+      runnerMode = 'one';
+      leftHtml = `<div class="vd-portrait">${LR.bustImg('bc', 'neutral', 'vd-port')}</div>`;
+    } else {
+      const stage = computeStage(beats, idx);
+      if (stage.mode === 'one') { runnerMode = 'one'; leftHtml = slot(stage.L, 'l', true); }
+      else if (stage.mode === 'two') {
+        runnerMode = 'two stance-' + stage.stance;
+        leftHtml = slot(stage.L, 'l', stage.activePid === stage.L.pid);
+        rightHtml = slot(stage.R, 'r', stage.activePid === stage.R.pid);
+      }
+    }
     dec.innerHTML = head + `
-      <div class="vd-runner ${b.kind}" id="vdRunner">
-        ${b.pid ? `<div class="vd-portrait"${((b.kind === 'dialog' || b.kind === 'narration') && b.pid !== 'bc') ? ` style="border-color:${nameColor(b.pid)}"` : ''}>${portrait}</div>` : ''}
+      <div class="vd-runner ${b.kind} ${runnerMode}" id="vdRunner">
+        ${leftHtml}
         <div class="vd-textbox">
           <span class="vd-spk${spkCls}"${spkStyle}>${spkLabel}</span>
           <p class="vd-line">${colorizeNames(b.text)}</p>
@@ -708,6 +895,7 @@ LR.village._renderDecisionView = function() {
             <span class="vd-next">${isLast ? '▸ 선택지' : '▸ 계속 (클릭)'}</span>
           </div>
         </div>
+        ${rightHtml}
       </div>`;
     const runner = document.getElementById('vdRunner');
     if (runner) runner.addEventListener('click', () => LR.village._advanceDecision());
@@ -724,9 +912,11 @@ LR.village._renderDecisionView = function() {
       const prPct = Math.round(pr.p * 100);
       const prCls = pr.p >= 0.6 ? 'danger' : pr.p >= 0.25 ? 'warn' : 'calm';
       const noiseChip = `<span class="vd-cnoise ${prCls}">🔊 소음 ${projNoise} → 밤 습격 ${prPct}%</span>`;
+      // 선택의 예상 영향 — 클릭 전에 '무엇이 얼마나 바뀌나'를 칩으로 보여준다 (외출은 보상/위험을 따로 확인)
+      const impact = choiceImpactChips(choice, s);
       return `<button class="vd-choice${risk}" data-cid="${choice.id}">
         <span class="vd-clet">${choice.id}</span>
-        <span class="vd-cbody"><b>${choice.label}</b>${sub}${noiseChip}</span>
+        <span class="vd-cbody"><b>${choice.label}</b>${sub}<span class="vd-chips">${impact}${noiseChip}</span></span>
       </button>`;
     }).join('');
     const replay = beats.length ? `<button class="vd-replay" id="vdReplay">↻ 대화 다시</button>` : '';
@@ -830,6 +1020,17 @@ function applyDecisionHighlights() {
   });
 }
 LR.village._applyDecisionHighlights = applyDecisionHighlights;
+
+// 선택 글로우만 토글 — 인물 클릭 시 씬 전체 재빌드(이미지 리로드) 없이 .sel 만 옮긴다
+function applySelectionGlow() {
+  const host = document.getElementById('vhScene');
+  if (!host) return;
+  host.querySelectorAll('[data-char].sel').forEach(a => a.classList.remove('sel'));
+  if (LR.village.picked && LR.village.selected) {
+    const a = host.querySelector('[data-char="' + LR.village.selected + '"]');
+    if (a) a.classList.add('sel');
+  }
+}
 
 LR.village.toggleDecision = function(force) {
   const dec = document.getElementById('vhDecision');
@@ -935,15 +1136,38 @@ function pill(key, label, value, cls, pct, trend) {
 }
 
 // 우측 패널용 자원 행 (아이콘 + 라벨 + 게이지 + 값 + 추세) — 상황 파악 쉽게
-function resRow(key, label, value, cls, pct, trend) {
+//  phys: 두 번째 줄에 '물리적 표현'(약병·식사 일수 등)을 깔아 숫자를 구체적 사물로 번역
+function resRow(key, label, value, cls, pct, trend, phys) {
   const m = RES[key];
   const tr = trend ? `<span class="vh-resrow-tr ${trend.cls}">${trend.glyph}</span>` : '<span class="vh-resrow-tr"></span>';
-  return `<div class="vh-resrow ${cls || ''}" data-res="${key}">
+  return `<div class="vh-resrow ${cls || ''}${phys ? ' has-phys' : ''}" data-res="${key}">
     <span class="vh-resrow-ic" style="color:${m.color}">${m.icon}</span>
     <span class="vh-resrow-lab">${label}</span>
     <span class="vh-resrow-bar"><i style="width:${Math.round(Math.max(0, Math.min(1, pct)) * 100)}%;background:${m.color}"></i></span>
     <b class="vh-resrow-val">${value}</b>${tr}
+    ${phys ? `<span class="vh-resrow-phys">${phys}</span>` : ''}
   </div>`;
+}
+
+// 물리적 표현용 칸(pip) — 채워진/빈 칸으로 '얼마나 남았나'를 사물처럼 보여준다
+function resPips(filled, max, color, cls) {
+  filled = Math.max(0, Math.min(max, Math.round(filled)));
+  let html = '';
+  for (let i = 0; i < max; i++) {
+    const on = i < filled;
+    html += `<i class="vh-rpip${on ? ' on' : ''}"${on ? ` style="background:${color};border-color:${color}"` : ''}></i>`;
+  }
+  return `<span class="vh-rpips ${cls || ''}">${html}</span>`;
+}
+// 약병(의약품 회분) — 칸 대신 또렷한 약병 실루엣으로
+function vialPips(n, max) {
+  n = Math.max(0, Math.min(max, n));
+  let html = '';
+  for (let i = 0; i < max; i++) {
+    const on = i < n;
+    html += `<i class="vh-vial${on ? ' on' : ''}"></i>`;
+  }
+  return `<span class="vh-vials">${html}</span>`;
 }
 
 // 자원 현황 카드 HTML (우측 패널 최상단). 추세는 _prevRes와 비교.
@@ -960,11 +1184,24 @@ function resourceCardHtml(s) {
     const good = invert ? !up : up;   // 소음·생존자감소는 반전
     return { glyph: up ? '▲' : '▼', cls: good ? 'good' : 'bad' };
   }
+  // ── 물리적 표현 — '약·물·식량'을 추상적 숫자가 아니라 구체적 사물/일수로 번역 ──
+  const aliveN = Math.max(1, alive);
+  const totalFood = s.food + s.driedFood + s.pickledFood;
+  const foodDays = Math.floor(totalFood / aliveN);                 // 전원 며칠치 식사가 남았나
+  const waterOut = Math.max(1, Math.ceil(aliveN * 0.5));
+  const waterDays = Math.floor(s.water / waterOut);                // 식수 며칠분
+  const foodCol = foodT.tier === 'famine' ? '#e07070' : foodT.tier === 'crisis' ? '#d4a14f' : RES.food.color;
+  const foodPhys = `${resPips(foodDays, 14, foodCol)}<em class="vh-phys-note">전원 ${foodDays}일치 식사</em>`;
+  const waterPhys = `${resPips(waterDays, 14, RES.water.color)}<em class="vh-phys-note">식수 약 ${waterDays}일분</em>`;
+  const medPhys = s.medicine > 0
+    ? `${vialPips(s.medicine, 8)}<em class="vh-phys-note">${s.medicine}회분 — 치료 ${s.medicine}번</em>`
+    : `${vialPips(0, 8)}<em class="vh-phys-note danger">남은 약 없음 — 다음 부상은 곧 죽음</em>`;
+
   const rows = [
-    resRow('food',  '식량', s.food, foodT.tier === 'famine' ? 'danger' : foodT.tier === 'crisis' ? 'warn' : '', s.food / 100, tr('food')),
-    resRow('water', '물',   s.water, s.water < 12 ? 'danger' : s.water < 25 ? 'warn' : '', s.water / 100, tr('water')),
+    resRow('food',  '식량', s.food, foodT.tier === 'famine' ? 'danger' : foodT.tier === 'crisis' ? 'warn' : '', s.food / 100, tr('food'), foodPhys),
+    resRow('water', '물',   s.water, s.water < 12 ? 'danger' : s.water < 25 ? 'warn' : '', s.water / 100, tr('water'), waterPhys),
+    resRow('med',   '의약품', s.medicine, s.medicine === 0 ? 'danger' : s.medicine <= 1 ? 'warn' : '', Math.min(1, s.medicine / 8), tr('med'), medPhys),
     resRow('fuel',  '연료', s.fuel,  s.fuel < 6 ? 'danger' : s.fuel < 12 ? 'warn' : '', s.fuel / 100, tr('fuel')),
-    resRow('med',   '의약품', s.medicine, s.medicine === 0 ? 'danger' : s.medicine <= 1 ? 'warn' : '', Math.min(1, s.medicine / 8), tr('med')),
     resRow('noise', '소음', s.noiseToday, raid.p >= 0.6 ? 'danger' : raid.p >= 0.25 ? 'warn' : '', s.noiseToday / 100, tr('noise', true)),
     resRow('people', '생존자', alive + '/10', alive < 10 ? 'warn' : '', alive / 10, tr('alive'))
   ].join('');
@@ -986,7 +1223,7 @@ function renderRoster(s) {
     return `<button class="vh-rost${sel}${dead}${danger}" data-rost="${id}" style="--cc:${def.color}">
       <span class="vh-rost-top">
         <span class="vh-rost-name">${c.name}<em>${c.role}</em></span>
-        <span class="vh-rost-state" style="color:${c.alive ? (c.health < 50 || c.morale < 50 ? hpc : 'var(--c-text-dim)') : '#777'}">${c.alive ? ht.label : '사망'}</span>
+        <span class="vh-rost-state" style="color:${c.alive ? (c.flags.withdrawn ? '#b08ae0' : (c.health < 50 || c.morale < 50 ? hpc : 'var(--c-text-dim)')) : '#777'}">${c.alive ? (c.flags.withdrawn ? ht.label + ' · 위축' : ht.label) : (c.left ? '떠남' : '사망')}</span>
       </span>
       <span class="vh-rost-stats">
         <span class="vh-stat${hpLow}"><span class="vh-stat-ic" style="color:${hpc}">${HPIC}</span><span class="vh-mini"><i style="width:${c.health}%;background:${hpc}"></i></span></span>
@@ -1063,10 +1300,24 @@ function renderSystems(s) {
       const el = sysEl.querySelector('.vh-resrow[data-res="' + k + '"]');
       if (!el) continue;
       const rose = cur[k] > prev[k];
-      el.classList.add(((k === 'noise') ? !rose : rose) ? 'flash-up' : 'flash-dn');
+      const good = (k === 'noise') ? !rose : rose;   // 소음만 반전(오를수록 나쁨)
+      el.classList.add(good ? 'flash-up' : 'flash-dn');
+      el.classList.remove(good ? 'flash-dn' : 'flash-up');
+      // 떠오르는 증감 숫자 — '내 선택이 이만큼 바꿨다'를 사물처럼 즉시 보여준다
+      floatDelta(el, cur[k] - prev[k], good);
     }
   }
   LR.village._prevRes = cur;
+}
+
+// 자원 행 위에 +N / -N 가 떠올라 사라진다 (초록=좋은 변화, 빨강=나쁜 변화)
+function floatDelta(el, delta, good) {
+  if (!delta) return;
+  const f = document.createElement('span');
+  f.className = 'vh-float ' + (good ? 'good' : 'bad');
+  f.textContent = (delta > 0 ? '+' : '') + delta;
+  el.appendChild(f);
+  setTimeout(() => f.remove(), 1300);
 }
 
 // 인물 상세는 상시 패널 대신 클릭 팝오버(showPopover)로만 표시 — renderDetail 제거됨
@@ -1304,15 +1555,26 @@ LR.village.renderScene = function() {
   });
   if (LR.village.mode === 'compound') {
     // 구역 호버 → 이름 라벨만 표시(빛무리 제거). 클릭 → 정보창(망루·정문은 외부 정찰)
+    LR.village._roofOff = LR.village._roofOff || {};
     host.querySelectorAll('.vh-hot').forEach(h => {
       const z = h.dataset.zone;
       h.classList.add('vh-hot-act');
-      h.addEventListener('mouseenter', () => h.classList.add('hot-on'));
-      h.addEventListener('mouseleave', () => h.classList.remove('hot-on'));
+      const roofEl = ROOF_ZONES[z] ? host.querySelector('.vh-roof[data-roof="' + z + '"]') : null;
+      h.addEventListener('mouseenter', () => {
+        h.classList.add('hot-on');
+        if (roofEl) roofEl.classList.add('off');           // 커서를 대면 지붕이 날아간다
+      });
+      h.addEventListener('mouseleave', () => {
+        h.classList.remove('hot-on');
+        if (roofEl && !LR.village._roofOff[z]) roofEl.classList.remove('off');   // 클릭으로 고정되지 않았으면 다시 덮임
+      });
       h.addEventListener('click', (e) => {
         e.stopPropagation();
         if (z === 'watchtower' || z === 'gate') { LR.village.closeZoneInfo(); LR.village.showOutside(); }
-        else LR.village.showZoneInfo(z);
+        else {
+          if (roofEl) { LR.village._roofOff[z] = true; roofEl.classList.add('off'); }   // 클릭하면 정보창 동안 계속 열림
+          LR.village.showZoneInfo(z);
+        }
       });
     });
     // 빈 곳 클릭 → 팝오버·정보창 닫기
@@ -1377,7 +1639,6 @@ if (!window.__vhResizeBound) {
   window.addEventListener('resize', () => {
     if (LR.village.mode === 'compound') fitStage();
     if (LR.village._scopeResize) LR.village._scopeResize();
-    if (LR.village.positionPopover) LR.village.positionPopover();
     if (LR.village.positionZinfo) LR.village.positionZinfo();
   });
 }
@@ -1494,10 +1755,16 @@ function sceneCompound(s) {
   // 건물 스프라이트 — 위치는 각 시설 ZONES 박스에서 산출(가이드 측정값이 박스에 반영됨 → 클릭영역과 동일).
   //  발끝(하단중앙) 기준 배치. 파일 없으면 onerror로 자동 생략.
   const buildings = ZONES.map(zn => {  // water_idle.png 포함(가이드 박스 위치). 파일 없으면 onerror로 생략
-    const cx = zn.box[0] + zn.box[2] / 2, by = zn.box[1] + zn.box[3], h = zn.box[3];
+    const cx = zn.box[0] + zn.box[2] / 2, by = zn.box[1] + zn.box[3], h = zn.rh || zn.box[3];
     return `<img class="vh-bldg" src="${BLD}${zn.z}_idle.png" alt="" style="left:${cx}%;top:${by}%;height:${h}%" onerror="this.remove()">`;
   }).join('') +
     `<img class="vh-bldg" src="${BLD}fire_idle.png" alt="" style="left:53%;top:60%;height:5%" onerror="this.remove()">`;
+  // 지붕 덮개 — idle과 같은 캔버스/배치(같은 rh·by·cx)라 정확히 겹친다. 평소 덮여있고 hover/클릭 시 .off로 날아간다.
+  const roofs = ZONES.filter(zn => ROOF_ZONES[zn.z]).map(zn => {
+    const cx = zn.box[0] + zn.box[2] / 2, by = zn.box[1] + zn.box[3], h = zn.rh || zn.box[3];
+    const off = (LR.village._roofOff && LR.village._roofOff[zn.z]) ? ' off' : '';
+    return `<img class="vh-roof${off}" data-roof="${zn.z}" src="${BLD}${zn.z}_roof.png" alt="" style="left:${cx}%;top:${by}%;height:${h}%" onerror="this.remove()">`;
+  }).join('');
   return `<div class="vh-stagebox">
     <img class="vh-layer vh-px vh-px-sky"    src="${A}bg_sky.png"    alt="" onerror="this.remove()">
     <img class="vh-layer vh-px vh-px-ground" src="${A}bg_ground.png" alt="" onerror="this.remove()">
@@ -1506,6 +1773,7 @@ function sceneCompound(s) {
     ${people}
     ${pips}
     <img class="vh-layer vh-px vh-px-front" src="${A}bg_block.png" alt="" onerror="this.remove()">
+    ${roofs}
     ${gateZombies}
     ${hots}
     ${phots}
@@ -1586,22 +1854,6 @@ function fig(c, def, st) {
   </g>`;
 }
 
-// 작은 흉상 (디테일 패널용)
-// 포트레이트: 실사 PNG가 있으면 그 위에 덮고, 없으면(onerror) 절차적 SVG로 폴백.
-// assets/images/portraits/<id>.png 만 떨어뜨리면 자동 적용.
-function portraitInner(id, c, def) {
-  return `${portraitSvg(c, def)}<img class="vh-port-img" src="assets/images/portraits/${id}.png" alt="" onerror="this.remove()">`;
-}
-function portraitSvg(c, def) {
-  const skin = '#d8b48f', col = def.color;
-  return `<svg viewBox="-30 -64 60 64">
-    <path d="M-22 0 Q-24 -34 0 -38 Q24 -34 22 0 Z" fill="${col}"/>
-    <path d="M-22 0 Q-23 -28 -6 -36 L-2 0 Z" fill="${shade(col,1.15)}"/>
-    <circle cx="0" cy="-44" r="14" fill="${skin}"/>
-    <path d="M-14 -48 a14 14 0 0 1 28 0 q-14 -9 -28 0" fill="#3a322a"/>
-    <circle cx="-5" cy="-44" r="1.4" fill="#2a221c"/><circle cx="5" cy="-44" r="1.4" fill="#2a221c"/>
-  </svg>`;
-}
 
 // ═══════════════════════════════════════════════════════
 //  설비/배경 프리미티브
@@ -1883,16 +2135,17 @@ function ensureDom() {
           </div>
           <div class="vh-paper"></div>
           <div class="vh-dim" id="vhDim"></div>
-          <div class="vh-pop" id="vhPop"></div>
           <div class="vh-pop vh-zinfo" id="vhZinfo"></div>
           <div class="vh-outside" id="vhOutside"></div>
           <div class="vh-dossier" id="vhDossier"></div>
           <div class="vh-pop vh-zinfo vh-logwin" id="vhLogWin"></div>
+          <div class="vh-pop vh-zinfo vh-calwin" id="vhCalWin"></div>
           <div class="vh-decision" id="vhDecision"></div>
         </div>
         <div class="vh-actbar">
           <button class="vh-act vh-act-main" id="vhActDecide" title="오늘의 결정">⚑ 오늘의 결정</button>
           <button class="vh-act" title="텍스트 상세 화면" id="vhActDetail">📋 상세</button>
+          <button class="vh-act" title="30일 달력 — 지나간 선택의 기록" id="vhActCal">🗓 30일</button>
           <button class="vh-act" title="지난 기록" id="vhActLog">📓 기록</button>
           <span class="vh-hint" id="vhHint">인물을 클릭하면 상태를 볼 수 있어요</span>
         </div>
@@ -1926,12 +2179,13 @@ function ensureDom() {
   if (dim) dim.addEventListener('click', () => {
     LR.village.closeZoneInfo();
     LR.village.closeLog();
+    LR.village.closeCalendar();
     const out = document.getElementById('vhOutside');
     if (out) out.classList.remove('open');
     LR.village._syncPause();
   });
   // 창 열림/닫힘을 감지해 일시정지(딤) 상태 동기화
-  const watchIds = ['vhDecision', 'vhZinfo', 'vhLogWin', 'vhOutside'];
+  const watchIds = ['vhDecision', 'vhZinfo', 'vhLogWin', 'vhCalWin', 'vhOutside'];
   const mo = new MutationObserver(() => LR.village._syncPause());
   watchIds.forEach(id => { const t = document.getElementById(id); if (t) mo.observe(t, { attributes: true, attributeFilter: ['class'] }); });
 
@@ -1953,6 +2207,8 @@ function ensureDom() {
   });
   const al = document.getElementById('vhActLog');
   if (al) al.addEventListener('click', () => LR.village.showLog());
+  const ac = document.getElementById('vhActCal');
+  if (ac) ac.addEventListener('click', () => LR.village.showCalendar());
 }
 
 // 일시정지/딤 동기화
@@ -1962,7 +2218,7 @@ LR.village._syncPause = function() {
   const scr = document.getElementById('villageScreen');
   if (!scr) return;
   const isOpen = id => { const e = document.getElementById(id); return e && e.classList.contains('open'); };
-  const modalOpen = isOpen('vhZinfo') || isOpen('vhLogWin') || isOpen('vhOutside');
+  const modalOpen = isOpen('vhZinfo') || isOpen('vhLogWin') || isOpen('vhCalWin') || isOpen('vhOutside');
   const anyOpen = modalOpen || isOpen('vhDecision');
   scr.classList.toggle('paused', anyOpen);
   if (anyOpen) { scr.style.setProperty('--px', '0'); scr.style.setProperty('--py', '0'); }  // 패럴렉스 중앙 고정

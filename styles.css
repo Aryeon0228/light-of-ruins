@@ -955,6 +955,45 @@ button {
   font-size: 0.74rem; color: var(--c-text-faint); font-family: 'Noto Sans KR', sans-serif;
 }
 
+/* ══════ 엔딩 카드 수집 갤러리 (작은 승리 카드 스타일 재사용 + 결말 전용) ══════ */
+#endingCollectionOverlay {
+  position: fixed; inset: 0; z-index: 350; display: none;
+  background: rgba(8, 9, 12, .94);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  align-items: center; justify-content: center; padding: 2rem;
+}
+#endingCollectionOverlay.active { display: flex; }
+.ec-card { position: relative; }
+.ec-card .coll-art { aspect-ratio: 4 / 3; }
+.ec-card.survival { border-color: #3a4a3a; }
+.ec-card.gameover { border-color: #4a2e2e; }
+.ec-type {
+  position: absolute; top: 13px; right: 13px;
+  font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em;
+  padding: 1px 7px; border-radius: 10px; font-family: 'Galmuri11', monospace;
+}
+.ec-type.survival { color: #b8e0b0; background: rgba(58,74,58,.85); border: 1px solid #4a6a4a; }
+.ec-type.gameover { color: #e8a8a8; background: rgba(74,46,46,.85); border: 1px solid #6a3a3a; }
+.ec-card.locked .ec-type { opacity: .4; }
+.ec-sub {
+  font-size: 0.64rem; letter-spacing: 0.06em; color: #8a8f9a;
+  font-family: 'Galmuri11', monospace; margin-top: -2px;
+}
+
+/* 엔딩 화면 — '엔딩 카드 수집됨' 배지 */
+.ending-collect-badge {
+  display: inline-block; margin-left: 0.5rem;
+  font-size: 0.7rem; font-family: 'Galmuri11', monospace; letter-spacing: 0.04em;
+  padding: 2px 9px; border-radius: 11px; vertical-align: middle;
+  color: var(--c-text-dim); border: 1px solid var(--c-border); background: rgba(255,255,255,.03);
+}
+.ending-collect-badge.is-new {
+  color: #1a140a; background: linear-gradient(180deg, #ffd98a, #e7b257);
+  border-color: #ffcf86; font-weight: 700;
+  animation: endingBadgePop .5s cubic-bezier(.2,1.5,.4,1) both;
+}
+@keyframes endingBadgePop { 0% { opacity: 0; transform: scale(.6); } 100% { opacity: 1; transform: scale(1); } }
+
 /* 선택 결과 변화량 칩 — 컷씬에 크게 표시 (초록=상승, 빨강=하락) */
 .cutscene-result { display: none; flex-wrap: wrap; gap: 0.55rem; justify-content: center; margin: 0.1rem 0 1.3rem; }
 .cs-rchip {

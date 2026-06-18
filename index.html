@@ -22,6 +22,7 @@
     <button id="btnNewGame">새 게임 — Day 1부터</button>
     <button id="btnContinue">이어하기</button>
     <button id="btnCollection">수집 카드 — 작은 승리</button>
+    <button id="btnEndingCollection">엔딩 카드 — 도달한 결말</button>
     <button id="btnAbout">기획에 대하여</button>
   </div>
   <div class="credits">
@@ -115,6 +116,7 @@
       <div id="endingTimeline"></div>
     </section>
     <div class="ending-actions">
+      <button id="btnEndingViewCollection">엔딩 카드 모음</button>
       <button id="btnRestart">처음부터 다시</button>
       <button id="btnEndingTitle">타이틀로</button>
     </div>
@@ -131,6 +133,19 @@
     </div>
     <div id="collectionGrid" class="collection-grid"></div>
     <div class="collection-foot">마을에서 작은 승리가 일어날 때마다 카드가 모입니다. (수집 기록은 판이 끝나도 유지)</div>
+  </div>
+</div>
+
+<!-- 엔딩 카드 수집 갤러리 -->
+<div id="endingCollectionOverlay">
+  <div class="collection-panel">
+    <div class="collection-head">
+      <h2>엔딩 카드 · 도달한 결말</h2>
+      <span id="endingCollectionCount" class="collection-count">0 / 0</span>
+      <button id="endingCollectionClose" class="collection-close">✕</button>
+    </div>
+    <div id="endingCollectionGrid" class="collection-grid"></div>
+    <div class="collection-foot">한 번이라도 도달한 결말은 카드로 영구 수집됩니다. 여덟 결말 — 어느 길로 가느냐에 따라 마을의 마지막은 달라집니다.</div>
   </div>
 </div>
 
@@ -189,6 +204,7 @@
 <script src="engine/loop.js"></script>
 <script src="engine/save.js"></script>
 <script src="engine/collection.js"></script>
+<script src="engine/ending-collection.js"></script>
 <script src="engine/ambience.js"></script>
 <script src="engine/main.js"></script>
 

@@ -235,7 +235,7 @@ LR.render.characters = function(state) {
       <div class="bar-label"><span>체력</span><span>${c.health}</span></div>
       <div class="bar morale"><div class="bar-fill" style="width:${c.morale}%"></div></div>
       <div class="bar-label"><span>사기</span><span>${c.morale}</span></div>
-      <div class="status ${c.alive ? ht.tier : 'dead'}">${c.alive ? ht.label : '사망'}</div>
+      <div class="status ${c.alive ? ht.tier : 'dead'}">${c.alive ? ht.label : (c.left ? '떠남' : '사망')}</div>
     `;
     root.appendChild(card);
   }
@@ -254,6 +254,11 @@ LR.render.toast = function(text, kind) {
 // ─── 엔딩 화면 ───
 LR.render.showEnding = function(state) {
   const ending = state.ending;
+  // 도달한 결말을 엔딩 카드로 영구 수집 (처음 본 결말이면 '새 카드' 표시)
+  let endingIsNew = false;
+  if (LR.endingCollection && LR.endingCollection.add) {
+    endingIsNew = LR.endingCollection.add(ending.id);
+  }
   const ov = document.getElementById('endingOverlay');
   // 엔딩별 무드(연출) — 색조/등장
   const moodMap = {
@@ -266,7 +271,13 @@ LR.render.showEnding = function(state) {
   void ov.offsetWidth;            // 리플로우 → 등장 애니메이션 재생
   ov.classList.add('enter');
   document.getElementById('endingTitle').textContent = ending.title;
-  document.getElementById('endingSubtitle').textContent = ending.subtitle;
+  const subEl = document.getElementById('endingSubtitle');
+  const collected = LR.endingCollection ? LR.endingCollection.count() : 0;
+  const total = (LR.ENDING_CARD_ORDER || []).length || 8;
+  subEl.innerHTML = (ending.subtitle || '')
+    + ` <span class="ending-collect-badge${endingIsNew ? ' is-new' : ''}">`
+    + (endingIsNew ? '✦ 새 엔딩 카드 수집' : '엔딩 카드 보유')
+    + ` · ${collected}/${total}</span>`;
 
   // 엔딩 히어로 일러스트 — assets/images/endings/{id소문자}.png, 없으면 숨김
   const heroWrap = document.getElementById('endingHero');
@@ -289,6 +300,12 @@ LR.render.showEnding = function(state) {
   roster.innerHTML = LR.CHARACTER_ORDER.map(id => {
     const c = state.characters[id];
     if (!c.alive) {
+      if (c.left) {     // 떠난 사람 — 죽음과 구분
+        return `<div class="row dead">
+          <span>${c.name}</span>
+          <span>Day ${c.departureDay || '?'} · 마을을 떠났다 — 빈자리로 남다</span>
+        </div>`;
+      }
       const when = c.deathDay ? `Day ${c.deathDay}` : '어느 날';
       const cause = c.deathCause || '폐허 속에서';
       return `<div class="row dead">

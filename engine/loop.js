@@ -159,6 +159,27 @@ LR.engine.applyChoice = function(choiceId) {
     Object.assign(state, { flags: Object.assign(state.flags || {}, choice.flags) });
   }
 
+  // 6.7 이탈 위기 결정 — 붙잡거나 보내거나 (C: 누적 여파의 정점)
+  let departureCut = null;
+  if (choice.departure) {
+    const dc = state.characters[choice.departure.id];
+    if (dc && dc.alive) {
+      state._lastDepartureDay = state.day;
+      if (choice.departure.action === 'plead') {
+        dc.strain = 2; dc.flags.withdrawn = false;
+        dc.morale = Math.min(100, dc.morale + 28);
+        LR.render.toast(`${dc.name}를 붙잡았다`, 'smallwin');
+        LR.chron(state, `${LR.nameGa(dc.name)} 떠나려다 마음을 돌렸다`, 'pos');
+      } else {  // release
+        dc.alive = false; dc.left = true; dc.departureDay = state.day; dc.status = 'left';
+        for (const o of LR.aliveChars(state)) o.morale = Math.max(0, o.morale - 6);
+        LR.render.toast(`${dc.name}가 마을을 떠났다`, 'raid');
+        LR.chron(state, `${LR.nameGa(dc.name)} 마을을 떠났다 — 빈자리가 남았다`, 'death');
+        departureCut = LR.buildDepartureCutscene(state, dc);   // 떠나는 새벽 — 전용 컷씬
+      }
+    }
+  }
+
   // 7. 전례 후보 생성 시도
   if (choice.precedentCandidate) {
     const newPrec = LR.tryGeneratePrecedent(state, choice.precedentCandidate);
@@ -168,6 +189,7 @@ LR.engine.applyChoice = function(choiceId) {
       LR.chron(state, `전례 ${newPrec.id} 『${newPrec.name}』 — ${newPrec.label}`, newPrec.type === 'neg' ? 'neg' : 'pos');
       // 같은 결정도 인물마다 다르게 읽힌다 — 감수성 분화 반응을 다음 날 아침에 보여준다
       state.pendingReactions = LR.buildPrecedentReactions(state, newPrec);
+      LR.accrueStrain(state, newPrec);   // 결정이 마음에 쌓인다(C)
     }
   }
 
@@ -203,6 +225,7 @@ LR.engine.applyChoice = function(choiceId) {
         LR.render.toast(`${p.id} 생성 — ${p.name}`, 'precedent-neg');
         LR.chron(state, `전례 ${p.id} 『${p.name}』 — ${p.label}`, 'neg');
         state.pendingReactions = LR.buildPrecedentReactions(state, p);
+        LR.accrueStrain(state, p);
       }
       state.pendingBabyLoss = true;
       birthLossCut = LR.buildBirthLossCutscene(state);
@@ -226,6 +249,7 @@ LR.engine.applyChoice = function(choiceId) {
       LR.chron(state, '영수가 떠났다 — 사흘의 방치', 'death');
       // 마을 사기 -15 전체
       for (const c of LR.aliveChars(state)) c.morale = Math.max(0, c.morale - 5);
+      LR.griefStrain(state, y);   // 영수를 잃은 슬픔이 마음에 쌓인다(C)
       // 죽음의 의례 — 작별 컷씬 + 다음 날 추모 예약. 출산과 같은 밤이면 한 프레임에 겹친다.
       yeongsuDeathCut = LR.buildDeathCutscene(state, [y], choice.babyBorn || birthOutcome === 'success');
       state.pendingMourning = { id: 'yeongsu', name: y.name };
@@ -263,6 +287,7 @@ LR.engine.applyChoice = function(choiceId) {
     const isNew = (LR.collection && LR.collection.add) ? LR.collection.add(sw.id) : false;
     if (!cardSW) { cardSW = sw; cardIsNew = isNew; }
   }
+  if (fired.length) LR.easeStrain(state, 0.4 * fired.length);   // 작은 승리 = 마음의 회복(C)
 
   // 11. 일일 마감 → (컷씬) → 다음 날
   state.awaitingChoice = false;
@@ -290,6 +315,9 @@ LR.engine.applyChoice = function(choiceId) {
   }
   if (birthLossCut) {
     cuts.push({ cut: birthLossCut, tone: 'bad', badge: '잃어버린 울음', isNew: false, deltas: null });
+  }
+  if (departureCut) {
+    cuts.push({ cut: departureCut, tone: 'bad', badge: '떠나는 사람', isNew: false, deltas: null });
   }
   if (!cuts.length) {
     if (choice.cutscene) {
@@ -407,6 +435,22 @@ LR.buildBirthLossCutscene = function(state) {
   };
 };
 
+// 이탈 — 떠나는 새벽. 정문/배낭/돌아보지 않는 뒷모습. 죽음과 다른 종류의 빈자리.
+//  1프레임: 전용 일러스트 슬롯(assets/images/cutscenes/departure.png) → 없으면 마을 배경 폴백.
+LR.buildDepartureCutscene = function(state, c) {
+  const bg = LR.villageCutsceneBg(state.season);
+  const slot = 'assets/images/cutscenes/departure.png';
+  const port = 'assets/images/portraits/' + c.id + '.png';
+  return {
+    id: 'depart_' + c.id + '_' + state.day,
+    frames: [
+      { image: slot, fallback: bg, slot: slot, text: `${LR.nameEun(c.name)} 새벽빛이 들기 전에 배낭을 멨다. 아무도 억지로 붙잡지 않았다.` },
+      { image: port, fallback: bg, text: `${LR.nameGa(c.name)} 정문을 나선다. 돌아보지 않는다 — 돌아보면, 발이 떨어지지 않을 테니까.` },
+      { image: bg, text: '문이 닫힌다. 마을은 한 사람 몫의 빈자리를 안고, 다시 하루를 시작한다.' }
+    ]
+  };
+};
+
 // 전례 분화 반응 — 같은 사건을 감수성 표가 다른 두 인물이 정반대로 읽는다.
 //  v1.2 감수성 표(negSens/posSens)가 수치가 아니라 '대사'로 드러나는 순간.
 //  가장 민감한 인물 + 가장 둔감한 인물의 한 마디씩, 다음 날 아침 비트로 표시.
@@ -418,34 +462,113 @@ LR.buildPrecedentReactions = function(state, prec) {
   const most = sorted[0];                       // 가장 깊이 받아들이는 사람
   const least = sorted[sorted.length - 1];      // 가장 건조하게 받아들이는 사람
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-  let mostLine, leastLine;
-  if (prec.type === 'neg') {
-    mostLine = pick([
-      '"…다음은 누구죠. 그런 생각을 하게 되네요."',
-      '"어제의 결정을, 우리는 잊지 못할 거예요."',
-      '"이제 아프면 말하기가 무서워졌어요."'
-    ]);
-    leastLine = pick([
-      '"어쩔 수 없는 판단이었어. 누구라도 그랬을 거야."',
-      '"감상은 사치야. 마을은 숫자로 버티는 거니까."',
-      '"잘잘못을 따질 여유가 있으면 담장이나 한 번 더 봐."'
-    ]);
-  } else {
-    mostLine = pick([
-      '"이 마을은… 사람을 버리지 않는군요. 그게 어디예요."',
-      '"어제 일 말이에요. 그거 하나로 며칠은 버틸 수 있어요."',
-      '"고마워요. 누가 한 말이 아니라, 마을이 한 일이라서요."'
-    ]);
-    leastLine = pick([
-      '"나쁘지 않은 결정이었어." 그는 그렇게만 말했다.',
-      '"좋은 일이지. 자원 계산은 다시 해야겠지만."',
-      '"다행이군. 내일도 이럴 수 있을지는 모르겠지만."'
-    ]);
-  }
+  // 공용 풀 — 인물 특화 대사(REACTION_LINES)가 없을 때 폴백
+  const GEN = {
+    neg: {
+      high: ['"…다음은 누구죠. 그런 생각을 하게 되네요."', '"어제의 결정을, 우리는 잊지 못할 거예요."', '"이제 아프면 말하기가 무서워졌어요."'],
+      low:  ['"어쩔 수 없는 판단이었어. 누구라도 그랬을 거야."', '"감상은 사치야. 마을은 숫자로 버티는 거니까."', '"잘잘못 따질 여유 있으면 담장이나 한 번 더 봐."']
+    },
+    pos: {
+      high: ['"이 마을은… 사람을 버리지 않는군요. 그게 어디예요."', '"어제 일 말이에요. 그거 하나로 며칠은 버틸 수 있어요."', '"고마워요. 누가 한 말이 아니라, 마을이 한 일이라서요."'],
+      low:  ['"나쁘지 않은 결정이었어." 그는 그렇게만 말했다.', '"좋은 일이지. 자원 계산은 다시 해야겠지만."', '"다행이군. 내일도 이럴 수 있을지는 모르겠지만."']
+    }
+  };
+  // 인물 특화 우선 → 없으면 공용 풀. (negHigh/negLow/posHigh/posLow)
+  const lineFor = (char, role) => {
+    const t = prec.type;                          // 'neg' | 'pos'
+    const key = t + (role === 'high' ? 'High' : 'Low');
+    const personal = (LR.REACTION_LINES[char.id] || {})[key];
+    return pick((personal && personal.length) ? personal : GEN[t][role]);
+  };
+  const mostEmo = prec.type === 'neg' ? 'worry' : 'smile';   // 민감자: 상심/안도
+  const leastEmo = prec.type === 'neg' ? 'angry' : 'neutral'; // 둔감자: 냉정/담담
+  // 같은 사건을 정반대로 읽는 두 사람 → 대립(마주봄)으로 좌우에 세운다
   return [
-    { speaker: most.name, text: mostLine },
-    { speaker: least.name, text: leastLine }
+    { speaker: most.name, text: lineFor(most, 'high'), emotion: mostEmo, with: least.id, stance: 'face' },
+    { speaker: least.name, text: lineFor(least, 'low'), emotion: leastEmo, with: most.id, stance: 'face' }
   ];
+};
+
+// ─── 기억 콜백 (B) — 며칠 지난 전례를 민감한 인물이 다시 꺼낸다 (지속되는 원한/고마움) ───
+//  쿨다운 + 확률로 가끔만. 신선한 반응(pendingReactions)이 있는 아침엔 양보한다.
+LR.pickPrecedentCallback = function(state) {
+  if (!state.precedents || !state.precedents.length) return null;
+  if (state._lastCallbackDay && (state.day - state._lastCallbackDay) < 4) return null;   // 쿨다운 4일
+  // 3일 이상 묵은 전례만 (충분히 '과거'가 된 것)
+  const old = state.precedents.filter(p => (state.day - (p.bornDay || 0)) >= 3);
+  if (!old.length) return null;
+  if (Math.random() > 0.5) return null;            // 자격 있어도 절반만 발동
+  const prec = old[Math.floor(Math.random() * old.length)];
+  // 그 전례에 민감한 생존자(대상자 제외) 중 가장 민감한 사람이 떠올린다
+  const key = prec.type === 'neg' ? 'negSens' : 'posSens';
+  const cands = LR.aliveChars(state).filter(c => !(prec.targets || []).includes(c.id));
+  if (!cands.length) return null;
+  const who = cands.slice().sort((a, b) => b[key] - a[key])[0];
+  const pool = (LR.CALLBACK_LINES && LR.CALLBACK_LINES[prec.type]) || [];
+  if (!pool.length) return null;
+  const line = pool[Math.floor(Math.random() * pool.length)](prec.name || prec.label || '그 결정');
+  state._lastCallbackDay = state.day;
+  return { kind: 'dialog', speaker: who.name, pid: who.id, text: line,
+           emotion: prec.type === 'neg' ? 'sad' : 'smile' };
+};
+
+// ─── 누적 여파 (C) — 마음의 상처가 쌓이면 위축되고, 끝내 떠난다 ───
+// 전례가 strain에 누적: 부정은 민감한 사람일수록 깊게(당사자는 더), 긍정은 깎아낸다(돌봄=회복 레버).
+LR.accrueStrain = function(state, prec) {
+  if (!prec) return;
+  for (const c of LR.aliveChars(state)) {
+    const isTarget = (prec.targets || []).includes(c.id);
+    if (prec.type === 'neg') {
+      c.strain = (c.strain || 0) + (c.negSens || 1) * (isTarget ? 1.6 : 1);
+    } else if (!isTarget) {
+      c.strain = Math.max(0, (c.strain || 0) - (c.posSens || 1) * 0.7);  // 긍정 전례 = 회복
+    }
+  }
+};
+// 작은 승리·따뜻한 순간 = 마을 전체 strain 약간 회복
+LR.easeStrain = function(state, amt) {
+  for (const c of LR.aliveChars(state)) c.strain = Math.max(0, (c.strain || 0) - (amt || 0.4));
+};
+// 죽음의 슬픔 — 동료를 잃으면 남은 이들의 마음에 깊이 새겨진다(민감할수록 크게). 전례보다 자주 strain을 민다.
+LR.griefStrain = function(state, dead) {
+  for (const c of LR.aliveChars(state)) {
+    if (dead && c.id === dead.id) continue;
+    c.strain = (c.strain || 0) + (c.negSens || 1) * 1.5;
+  }
+};
+
+// 이탈 위기 — 가장 지친 한 사람이 마을을 떠나려 한다 (드라마의 정점)
+LR.checkDepartureEvent = function(state) {
+  if (state._lastDepartureDay && (state.day - state._lastDepartureDay) < 5) return null;  // 쿨다운
+  const cand = LR.aliveChars(state).find(c =>
+    (c.strain || 0) >= 7 && c.morale < 28 &&
+    c.id !== 'minsu' &&                                              // 아이는 혼자 떠나지 않는다
+    !(c.id === 'miyeon' && state.baby && state.baby.exists)          // 아기 있는 미연 제외
+  );
+  if (!cand) return null;
+  const plea = (LR.DEPARTURE_LINES && LR.DEPARTURE_LINES[cand.id])
+    || '"…나, 더는 여기 못 있겠어요. 짐을 쌌어요."';
+  return {
+    id: `DEPART_${cand.id}_D${state.day}`,
+    source: 'departure',
+    title: `Day ${state.day} — 떠나려는 사람`,
+    body: [
+      { kind: 'narration', text: `${cand.name}가 새벽부터 배낭을 꾸렸다. 말없이 나가려던 길목에서, 누군가 그 앞을 막아선다.` },
+      { kind: 'dialog', speaker: cand.name, pid: cand.id, emotion: 'sad', text: plea }
+    ],
+    choices: [
+      { id: 'A', label: '붙잡는다 — 곁을 지킨다',
+        body: '마을이 그를 둘러싼다. 다른 이들의 기운이 조금 빠지지만, 그를 붙든다.',
+        moraleAll: -3,
+        departure: { id: cand.id, action: 'plead' } },
+      { id: 'B', label: '보내준다',
+        body: '억지로 붙잡지 않는다. 그의 선택을 존중한다 — 빈자리가 남는다.',
+        risk: 'danger',
+        departure: { id: cand.id, action: 'release' } }
+    ],
+    keyLine: '붙잡는 것도, 보내는 것도, 이 마을이 어떤 곳인지를 정한다.',
+    isDeparture: true
+  };
 };
 
 // 탐색(외출) 부상 컷씬 — 장소를 문장에 엮어 매번 다른 장면으로.
@@ -546,8 +669,23 @@ LR.engine.endOfDay = function() {
     //   자동 100 수렴 방지(평시 ~55에서 weary) + 좋은 하루(이벤트 moraleAll+)는 위로, 방치는 기준선으로.
     //   나선 없음 60 · 교감 68 · 결속 78 · 단합 88. (긴장은 있되 영구 비참은 아니게)
     const moraleTarget = { danhap: 88, gyeolsok: 78, gyogam: 68 }[state.spiral.state] || 60;
-    const drift = (moraleTarget - c.morale) * 0.22;
+    //  위축(withdrawn) 상태면 회복이 둔하다 — 마음을 닫은 사람은 잘 돌아오지 않는다(C)
+    const driftK = c.flags.withdrawn ? 0.09 : 0.22;
+    const drift = (moraleTarget - c.morale) * driftK;
     c.morale = Math.max(0, Math.min(100, Math.round(c.morale + drift)));
+  }
+
+  // ── 누적 여파 (C): 저사기 → strain↑, 충분히 회복돼야(사기>65)만 천천히 아묾 ──
+  //  상처가 평시 사기대(50~65)에서 잘 안 깎이게 해, 죽음·전례의 여파가 오래 남고 누적되도록.
+  for (const c of LR.aliveChars(state)) {
+    if (c.morale < 25) c.strain = (c.strain || 0) + 0.5;
+    else if (c.morale > 65) c.strain = Math.max(0, (c.strain || 0) - 0.3);
+    const was = !!c.flags.withdrawn;
+    c.flags.withdrawn = (c.strain || 0) >= 4;
+    if (c.flags.withdrawn && !was) {            // 막 마음을 닫음 → 다음 날 아침 비트 예약
+      (state.pendingWithdrawn = state.pendingWithdrawn || []).push({ id: c.id, name: c.name });
+      LR.chron(state, `${LR.nameGa(c.name)} 부쩍 말이 줄었다`, 'neg');
+    }
   }
   // 사망 처리 (별도 패스 — 회복 후 체력 0이면 사망)
   const deadToday = [];
@@ -565,6 +703,7 @@ LR.engine.endOfDay = function() {
         : '부상 악화';
       deadToday.push(c);
       for (const o of LR.aliveChars(state)) o.morale = Math.max(0, o.morale - 5);
+      LR.griefStrain(state, c);   // 남은 이들의 슬픔이 마음에 쌓인다(C)
       LR.render.toast(`${c.name} 사망 — Day ${state.day}`, 'raid');
       LR.chron(state, `${LR.nameGa(c.name)} 떠났다 — ${c.deathCause}`, 'death');
     } else if (c.alive) {

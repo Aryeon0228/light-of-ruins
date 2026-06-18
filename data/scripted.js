@@ -16,8 +16,8 @@ LR.SCRIPTED_DAYS = {
     title: 'Day 1 — 봄바람의 불안, 그리고 지지직거리는 라디오',
     body: [
       { kind: 'narration', text: '폐공장 창고에 아침 햇빛이 들어온다. 식량 65. 오늘 10을 소비하면 55. 이대로면 6일 후 위기 구간이다.' },
-      { kind: 'narration', text: '재혁이 탐색대를 보내야 한다고 판단한다. 그때 동호가 미연을 보며 투덜거린다.' },
-      { kind: 'dialog', speaker: '동호', text: '"배 속에 애가 있다고 식량 부족한데도 배급 예전과 똑같이 받는 거 아니겠지?"' },
+      { kind: 'dialog', speaker: '재혁', emotion: 'neutral', text: '"이대로면 엿새 뒤엔 곳간이 빈다. 탐색대를 내보내야 해."' },
+      { kind: 'dialog', speaker: '동호', emotion: 'angry', with: 'jaehyeok', stance: 'face', text: '"배 속에 애가 있다고 식량 부족한데도 배급 예전과 똑같이 받는 거 아니겠지?"' },
       { kind: 'narration', text: '가족을 잃은 동호의 사기는 절망 구간이다.' },
       { kind: 'narration', text: '그때 수진이 의무실 라디오 주파수를 돌리다 손을 멈춘다. 지지직. 잡음 사이로 사람의 목소리 같은 무언가가 섞였다가 사라진다.' },
       { kind: 'dialog', speaker: '수진', text: '"이게… 무슨 신호 같은데요."' },
@@ -73,9 +73,9 @@ LR.SCRIPTED_DAYS = {
     title: 'Day 3 — 부상의 대가, 계속되는 지지직',
     body: [
       { kind: 'narration', text: '어젯밤 주변 좀비를 보고 긴장한 마을. 재혁이 다시 탐색을 결정한다.' },
-      { kind: 'narration', text: '편의점에서 식량을 회수하다 좀비를 만난다. 재혁이 은서를 먼저 안전한 쪽으로 보내다가 무너지는 선반에 다리를 다친다.' },
-      { kind: 'narration', text: '돌아온 탐색대 — 식량 +18. 재혁 체력 90 → 55. 은서 체력 -5, 사기 -15.' },
-      { kind: 'systemNote', text: '재혁의 부상 치료에 의약품 1회분 + 수진의 간병이 필요하다.' }
+      { kind: 'narration', text: '편의점에서 식량을 회수하다 좀비를 만난다. 재혁이 은서를 먼저 안전한 쪽으로 밀어내다가, 무너지는 선반에 다리가 깔린다.' },
+      { kind: 'narration', text: '해질 무렵, 재혁이 한쪽 다리를 끌며 돌아왔다. 등에 진 식량 자루는 묵직하다 — 그 무게만큼, 그의 다리는 성치 않다. 뒤따라 들어온 은서는 내내 고개를 들지 못한다.' },
+      { kind: 'systemNote', text: '탐색 결과 — 식량 +18 확보. 재혁 체력 90→55 · 은서 사기 -15. 치료에는 의약품 1회분과 수진의 간병이 필요하다.' }
     ],
     choices: [
       { id: 'A', label: '수진을 간병에 투입 (추천)',

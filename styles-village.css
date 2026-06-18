@@ -192,6 +192,16 @@
   image-rendering: pixelated; image-rendering: crisp-edges;
 }
 
+/* 지붕 덮개 — 평소 덮여있다가 hover/클릭 시 .off 로 위로 날아간다(인형의 집 리빌) */
+.vh-roof {
+  position: absolute; z-index: 7; transform: translate(-50%, -100%);
+  pointer-events: none; user-select: none;
+  image-rendering: pixelated; image-rendering: crisp-edges;
+  transition: opacity .6s ease;            /* 그 자리에서 스르르 사라진다(이동 없음) */
+  filter: drop-shadow(0 5px 9px rgba(0,0,0,.45));
+}
+.vh-roof.off { opacity: 0; }               /* 위치 유지 — 페이드아웃만 */
+
 /* 모닥불 — 불꽃 PNG 불규칙 flicker */
 .vh-campfire { z-index: 2; animation: vhFlick 1.5s steps(1, end) infinite; }
 @keyframes vhFlick {
@@ -678,7 +688,16 @@
   animation: vdPortIn .28s ease both;   /* 대사 비트마다 슬라이드 등장 */
 }
 @keyframes vdPortIn { from { opacity: 0; transform: translateX(-10px) scale(.97); } to { opacity: 1; transform: translateX(0) scale(1); } }
-.vd-port { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
+.vd-port { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; transition: transform .2s ease; }
+
+/* ── 2인 대화 무대 — 좌/우 배치 + 말하는 사람 강조(배치·명암이 메인 신호) ── */
+.vd-runner.two { gap: 10px; }
+.vd-portrait.side-r { animation: vdPortInR .28s ease both; }
+@keyframes vdPortInR { from { opacity: 0; transform: translateX(10px) scale(.97); } to { opacity: 1; transform: translateX(0) scale(1); } }
+.vd-portrait.idle { opacity: .5; filter: grayscale(.55) brightness(.62); }
+.vd-portrait.active { box-shadow: inset 0 1px 0 #5a5e4355, 0 4px 16px #000a, 0 0 11px -2px #ffcf8688; }
+/* 마주봄(face): 오른쪽 인물 좌우반전 → 비대칭 요소가 안쪽(서로)을 향함. 동조(with)는 반전 없음(같은 방향) */
+.vd-runner.stance-face .vd-portrait.side-r .vd-port { transform: scaleX(-1); }
 .vd-textbox { flex: 1; min-width: 0; }
 .vd-textbox .vd-spk {
   display: block; margin-bottom: 5px; font-size: 0.95rem; font-weight: 700; color: #ffcf86;
@@ -1206,6 +1225,52 @@
 .vh-resrow-tr.flat { color: #6a6a48; }
 #villageScreen .vh-resrow.flash-up { animation: vhFlashUp .7s ease-out; }
 #villageScreen .vh-resrow.flash-dn { animation: vhFlashDn .7s ease-out; }
+.vh-resrow { position: relative; }
+
+/* ── 물리적 표현 — 숫자 아래에 '사물/일수' 한 줄 (식사 칸·약병) ── */
+.vh-resrow.has-phys { grid-template-rows: auto auto; row-gap: 3px; padding-bottom: 3px; }
+.vh-resrow-phys {
+  grid-column: 1 / -1; display: flex; align-items: center; gap: 7px;
+  padding-left: 23px; margin-top: 1px;
+}
+.vh-rpips { display: inline-flex; gap: 2px; }
+.vh-rpip {
+  width: 6px; height: 11px; border-radius: 1px;
+  background: #15160d; border: 1px solid #23241a;
+}
+.vh-rpip.on { box-shadow: 0 0 3px -1px currentColor; }
+.vh-vials { display: inline-flex; gap: 3px; }
+.vh-vial {
+  position: relative; width: 6px; height: 12px;
+  border-radius: 1px 1px 2px 2px; background: #15160d; border: 1px solid #2a201c;
+}
+.vh-vial::before {   /* 병 마개 */
+  content: ''; position: absolute; top: -2px; left: 0; right: 0; height: 2px;
+  background: #2a201c; border-radius: 1px;
+}
+.vh-vial.on { background: linear-gradient(180deg, #e88a8a 40%, #e05a5a); border-color: #e05a5a; }
+.vh-vial.on::before { background: #f0b0b0; }
+.vh-phys-note {
+  font-style: normal; font-size: 0.66rem; color: #8a8b62;
+  font-family: 'Noto Sans KR', sans-serif; white-space: nowrap;
+}
+.vh-phys-note.danger { color: #e08080; font-weight: 600; }
+
+/* ── 떠오르는 증감 숫자 — '내 선택이 이만큼 바꿨다' ── */
+.vh-float {
+  position: absolute; right: 4px; top: -2px; z-index: 6;
+  font-family: 'Galmuri11', monospace; font-size: 0.92rem; font-weight: 700;
+  pointer-events: none; text-shadow: 0 1px 3px #000c;
+  animation: vhFloatRise 1.3s cubic-bezier(.2,.8,.3,1) forwards;
+}
+.vh-float.good { color: #8fe070; }
+.vh-float.bad  { color: #ff8a7a; }
+@keyframes vhFloatRise {
+  0%   { opacity: 0; transform: translateY(6px) scale(.8); }
+  18%  { opacity: 1; transform: translateY(-2px) scale(1.08); }
+  35%  { transform: translateY(-6px) scale(1); }
+  100% { opacity: 0; transform: translateY(-22px) scale(1); }
+}
 
 /* ═══════════════════════════════════════════════════════
    컴팩트 로스터 (세로 축소) + 클릭 시 전신사진 디테일
@@ -1301,3 +1366,80 @@
 .vd-cnoise.calm   { color: #8fbf8f; background: #182016; border-color: #2c3a26; }
 .vd-cnoise.warn   { color: #e0b060; background: #221d10; border-color: #4a3c1a; }
 .vd-cnoise.danger { color: #e08a7a; background: #221311; border-color: #5a2620; }
+
+/* 선택지 영향 미리보기 칩 — 클릭 전에 '무엇이 얼마나 바뀌나' */
+.vd-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; align-items: center; }
+.vd-chips .vd-cnoise { margin-top: 0; }
+.vd-imp {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 0.74rem; font-weight: 700; letter-spacing: .01em;
+  padding: 1px 8px; border-radius: 2px; border: 1px solid #2a2c1e;
+  font-family: 'Galmuri11', monospace; white-space: nowrap;
+}
+.vd-imp.good { color: #9ce080; background: #16210f; border-color: #335024; }
+.vd-imp.bad  { color: #ff9a86; background: #221310; border-color: #5a2a22; }
+.vd-imp.warn { color: #e0b060; background: #221d10; border-color: #4a3c1a; font-weight: 600; }
+.vd-imp.prec { color: #c9a6e0; background: #1c1626; border-color: #3c2e52; font-weight: 600; }
+.vd-imp.expd { color: #e6c79a; background: #241c10; border-color: #5a4524; font-weight: 600; }
+
+/* ═══════════════════════════════════════════════════════
+   30일 달력 (페르소나식) — 지나간 선택이 시간 위에 누적
+   ═══════════════════════════════════════════════════════ */
+#villageScreen .vh-calwin { width: min(744px, calc(100% - 28px)); }
+.vc-prog { margin-left: auto; font-size: .82rem; color: #cdd0a0; font-family: 'Galmuri11', monospace; }
+.vc-body { gap: 11px; }
+.vc-cal { display: flex; flex-direction: column; gap: 6px; }
+.vc-week { display: grid; grid-template-columns: 54px 1fr; align-items: center; gap: 9px; }
+.vc-wk { font-size: .7rem; color: #9a9a6a; font-family: 'Galmuri11', monospace; line-height: 1.35; }
+.vc-wk i { display: block; font-style: normal; font-size: .56rem; color: #6a6a48; letter-spacing: .02em; }
+.vc-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+.vc-cell {
+  position: relative; aspect-ratio: 1 / 1; min-height: 42px;
+  border: 1px solid #23241a; border-radius: 3px; background: #111208;
+  padding: 3px 4px; overflow: hidden; display: flex; flex-direction: column;
+  transition: border-color .12s, transform .08s;
+}
+.vc-cell.void { background: transparent; border-color: transparent; }
+.vc-cell.future { opacity: .38; }
+.vc-cell.past, .vc-cell.today { cursor: pointer; }
+.vc-cell.past:hover, .vc-cell.today:hover { border-color: #6a6d4e; transform: translateY(-1px); }
+.vc-cell.sel { outline: 2px solid #ffcf86; outline-offset: -2px; }
+.vc-dnum { font-size: .72rem; color: #b9b694; font-family: 'Galmuri11', monospace; }
+.vc-cell.future .vc-dnum { color: #5a5b40; }
+.vc-tod {
+  position: absolute; top: 2px; right: 3px; font-size: .52rem; color: #15140d;
+  background: #ffcf86; border-radius: 6px; padding: 0 5px; font-weight: 700;
+  font-family: 'Galmuri11', monospace;
+}
+.vc-cell.today { border-color: #ffcf86; box-shadow: 0 0 0 1px #ffcf8644, 0 0 13px -4px #ffcf86; }
+.vc-glyphs { margin-top: auto; display: flex; flex-wrap: wrap; gap: 1px; line-height: 1; }
+.vc-g { font-style: normal; font-size: .8rem; }
+/* 그날의 사기로 칸 색조 — 한눈에 마을의 기복이 보인다 */
+.vc-cell.m-hi   { background: #121d0f; }
+.vc-cell.m-mid  { background: #15170c; }
+.vc-cell.m-lo   { background: #1d1809; }
+.vc-cell.m-crit { background: #20120c; }
+.vc-cell.raided { border-color: #5a2620; }
+.vc-legend {
+  display: flex; flex-wrap: wrap; gap: 10px 14px; font-size: .7rem; color: #9a9a6a;
+  font-family: 'Noto Sans KR', sans-serif; padding-top: 8px; border-top: 1px solid #2a2c1e;
+}
+.vc-leg { display: inline-flex; align-items: center; gap: 4px; }
+.vc-leg.dim { color: #6a6a48; }
+.vc-detail { background: #0d0e07; border: 1px solid #23241a; border-radius: 3px; padding: 9px 11px; min-height: 58px; }
+.vc-det-h { font-size: .82rem; color: #ffcf86; font-family: 'Galmuri11', monospace; margin-bottom: 6px; }
+.vc-det-row {
+  display: flex; gap: 7px; align-items: flex-start; font-size: .82rem; color: #cdcdb0;
+  line-height: 1.5; padding: 2px 0; font-family: 'Noto Sans KR', sans-serif; word-break: keep-all;
+}
+.vc-det-row .vc-g { flex-shrink: 0; }
+.vc-det-row.death span { color: #e08a8a; }
+.vc-det-row.neg span   { color: #c89aa0; }
+.vc-det-row.pos span   { color: #9ce0a0; }
+.vc-det-row.raid span  { color: #e0b060; }
+.vc-det-row.beacon span{ color: #7fc0e0; }
+.vc-det-empty { font-size: .8rem; color: #7a7a58; font-family: 'Noto Sans KR', sans-serif; }
+.vc-det-stat {
+  margin-top: 7px; padding-top: 6px; border-top: 1px solid #23241a;
+  font-size: .72rem; color: #8e8f5e; font-family: 'Galmuri11', monospace;
+}

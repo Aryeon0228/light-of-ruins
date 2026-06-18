@@ -98,6 +98,16 @@ LR.nameYa = function(name) {
   return name + '아';
 };
 
+// 주제 조사 — 받침 있으면 '은'(종혁은), 없으면 '는'(은서는)
+LR.nameEun = function(name) {
+  if (!name) return '';
+  const code = name.charCodeAt(name.length - 1);
+  if (code >= 0xAC00 && code <= 0xD7A3) {
+    return name + (((code - 0xAC00) % 28) ? '은' : '는');
+  }
+  return name + '은(는)';
+};
+
 // 공동격 조사 — 받침 있으면 '과'(민수과 X→민수와... 받침 기준), 없으면 '와'
 LR.nameWa = function(name) {
   if (!name) return '';
