@@ -1573,3 +1573,35 @@
   margin-top: 7px; padding-top: 6px; border-top: 1px solid #23241a;
   font-size: .72rem; color: #8e8f5e; font-family: 'Galmuri11', monospace;
 }
+
+/* ═══════════════════════════════════════════════════════
+   물자고 (Stockpile) — 자원을 사물로 늘어놓아 고갈을 눈으로
+   ═══════════════════════════════════════════════════════ */
+#villageScreen .vh-stockwin { width: min(620px, calc(100% - 28px)); }
+.vstk-mouths { margin-left: auto; font-size: .74rem; color: #cdd0a0; font-family: 'Galmuri11', monospace; }
+.vstk-body { gap: 9px; }
+.vstk-row {
+  display: grid; grid-template-columns: 92px 1fr; align-items: center; gap: 10px;
+  padding: 7px 9px; border-radius: 3px; background: #0f100a; border: 1px solid #1e1f15;
+}
+.vstk-row.alarm { background: #1d1109; border-color: #5a2a1e; animation: vstkAlarm 1.7s ease-in-out infinite; }
+@keyframes vstkAlarm { 0%,100% { border-color: #5a2a1e; } 50% { border-color: #b0502e; } }
+.vstk-lab { display: flex; flex-direction: column; gap: 1px; }
+.vstk-name { font-size: .78rem; color: #b9b694; font-family: 'Noto Sans KR', sans-serif; }
+.vstk-note { font-size: .72rem; color: #8a8b62; font-family: 'Galmuri11', monospace; }
+.vstk-row.alarm .vstk-note { color: #e8917a; font-weight: 700; }
+.vstk-objs { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
+.vstk-obj { width: 25px; height: 25px; display: inline-flex; }
+.vstk-obj svg { width: 100%; height: 100%; filter: drop-shadow(0 1px 1px #0009); }
+.vstk-obj.ghost { color: #63654a; opacity: .18; }
+.vstk-obj.ghost svg { filter: none; }
+.vstk-warn {
+  display: flex; flex-direction: column; gap: 3px; margin-top: 5px;
+  padding: 8px 11px; border-radius: 3px; background: #1d120e; border-left: 3px solid #c25030;
+  font-size: .82rem; color: #ecb4a4; font-family: 'Noto Sans KR', sans-serif; line-height: 1.5; word-break: keep-all;
+}
+.vstk-warn.ok { background: #12140c; border-left-color: #4a6a3e; color: #9aa884; }
+.vstk-foot {
+  font-size: .7rem; color: #6a6a48; font-family: 'Noto Sans KR', sans-serif;
+  padding-top: 5px; border-top: 1px solid #1e1f15; margin-top: 2px;
+}

@@ -616,7 +616,8 @@ LR.engine.endOfDay = function() {
   //  생산이 소비를 일부 상쇄해 '늘 결핍'을 완화. 물받이는 계절별 수집 − 식수 소비.
   const aliveN = LR.aliveChars(state).length;
   const farmBySeason = { spring_late: 5, rainy: 4, summer_heat: 3, autumn: 6, winter: 1 };
-  const rainBySeason = { spring_late: 7, rainy: 16, summer_heat: 4, autumn: 8, winter: 5 };
+  //  빗물받이 passive 수집 하향 — 이대로 두면 물은 줄어든다. '물 뜨기' 살림을 매일 해야 유지(방치=고갈).
+  const rainBySeason = { spring_late: 3, rainy: 10, summer_heat: 2, autumn: 3, winter: 2 };
   const farmYield = Math.round((farmBySeason[state.season] ?? 3) * (state.water >= 25 ? 1 : 0.5));
   state.food = Math.min(100, state.food + farmYield);
   const waterIn = rainBySeason[state.season] ?? 6;

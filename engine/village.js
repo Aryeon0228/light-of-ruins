@@ -557,6 +557,88 @@ LR.village.closeCalendar = function() {
   if (win) win.classList.remove('open');
 };
 
+// ═══════════════════════════════════════════════════════
+//  물자고 (Stockpile) — 자원을 '사물'로 늘어놓아 고갈을 눈으로 느끼게 (위기감)
+// ═══════════════════════════════════════════════════════
+const STOCK_SVG = {
+  vial:   '<svg viewBox="0 0 16 16"><rect x="5" y="1.4" width="6" height="2" rx="1" fill="currentColor"/><path d="M5.5 3.4h5v8a2.5 2.5 0 0 1-5 0z" fill="currentColor"/><rect x="6" y="5.2" width="4" height="2" fill="#0d0b08" opacity=".3"/></svg>',
+  bandage:'<svg viewBox="0 0 16 16"><rect x="2" y="5.5" width="12" height="5" rx="2.5" fill="currentColor"/><path d="M2.5 8h11" stroke="#0d0b08" stroke-width="1" opacity=".3"/></svg>',
+  jug:    '<svg viewBox="0 0 16 16"><rect x="6" y="1.4" width="4" height="2" fill="currentColor"/><path d="M4 3.8h8v9.2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" fill="currentColor"/><rect x="5.2" y="7" width="5.6" height="5" fill="#0d0b08" opacity=".22"/></svg>',
+  can:    '<svg viewBox="0 0 16 16"><rect x="3.4" y="3.6" width="9.2" height="9.4" rx="1.4" fill="currentColor"/><rect x="3.4" y="3.6" width="9.2" height="2.3" fill="#fff" opacity=".28"/></svg>',
+  sack:   '<svg viewBox="0 0 16 16"><path d="M4 6.2c0-2 1.6-3.2 4-3.2s4 1.2 4 3.2v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" fill="currentColor"/><path d="M5.4 3.6q2.6 1.6 5.2 0" stroke="#0d0b08" stroke-width="1" fill="none" opacity=".4"/></svg>',
+  jar:    '<svg viewBox="0 0 16 16"><rect x="5" y="1.8" width="6" height="2" rx="1" fill="currentColor"/><rect x="4.4" y="3.8" width="7.2" height="10.4" rx="1.5" fill="currentColor"/><rect x="5.6" y="6.4" width="4.8" height="6" fill="#0d0b08" opacity=".25"/></svg>',
+  fuel:   '<svg viewBox="0 0 16 16"><rect x="3.4" y="4" width="7.6" height="10" rx="1" fill="currentColor"/><rect x="5.4" y="1.9" width="3.6" height="2.2" rx="1" fill="currentColor"/><path d="M11 6.2l2.2 1.1v3.6L11 12z" fill="currentColor"/></svg>'
+};
+// 사물 N개 + 빈 칸(ghost, 줄어든 게 보이게). alarm이면 행 강조.
+function stockRow(label, icon, have, baseline, color, note, alarm) {
+  const total = Math.max(baseline, have);
+  let objs = '';
+  for (let i = 0; i < total; i++) {
+    const on = i < have;
+    objs += `<span class="vstk-obj${on ? '' : ' ghost'}"${on ? ` style="color:${color}"` : ''}>${STOCK_SVG[icon]}</span>`;
+  }
+  return `<div class="vstk-row${alarm ? ' alarm' : ''}">
+    <div class="vstk-lab"><span class="vstk-name">${label}</span><b class="vstk-note">${note}</b></div>
+    <div class="vstk-objs">${objs}</div>
+  </div>`;
+}
+
+function buildStockHtml(s) {
+  const alive = Math.max(1, LR.aliveChars(s).length);
+  const totalFood = s.food + s.driedFood + s.pickledFood;
+  const foodDays = Math.floor(totalFood / alive);
+  const waterOut = Math.max(1, Math.ceil(alive * 0.5));
+  const waterDays = Math.floor(s.water / waterOut);
+  const foodT = LR.foodTier(totalFood);
+  const foodAlarm = foodT.tier === 'famine' || foodT.tier === 'crisis';
+
+  const rows =
+    stockRow('신선 식량', 'can', Math.min(12, foodDays), 7, '#e0b24a',
+             `전원 ${foodDays}일치` + (foodAlarm ? ' · ' + foodT.label : ''), foodAlarm) +
+    stockRow('비축 · 건조', 'sack', Math.min(12, s.driedFood), 4, '#c2925a', `${s.driedFood}끼`, false) +
+    stockRow('비축 · 절임', 'jar', Math.min(12, s.pickledFood), 4, '#9aa84f', `${s.pickledFood}끼`, false) +
+    stockRow('식수', 'jug', Math.min(12, waterDays), 7, '#5ab0e0',
+             `약 ${waterDays}일분`, waterDays <= 1) +
+    stockRow('의약품', 'vial', Math.min(8, s.medicine), 5, '#e05a5a',
+             s.medicine > 0 ? `${s.medicine}회분` : '바닥', s.medicine <= 1) +
+    stockRow('연료', 'fuel', Math.min(10, Math.ceil(s.fuel / 8)), 6, '#e0823a',
+             `${s.fuel}` + (s.season === 'winter' ? ` · 겨울 ${Math.floor(s.fuel / 2)}일` : ''), s.fuel < 6);
+
+  const warns = [];
+  if (s.medicine <= 0) warns.push('🩸 약상자가 비었다 — 다음 부상은 손쓸 도리가 없다.');
+  if (foodT.tier === 'famine') warns.push('🥄 곳간이 바닥났다 — 모두가 굶고 있다.');
+  else if (foodT.tier === 'crisis') warns.push('🥄 식량이 위기 구간 — 며칠 안에 바닥난다.');
+  if (waterDays <= 1) warns.push('💧 식수가 거의 없다 — 오늘 물을 떠 와야 한다.');
+  if (s.fuel < 6) warns.push('🔥 연료가 곧 떨어진다.');
+  const warnHtml = warns.length
+    ? `<div class="vstk-warn">${warns.map(w => `<div>${w}</div>`).join('')}</div>`
+    : `<div class="vstk-warn ok">당장 급한 물자는 없다. 그러나 매일 줄어든다.</div>`;
+
+  return `
+    <button class="vh-pop-x" id="vhStockX">✕</button>
+    <div class="vz-head"><span class="vz-icon">📦</span><span class="vz-title">물자고</span>
+      <span class="vstk-mouths">먹일 입 ${alive} · 하루 식량 ${alive} · 물 ${waterOut}</span></div>
+    <div class="vz-body vstk-body">
+      ${rows}
+      ${warnHtml}
+      <div class="vstk-foot">채워진 것 = 지금 가진 것 · 빈 칸 = 비어버린 자리. 매일 아침 줄어든다.</div>
+    </div>`;
+}
+
+LR.village.showStock = function() {
+  const win = document.getElementById('vhStockWin');
+  const s = LR.village.state;
+  if (!win || !s) return;
+  win.innerHTML = buildStockHtml(s);
+  win.classList.add('open');
+  const x = document.getElementById('vhStockX');
+  if (x) x.addEventListener('click', () => LR.village.closeStock());
+};
+LR.village.closeStock = function() {
+  const win = document.getElementById('vhStockWin');
+  if (win) win.classList.remove('open');
+};
+
 // ─── 망루 · 외부 정찰 (방어탑 클릭) ───
 LR.village.showOutside = function() {
   const el = document.getElementById('vhOutside');
@@ -2288,12 +2370,14 @@ function ensureDom() {
           <div class="vh-dossier" id="vhDossier"></div>
           <div class="vh-pop vh-zinfo vh-logwin" id="vhLogWin"></div>
           <div class="vh-pop vh-zinfo vh-calwin" id="vhCalWin"></div>
+          <div class="vh-pop vh-zinfo vh-stockwin" id="vhStockWin"></div>
           <div class="vh-decision" id="vhDecision"></div>
         </div>
         <div class="vh-actbar">
           <button class="vh-act vh-act-main" id="vhActDecide" title="오늘의 결정">⚑ 오늘의 결정</button>
           <button class="vh-act" title="텍스트 상세 화면" id="vhActDetail">📋 상세</button>
           <button class="vh-act" title="30일 달력 — 지나간 선택의 기록" id="vhActCal">🗓 30일</button>
+          <button class="vh-act" title="물자고 — 남은 물자를 사물로" id="vhActStock">📦 물자</button>
           <button class="vh-act" title="지난 기록" id="vhActLog">📓 기록</button>
           <span class="vh-hint" id="vhHint">인물을 클릭하면 상태를 볼 수 있어요</span>
         </div>
@@ -2328,12 +2412,13 @@ function ensureDom() {
     LR.village.closeZoneInfo();
     LR.village.closeLog();
     LR.village.closeCalendar();
+    LR.village.closeStock();
     const out = document.getElementById('vhOutside');
     if (out) out.classList.remove('open');
     LR.village._syncPause();
   });
   // 창 열림/닫힘을 감지해 일시정지(딤) 상태 동기화
-  const watchIds = ['vhDecision', 'vhZinfo', 'vhLogWin', 'vhCalWin', 'vhOutside'];
+  const watchIds = ['vhDecision', 'vhZinfo', 'vhLogWin', 'vhCalWin', 'vhStockWin', 'vhOutside'];
   const mo = new MutationObserver(() => LR.village._syncPause());
   watchIds.forEach(id => { const t = document.getElementById(id); if (t) mo.observe(t, { attributes: true, attributeFilter: ['class'] }); });
 
@@ -2357,6 +2442,8 @@ function ensureDom() {
   if (al) al.addEventListener('click', () => LR.village.showLog());
   const ac = document.getElementById('vhActCal');
   if (ac) ac.addEventListener('click', () => LR.village.showCalendar());
+  const ak = document.getElementById('vhActStock');
+  if (ak) ak.addEventListener('click', () => LR.village.showStock());
 }
 
 // 일시정지/딤 동기화
@@ -2366,7 +2453,7 @@ LR.village._syncPause = function() {
   const scr = document.getElementById('villageScreen');
   if (!scr) return;
   const isOpen = id => { const e = document.getElementById(id); return e && e.classList.contains('open'); };
-  const modalOpen = isOpen('vhZinfo') || isOpen('vhLogWin') || isOpen('vhCalWin') || isOpen('vhOutside');
+  const modalOpen = isOpen('vhZinfo') || isOpen('vhLogWin') || isOpen('vhCalWin') || isOpen('vhStockWin') || isOpen('vhOutside');
   const anyOpen = modalOpen || isOpen('vhDecision');
   scr.classList.toggle('paused', anyOpen);
   if (anyOpen) { scr.style.setProperty('--px', '0'); scr.style.setProperty('--py', '0'); }  // 패럴렉스 중앙 고정
